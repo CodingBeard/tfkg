@@ -1,0 +1,6 @@
+/tmp/
+.idea
+*.iml
+.codingbeard/
+tfkg
+venv/
