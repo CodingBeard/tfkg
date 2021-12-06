@@ -9,7 +9,7 @@
 
 ## Find your version
 Versions starting with v0 are liable to change radically.
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.2`
 
 ## Requirements
 - Docker if using the provided container
