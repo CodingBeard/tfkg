@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/codingbeard/cberrors"
 	"github.com/codingbeard/cblog"
@@ -20,7 +21,7 @@ var (
 	tempModelDir = "tfkg_temp_model"
 )
 
-type TfModel struct {
+type TfkgModel struct {
 	model        *tf.SavedModel
 	baseModelDir string
 	layers       []layer.Layer
@@ -35,8 +36,8 @@ func NewSequentialModel(
 	logger *cblog.Logger,
 	errorHandler *cberrors.ErrorsContainer,
 	layers ...layer.Layer,
-) *TfModel {
-	return &TfModel{
+) *TfkgModel {
+	return &TfkgModel{
 		isSequential: true,
 		layers:       layers,
 		baseModelDir: tempModelDir,
@@ -49,7 +50,7 @@ func LoadModel(
 	errorHandler *cberrors.ErrorsContainer,
 	logger *cblog.Logger,
 	dir string,
-) (*TfModel, error) {
+) (*TfkgModel, error) {
 	m, e := tf.LoadSavedModel(dir, []string{"serve"}, nil)
 	if e != nil {
 		errorHandler.Error(e)
@@ -62,82 +63,13 @@ func LoadModel(
 		return nil, e
 	}
 
-	return &TfModel{
+	return &TfkgModel{
 		model:        m,
 		baseModelDir: dir,
 		pbCache:      pbCache,
 		errorHandler: errorHandler,
 		logger:       logger,
 	}, nil
-}
-
-func (m *TfModel) CompileAndLoad(batchSize int, pythonPath string, createModelFunc ...func(tempDir, tempPythonGenerationFile string) error) error {
-	// TODO: this is nasty, replace it with json configs
-	tempDir := filepath.Join(os.TempDir(), "/tfkg")
-	code, e := m.generatePythonModelCode(tempDir, batchSize)
-	if e != nil {
-		return e
-	}
-
-	e = os.MkdirAll(tempDir, os.ModePerm)
-	if e != nil {
-		m.errorHandler.Error(e)
-		return e
-	}
-
-	generatorFileName := "tfkg_temp_model_generator.py"
-	e = ioutil.WriteFile(filepath.Join(tempDir, generatorFileName), []byte(code), os.ModePerm)
-	if e != nil {
-		m.errorHandler.Error(e)
-		return e
-	}
-
-	if len(createModelFunc) == 1 {
-		e = createModelFunc[0](tempDir, generatorFileName)
-		if e != nil {
-			return e
-		}
-	} else {
-		e = func(tempDir string, tempPythonGenerationFile string) error {
-			cmd := exec.Command(pythonPath, tempPythonGenerationFile)
-			cmd.Dir = tempDir
-			output, e := cmd.CombinedOutput()
-			if e != nil {
-				m.errorHandler.Error(e)
-			}
-			fmt.Println(string(output))
-			return e
-		}(tempDir, generatorFileName)
-		if e != nil {
-			return e
-		}
-	}
-
-	m.model, e = tf.LoadSavedModel(filepath.Join(tempDir, tempModelDir), []string{"serve"}, nil)
-	if e != nil {
-		m.errorHandler.Error(e)
-		return e
-	}
-
-	m.pbCache, e = ioutil.ReadFile(filepath.Join(tempDir, tempModelDir, "saved_model.pb"))
-	if e != nil {
-		m.errorHandler.Error(e)
-		return e
-	}
-
-	e = os.RemoveAll(filepath.Join(tempDir, tempModelDir))
-	if e != nil {
-		m.errorHandler.Error(e)
-		return e
-	}
-
-	e = os.Remove(filepath.Join(tempDir, generatorFileName))
-	if e != nil {
-		m.errorHandler.Error(e)
-		return e
-	}
-
-	return nil
 }
 
 type FitConfig struct {
@@ -150,7 +82,7 @@ type FitConfig struct {
 	Verbose    int
 }
 
-func (m *TfModel) Fit(
+func (m *TfkgModel) Fit(
 	trainSignature string,
 	valSignature string,
 	dataset data.Dataset,
@@ -198,8 +130,8 @@ func (m *TfModel) Fit(
 		negWeightOp := m.model.Graph.Operation(fmt.Sprintf("%s_%s", trainSignature, "neg_weight")).Output(0)
 
 		var inputOps []tf.Output
-		for _, columnName := range dataset.GetColumnNames() {
-			inputOps = append(inputOps, m.model.Graph.Operation(fmt.Sprintf("%s_%s", trainSignature, columnName)).Output(0))
+		for offset := range dataset.GetColumnNames() {
+			inputOps = append(inputOps, m.model.Graph.Operation(fmt.Sprintf("%s_inputs_%d", trainSignature, offset)).Output(0))
 		}
 
 		halt := false
@@ -318,8 +250,8 @@ func (m *TfModel) Fit(
 			valNegWeightOp := m.model.Graph.Operation(fmt.Sprintf("%s_%s", valSignature, "neg_weight")).Output(0)
 
 			var valInputOps []tf.Output
-			for _, columnName := range dataset.GetColumnNames() {
-				valInputOps = append(valInputOps, m.model.Graph.Operation(fmt.Sprintf("%s_%s", valSignature, columnName)).Output(0))
+			for offset := range dataset.GetColumnNames() {
+				valInputOps = append(valInputOps, m.model.Graph.Operation(fmt.Sprintf("%s_inputs_%d", valSignature, offset)).Output(0))
 			}
 
 			batch = 1
@@ -413,7 +345,7 @@ type EvaluateConfig struct {
 	Verbose   int
 }
 
-func (m *TfModel) Evaluate(
+func (m *TfkgModel) Evaluate(
 	evaluateSignature string,
 	mode data.GeneratorMode,
 	dataset data.Dataset,
@@ -455,8 +387,8 @@ func (m *TfModel) Evaluate(
 	evaluateNegWeightOp := m.model.Graph.Operation(fmt.Sprintf("%s_%s", evaluateSignature, "neg_weight")).Output(0)
 
 	var evaluateInputOps []tf.Output
-	for _, columnName := range dataset.GetColumnNames() {
-		evaluateInputOps = append(evaluateInputOps, m.model.Graph.Operation(fmt.Sprintf("%s_%s", evaluateSignature, columnName)).Output(0))
+	for offset := range dataset.GetColumnNames() {
+		evaluateInputOps = append(evaluateInputOps, m.model.Graph.Operation(fmt.Sprintf("%s_inputs_%d", evaluateSignature, offset)).Output(0))
 	}
 
 	batch := 1
@@ -552,7 +484,7 @@ func (m *TfModel) Evaluate(
 	}
 }
 
-func (m *TfModel) getMetricLogs(
+func (m *TfkgModel) getMetricLogs(
 	metrics []metric.Metric,
 	namePrefix string,
 	isLastBatch bool,
@@ -602,7 +534,7 @@ func (m *TfModel) getMetricLogs(
 	return logs
 }
 
-func (m *TfModel) processCallbacks(
+func (m *TfkgModel) processCallbacks(
 	callbacks []callback.Callback,
 	event callback.Event,
 	mode callback.Mode,
@@ -633,7 +565,7 @@ func (m *TfModel) processCallbacks(
 	return halt, saved
 }
 
-func (m *TfModel) callCallbacks(
+func (m *TfkgModel) callCallbacks(
 	callbacks []callback.Callback,
 	event callback.Event,
 	mode callback.Mode,
@@ -668,7 +600,7 @@ func (m *TfModel) callCallbacks(
 	return halt, saved
 }
 
-func (m *TfModel) Save(dir string) error {
+func (m *TfkgModel) Save(dir string) error {
 	signatureCount := len(m.model.Signatures)
 
 	e := os.MkdirAll(filepath.Join(dir, "variables"), os.ModePerm)
@@ -705,33 +637,108 @@ func (m *TfModel) Save(dir string) error {
 	return nil
 }
 
-func (m *TfModel) generatePythonModelCode(tempDir string, batchSize int) (string, error) {
-	// TODO: this is nasty, replace it with json configs
-	imports := make(map[string]bool)
+type pythonConfig struct {
+	BatchSize   int    `json:"batch_size"`
+	ModelConfig string `json:"model_config"`
+	SaveDir     string `json:"save_dir"`
+}
 
-	var inputVariableNames []string
-	var inputShapes []string
-	var inputDtypes []string
-	var inputBlanks []string
-	var outputVariableName string
-	var labelSpec string
-	var outputBlank string
+func (m *TfkgModel) CompileAndLoad(batchSize int) error {
+	modelConfig, e := m.generateKerasDefinitionJson()
+	if e != nil {
+		return e
+	}
 
-	var layerDefs []string
+	tempDir := filepath.Join(os.TempDir(), "/tfkg")
+
+	e = os.MkdirAll(tempDir, os.ModePerm)
+	if e != nil {
+		m.errorHandler.Error(e)
+		return e
+	}
+
+	config := pythonConfig{
+		BatchSize:   batchSize,
+		ModelConfig: modelConfig,
+		SaveDir:     filepath.Join(tempDir, tempModelDir),
+	}
+
+	configBytes, e := json.Marshal(config)
+	if e != nil {
+		m.errorHandler.Error(e)
+		return e
+	}
+
+	cmd := exec.Command("python", "-c", m.getPythonModelCode())
+	stdinPipe, e := cmd.StdinPipe()
+	if e != nil {
+		m.errorHandler.Error(e)
+		return e
+	}
+	_, e = stdinPipe.Write(configBytes)
+	if e != nil {
+		m.errorHandler.Error(e)
+		return e
+	}
+	e = stdinPipe.Close()
+	if e != nil {
+		m.errorHandler.Error(e)
+		return e
+	}
+	output, e := cmd.CombinedOutput()
+	if e != nil {
+		m.errorHandler.Error(e)
+	}
+	fmt.Println(string(output))
+	if e != nil {
+		return e
+	}
+
+	m.model, e = tf.LoadSavedModel(filepath.Join(tempDir, tempModelDir), []string{"serve"}, nil)
+	if e != nil {
+		m.errorHandler.Error(e)
+		return e
+	}
+
+	m.pbCache, e = ioutil.ReadFile(filepath.Join(tempDir, tempModelDir, "saved_model.pb"))
+	if e != nil {
+		m.errorHandler.Error(e)
+		return e
+	}
+
+	e = os.RemoveAll(filepath.Join(tempDir, tempModelDir))
+	if e != nil {
+		m.errorHandler.Error(e)
+		return e
+	}
+
+	return nil
+}
+
+type kerasModelConfigStruct struct {
+	ClassName string `json:"class_name"`
+	Config    struct {
+		Name         string          `json:"name"`
+		Layers       []interface{}   `json:"layers"`
+		InputLayers  [][]interface{} `json:"input_layers"`
+		OutputLayers [][]interface{} `json:"output_layers"`
+	} `json:"config"`
+	KerasVersion string `json:"keras_version"`
+	Backend      string `json:"backend"`
+}
+
+func (m *TfkgModel) generateKerasDefinitionJson() (string, error) {
+	var inputLayerConfigs [][]interface{}
+	var outputLayerConfigs [][]interface{}
+	var layerConfigs []interface{}
 	var lastLayer layer.Layer
 	for i, l := range m.layers {
 		if _, ok := l.(*layer.Input); ok {
-			inputVariableNames = append(inputVariableNames, l.GetPythonVariableName())
-			inputShapes = append(inputShapes, strings.ReplaceAll(l.GetShape().String(), "?", "None"))
-			inputDtypes = append(inputDtypes, string(l.GetDtype()))
-			inputBlanks = append(inputBlanks, fmt.Sprintf(
-				"%s = tf.zeros(shape=[%d, %d], dtype=%s)",
-				inputVariableNames[i],
-				batchSize,
-				l.GetShape().Size(1),
-				inputDtypes[i],
-			))
-
+			inputLayerConfigs = append(inputLayerConfigs, []interface{}{
+				l.GetName(),
+				0,
+				0,
+			})
 		} else {
 			if m.isSequential {
 				l.SetInput([]layer.Layer{lastLayer})
@@ -740,72 +747,95 @@ func (m *TfModel) generatePythonModelCode(tempDir string, batchSize int) (string
 			}
 		}
 		if i+1 == len(m.layers) {
-			outputVariableName = l.GetPythonVariableName()
-			labelSpec = fmt.Sprintf(
-				"tf.TensorSpec(shape=(None, 1), dtype=tf.int32)",
-			)
-			outputBlank = fmt.Sprintf(
-				"y = tf.zeros(shape=[%d, 1], dtype=tf.int32)",
-				batchSize,
-			)
+			outputLayerConfigs = append(outputLayerConfigs, []interface{}{
+				l.GetName(),
+				0,
+				0,
+			})
 		}
-		imports[l.GetImport()] = true
-		layerDefLines := strings.Split(fmt.Sprintf(
-			"%s = %s",
-			l.GetPythonVariableName(),
-			l.GetPythonDefinitionString(),
-		), "\n")
-
-		for lineOffset := range layerDefLines {
-			layerDefLines[lineOffset] = "        " + layerDefLines[lineOffset]
-		}
-
-		layerDefs = append(layerDefs, strings.Join(layerDefLines, "\n"))
+		layerConfigs = append(layerConfigs, l.GetKerasLayerConfig())
 		lastLayer = l
 	}
-
-	var importsSlice []string
-	for imp := range imports {
-		importsSlice = append(importsSlice, imp)
+	config := kerasModelConfigStruct{
+		ClassName: "Functional",
+		Config: struct {
+			Name         string          `json:"name"`
+			Layers       []interface{}   `json:"layers"`
+			InputLayers  [][]interface{} `json:"input_layers"`
+			OutputLayers [][]interface{} `json:"output_layers"`
+		}{
+			Name:         "model",
+			Layers:       layerConfigs,
+			InputLayers:  inputLayerConfigs,
+			OutputLayers: outputLayerConfigs,
+		},
+		KerasVersion: "2.6.0",
+		Backend:      "tensorflow",
 	}
 
-	var inputSpecs []string
-	for i := range inputShapes {
-		inputSpecs = append(inputSpecs, fmt.Sprintf("tf.TensorSpec(shape=%s, dtype=%s)", inputShapes[i], inputDtypes[i]))
+	jsonBytes, e := json.Marshal(config)
+	if e != nil {
+		m.errorHandler.Error(e)
+		return "", e
 	}
 
-	return fmt.Sprintf(
-		`
+	return string(jsonBytes), nil
+}
+
+func (m *TfkgModel) getPythonModelCode() string {
+	// TODO somehow move this into a separate python file and load it into a resource at build time
+	return `import json
 import os
 import logging
-import datetime
+import sys
+
 import tensorflow as tf
 from tensorflow.keras import Model
-%s
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # ERROR
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 logging.disable(logging.WARNING)
 
+config = json.load(sys.stdin)
 
-def timestamp(message):
-    print(
-        datetime.datetime.now().strftime("%s") +
-        " " +
-        message
-    )
+model = tf.keras.models.model_from_json(config["model_config"])
+learn_input_signature = [
+    tf.TensorSpec(shape=(None, 1), dtype=tf.int32),
+    tf.TensorSpec(shape=1, dtype=tf.float32),
+    tf.TensorSpec(shape=1, dtype=tf.float32),
+]
+predict_input_signature = []
+
+zero_inputs = []
+
+for model_layer in model.layers:
+    if type(model_layer) == tf.keras.layers.InputLayer:
+        input_shape = [config["batch_size"]]
+        for dim in model_layer.input_shape[0][3:]:
+            input_shape.append(dim)
+        zero_inputs.append(
+            tf.zeros(shape=input_shape, dtype=model_layer.dtype)
+        )
+        learn_input_signature.append(tf.TensorSpec(
+            shape=model_layer.input_shape[0][2:],
+            dtype=model_layer.dtype,
+        ))
+        predict_input_signature.append(tf.TensorSpec(
+            shape=model_layer.input_shape[0][2:],
+            dtype=model_layer.dtype,
+        ))
+
+evaluate_input_signature = learn_input_signature
 
 
 class GolangModel(tf.Module):
     def __init__(self):
         super().__init__()
 
-        self.batch_size = %d
+        self.batch_size = config["batch_size"]
+        self._model = model
 
-%s
-
-        self._model = Model([%s], %s)
         self._global_step = tf.Variable(0, dtype=tf.int32, trainable=False)
         self._optimizer = tf.keras.optimizers.Adam()
         loss_func = tf.keras.losses.SparseCategoricalCrossentropy(
@@ -817,7 +847,7 @@ class GolangModel(tf.Module):
                 loss_func(y_true, y_pred),
                 tf.where(
                     tf.greater_equal(
-                        tf.reshape(y, shape=[self.batch_size]),
+                        tf.reshape(y_true, shape=[self.batch_size]),
                         tf.ones(dtype=tf.int32, shape=[self.batch_size])
                     ),
                     tf.repeat(pos_weight, self.batch_size),
@@ -828,22 +858,17 @@ class GolangModel(tf.Module):
 
         self._loss = loss
 
-    @tf.function(input_signature=[
-        %s
-        %s,
-        tf.TensorSpec(shape=1, dtype=tf.float32),
-        tf.TensorSpec(shape=1, dtype=tf.float32),
-    ])
+    @tf.function(input_signature=learn_input_signature)
     def learn(
             self,
-            %s
             y,
             neg_weight,
             pos_weight,
+            *inputs
     ):
         self._global_step.assign_add(1)
         with tf.GradientTape() as tape:
-            logits = self._model([%s], training=True)
+            logits = self._model(list(inputs), training=True)
             loss = self._loss(y, logits, pos_weight, neg_weight)
 
         gradient = tape.gradient(
@@ -858,22 +883,17 @@ class GolangModel(tf.Module):
             logits
         ]
 
-    @tf.function(input_signature=[
-        %s
-        %s,
-        tf.TensorSpec(shape=1, dtype=tf.float32),
-        tf.TensorSpec(shape=1, dtype=tf.float32),
-    ])
+    @tf.function(input_signature=evaluate_input_signature)
     def evaluate(
             self,
-            %s
             y,
             neg_weight,
             pos_weight,
+            *inputs
     ):
         self._global_step.assign_add(1)
         with tf.GradientTape() as tape:
-            logits = self._model([%s], training=True)
+            logits = self._model(list(inputs), training=True)
             loss = self._loss(y, logits, pos_weight, neg_weight)
 
         return [
@@ -881,50 +901,47 @@ class GolangModel(tf.Module):
             logits
         ]
 
-    @tf.function(input_signature=[
-        %s
-    ])
+    @tf.function(input_signature=predict_input_signature)
     def predict(
             self,
-            %s
+            *inputs,
     ):
-        return [self._model(%s)]
+        return [self._model(list(inputs))]
 
 
-timestamp("Initialising model")
+print("Initialising model")
 
 gm = GolangModel()
 
-%s
-%s
+y_zeros = tf.zeros(shape=[config["batch_size"], 1], dtype=tf.int32)
 
-timestamp("Tracing learn")
+print("Tracing learn")
 
 gm.learn(
-    %s
-    y,
+    y_zeros,
     tf.convert_to_tensor([1], dtype=tf.float32),
     tf.convert_to_tensor([1], dtype=tf.float32),
+    *zero_inputs,
 )
 
-timestamp("Tracing evaluate")
+print("Tracing evaluate")
 
 gm.evaluate(
-    %s
-    y,
+    y_zeros,
     tf.convert_to_tensor([1], dtype=tf.float32),
     tf.convert_to_tensor([1], dtype=tf.float32),
+    *zero_inputs,
 )
 
-timestamp("Tracing predict")
+print("Tracing predict")
 
-gm.predict(%s)
+gm.predict(*zero_inputs)
 
-timestamp("Saving model")
+print("Saving model")
 
 tf.saved_model.save(
     gm,
-    "%s",
+    config["save_dir"],
     signatures={
         "learn": gm.learn,
         "evaluate": gm.evaluate,
@@ -932,30 +949,6 @@ tf.saved_model.save(
     },
 )
 
-timestamp("Completed model base")
-`,
-		strings.Join(importsSlice, "\n"),
-		"%d/%m/%Y %H:%M:%S",
-		batchSize,
-		strings.Join(layerDefs, "\n"),
-		strings.Join(inputVariableNames, ", "),
-		outputVariableName,
-		strings.Join(inputSpecs, "\n        ")+",",
-		labelSpec,
-		strings.Join(inputVariableNames, ",\n            ")+",",
-		strings.Join(inputVariableNames, ", "),
-		strings.Join(inputSpecs, "\n        ")+",",
-		labelSpec,
-		strings.Join(inputVariableNames, ",\n            ")+",",
-		strings.Join(inputVariableNames, ", "),
-		strings.Join(inputSpecs, "\n        ")+",",
-		strings.Join(inputVariableNames, ",\n            ")+",",
-		strings.Join(inputVariableNames, ", "),
-		strings.Join(inputBlanks, "\n"),
-		outputBlank,
-		strings.Join(inputVariableNames, ",\n    ")+",",
-		strings.Join(inputVariableNames, ",\n    ")+",",
-		strings.Join(inputVariableNames, ","),
-		filepath.Join(tempDir, tempModelDir),
-	), nil
+print("Completed model base")
+`
 }

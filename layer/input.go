@@ -1,9 +1,7 @@
 package layer
 
 import (
-	"fmt"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
-	"strings"
 )
 
 type Input struct {
@@ -65,30 +63,57 @@ func (i *Input) GetImport() string {
 	return "from tensorflow.keras.layers import Input"
 }
 
-func (i *Input) GetPythonVariableName() string {
+func (i *Input) GetName() string {
 	return i.name
 }
 
-func (i *Input) GetPythonDefinitionString() string {
-	// TODO: this is nasty, replace it with json configs
-	args := []string{
-		fmt.Sprintf(`name="%s"`, i.name),
-		fmt.Sprintf("shape=%s", strings.ReplaceAll(i.shape.String(), "?", "None")),
-		fmt.Sprintf("dtype=%s", i.dtype),
+type kerasInputConfig struct {
+	ClassName string `json:"class_name"`
+	Config    struct {
+		BatchInputShape []interface{} `json:"batch_input_shape"`
+		Dtype           string        `json:"dtype"`
+		Sparse          bool          `json:"sparse"`
+		Ragged          bool          `json:"ragged"`
+		Name            string        `json:"name"`
+	} `json:"config"`
+	Name         string        `json:"name"`
+	InboundNodes []interface{} `json:"inbound_nodes"`
+}
+
+func (i *Input) GetKerasLayerConfig() interface{} {
+	shape := []interface{}{
+		nil,
+		nil,
 	}
 
-	if i.ragged != TfDefault {
-		args = append(args, fmt.Sprintf("ragged=%s", i.ragged))
+	dims, _ := i.shape.ToSlice()
+
+	for _, dim := range dims {
+		if dim == -1 {
+			shape = append(shape, nil)
+		} else {
+			shape = append(shape, dim)
+		}
 	}
 
-	if i.sparse != TfDefault {
-		args = append(args, fmt.Sprintf("sparse=%s", i.sparse))
+	config := kerasInputConfig{
+		ClassName: "InputLayer",
+		Config: struct {
+			BatchInputShape []interface{} `json:"batch_input_shape"`
+			Dtype           string        `json:"dtype"`
+			Sparse          bool          `json:"sparse"`
+			Ragged          bool          `json:"ragged"`
+			Name            string        `json:"name"`
+		}{
+			BatchInputShape: shape,
+			Dtype:           string(i.dtype),
+			Sparse:          i.sparse.ToBool(false),
+			Ragged:          i.ragged.ToBool(false),
+			Name:            i.name,
+		},
+		Name:         i.name,
+		InboundNodes: []interface{}{},
 	}
 
-	return fmt.Sprintf(
-		`Input(
-    %s
-)`,
-		strings.Join(args, ",\n    "),
-	)
+	return config
 }

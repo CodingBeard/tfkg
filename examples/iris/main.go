@@ -41,22 +41,18 @@ func main() {
 	errorHandler := cberrors.NewErrorContainer(iowriterprovider.New(logger))
 
 	// Define a simple keras style Sequential model with two hidden Dense layers
-	// Note that the input name "petal_sizes" MUST correspond to the name used in the dataset further down
 	m := model.NewSequentialModel(
 		logger,
 		errorHandler,
-		layer.NewInput(tf.MakeShape(-1, 4), layer.Float32, layer.InputConfig{Name: "petal_sizes"}),
+		layer.NewInput(tf.MakeShape(-1, 4), layer.Float32),
 		layer.NewDense(100, layer.Float32, layer.DenseConfig{Activation: "swish"}),
 		layer.NewDense(100, layer.Float32, layer.DenseConfig{Activation: "swish"}),
 		layer.NewDense(3, layer.Float32, layer.DenseConfig{Activation: "softmax"}),
 	)
 
-	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and then save the model in a format we can load and train
-	// The pythonPath must be a python binary which knows about the corresponding tensorflow libraries. In this example it is the python path in the docker container provided
-	e = m.CompileAndLoad(
-		3,
-		"/usr/local/bin/python",
-	)
+	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and execute it to save the model in a format we can load and train
+	// A python binary must be available to use for this to work
+	e = m.CompileAndLoad(3)
 	if e != nil {
 		return
 	}
@@ -70,7 +66,7 @@ func main() {
 	// We allocate 80% of the data to training (TrainPercent: 0.8)
 	// We allocate 10% of the data to validation (ValPercent: 0.1)
 	// We allocate 10% of the data to testing (TestPercent: 0.1)
-	// We define a data processor for the four float32 data points. The name petal_sizes MUST match the name of the input defined above
+	// We define a data processor for the four float32 data points. The name will be used for the tokenizer or divisor cache file
 	// The lineOffset is 0 because the data is the first thing in the csv row and the dataLength is 4 because there are 4 floats to train
 	// The preprocessor.NewDivisor(errorHandler) will scale the floats to between 0 and 1
 	// We use a preprocessor.ReadCsvFloat32s because under the hood a lineOffset: 0 dataLength: 4 will grab the first four elements of the csv row and return them as a csv string. It will convert the string to a slice of float32 values

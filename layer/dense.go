@@ -1,10 +1,7 @@
 package layer
 
 import (
-	"fmt"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
-	"strconv"
-	"strings"
 )
 
 type Dense struct {
@@ -77,39 +74,107 @@ func (d *Dense) GetImport() string {
 	return "from tensorflow.keras.layers import Dense"
 }
 
-func (d *Dense) GetPythonVariableName() string {
+func (d *Dense) GetName() string {
 	return d.name
 }
 
-func (d *Dense) GetPythonDefinitionString() string {
-	// TODO: this is nasty, replace it with json configs
-	args := []string{
-		strconv.Itoa(d.units),
-		fmt.Sprintf(`name="%s"`, d.name),
-		fmt.Sprintf("dtype=%s", d.dtype),
+type kerasDenseConfig struct {
+	ClassName string `json:"class_name"`
+	Config    struct {
+		Name                string                            `json:"name"`
+		Trainable           bool                              `json:"trainable"`
+		Dtype               string                            `json:"dtype"`
+		Units               int                               `json:"units"`
+		Activation          string                            `json:"activation"`
+		UseBias             bool                              `json:"use_bias"`
+		KernelInitializer   kerasDenseKernelInitializerConfig `json:"kernel_initializer"`
+		BiasInitializer     kerasDenseBiasInitializer         `json:"bias_initializer"`
+		KernelRegularizer   interface{}                       `json:"kernel_regularizer"`
+		BiasRegularizer     interface{}                       `json:"bias_regularizer"`
+		ActivityRegularizer interface{}                       `json:"activity_regularizer"`
+		KernelConstraint    interface{}                       `json:"kernel_constraint"`
+		BiasConstraint      interface{}                       `json:"bias_constraint"`
+	} `json:"config"`
+	Name         string            `json:"name"`
+	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+}
+
+type kerasDenseKernelInitializerConfig struct {
+	ClassName string `json:"class_name"`
+	Config    struct {
+		Seed interface{} `json:"seed"`
+	} `json:"config"`
+}
+
+type kerasDenseBiasInitializer struct {
+	ClassName string   `json:"class_name"`
+	Config    struct{} `json:"config"`
+}
+
+func (d *Dense) GetKerasLayerConfig() interface{} {
+	config := kerasDenseConfig{
+		ClassName: "Dense",
+		Config: struct {
+			Name                string                            `json:"name"`
+			Trainable           bool                              `json:"trainable"`
+			Dtype               string                            `json:"dtype"`
+			Units               int                               `json:"units"`
+			Activation          string                            `json:"activation"`
+			UseBias             bool                              `json:"use_bias"`
+			KernelInitializer   kerasDenseKernelInitializerConfig `json:"kernel_initializer"`
+			BiasInitializer     kerasDenseBiasInitializer         `json:"bias_initializer"`
+			KernelRegularizer   interface{}                       `json:"kernel_regularizer"`
+			BiasRegularizer     interface{}                       `json:"bias_regularizer"`
+			ActivityRegularizer interface{}                       `json:"activity_regularizer"`
+			KernelConstraint    interface{}                       `json:"kernel_constraint"`
+			BiasConstraint      interface{}                       `json:"bias_constraint"`
+		}{
+			Name:       d.name,
+			Trainable:  true,
+			Dtype:      string(d.dtype),
+			Units:      d.units,
+			Activation: d.activation,
+			UseBias:    d.useBias.ToBool(true),
+			KernelInitializer: kerasDenseKernelInitializerConfig{
+				ClassName: "GlorotUniform",
+				Config: struct {
+					Seed interface{} `json:"seed"`
+				}{
+					Seed: nil,
+				},
+			},
+			BiasInitializer: kerasDenseBiasInitializer{
+				ClassName: "Zeros",
+				Config:    struct{}{},
+			},
+			KernelRegularizer:   nil,
+			BiasRegularizer:     nil,
+			ActivityRegularizer: nil,
+			KernelConstraint:    nil,
+			BiasConstraint:      nil,
+		},
+		Name: d.name,
+		InboundNodes: [][][]interface{}{
+			{
+				{
+					d.input.GetName(),
+					0,
+					0,
+					map[string]bool{},
+				},
+			},
+		},
 	}
 
-	if d.useBias != TfTrue {
-		args = append(args, fmt.Sprintf("use_bias=%s", d.useBias))
-	}
-
+	//TODO implement kernalInitializer
 	if d.kernelInitializer != "glorot_uniform" {
-		args = append(args, fmt.Sprintf(`kernel_initializer="%s"`, d.kernelInitializer))
+		panic("Dense.kernalInitializer not implemented")
 	}
 
+	//TODO implement biasInitializer
 	if d.biasInitializer != "zeros" {
-		args = append(args, fmt.Sprintf(`bias_initializer="%s"`, d.biasInitializer))
+		panic("Dense.biasInitializer not implemented")
 	}
 
-	if d.activation != "" {
-		args = append(args, fmt.Sprintf(`activation="%s"`, d.activation))
-	}
-
-	return fmt.Sprintf(
-		`Dense(
-    %s
-)(%s)`,
-		strings.Join(args, ",\n    "),
-		d.input.GetPythonVariableName(),
-	)
+	return config
 }

@@ -9,4 +9,4 @@ examples-iris:
 	docker-compose exec -T tf-jupyter-golang sh -c "cd /go/src/tfkg && go run examples/iris/main.go"
 
 test-python:
-	docker-compose exec -T tf-jupyter-golang sh -c "cd /tfkg && python test.py"
+	docker-compose exec -T tf-jupyter-golang sh -c "cd /tfkg && cat config.txt | python test.py"

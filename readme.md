@@ -17,7 +17,7 @@ Versions starting with v0 are liable to change radically.
 
 **If not using the container: Make sure to install the correct versions to match the version of this library**
 - Tensorflow C library: https://www.tensorflow.org/install/lang_c
-- Python 3.8  
+- Python 3.8 - the binary "python" must be on your path and the correct version
 - Tensorflow Python library: https://www.tensorflow.org/install
 
 ## Features
@@ -73,7 +73,6 @@ m := model.NewSequentialModel(
 )
 e = m.CompileAndLoad(
     3, // batchSize
-    "/usr/local/bin/python", // pythonPath
 )
 ```
 Load a dataset:
@@ -147,9 +146,7 @@ The Graph is calculated in python based on your model configuration, and a lot o
 
 While possible, it is not currently feasible for me to generate the Graph in Golang, so I am relying on python to do so.
 
-This means while the model is technically defined and trained in Golang, it just generates python code and then executes it to save the model, finally loading this model in Golang and trains it using the C library.
-
-I will replace this nasty python code generation with Keras json configs which should mean there is a bundled static python file which accepts a json config to generate the model. Nicer, but still nasty.
+This means while the model is technically defined and trained in Golang, it just generates a json config string which static python code uses to configure the model and then saves it ready for loading in Golang for training. For the moment this is a needed evil.
 
 If some kind soul wants to replicate Keras and Autograph to generate the Graph in Golang, feel free to make a pull request. I may eventually do it, but it is not likely. There is a branch origin/scratch which allows you to investigate the graph of a saved model.
 
