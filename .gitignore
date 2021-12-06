@@ -4,3 +4,5 @@
 .codingbeard/
 tfkg
 venv/
+examples/*/training-cache/
+examples/*/saved_models/

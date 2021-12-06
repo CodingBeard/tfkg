@@ -1,20 +1,11 @@
 version: "2"
 
 services:
-  tf-jupyter:
+  tf-jupyter-golang:
     build:
-      context: ./docker/tf-jupyter
-      dockerfile: Dockerfile
-    volumes:
-      - .:/tfkg
-    ports:
-      - 8889:8888
-  golang:
-    build:
-      context: ./docker/golang
+      context: ./docker/tf-jupyter-golang
       dockerfile: Dockerfile
     command: sleep infinity
     volumes:
+      - .:/tfkg
       - .:/go/src/tfkg
-    ports:
-      - 8888:8889
