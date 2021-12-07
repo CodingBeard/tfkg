@@ -9,7 +9,7 @@
 
 ## Find your version
 Versions starting with v0 are liable to change radically.
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.3`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.4`
 
 ## Requirements
 - Docker if using the provided container
@@ -66,7 +66,7 @@ Define a model:
 m := model.NewSequentialModel(
     errorHandler,
     logger,
-    layer.NewInput(tf.MakeShape(-1, 4), layer.Float32, layer.InputConfig{Name: "petal_sizes"}),
+    layer.NewInput(tf.MakeShape(-1, 4), layer.Float32),
     layer.NewDense(100, layer.Float32, layer.DenseConfig{Activation: "swish"}),
     layer.NewDense(100, layer.Float32, layer.DenseConfig{Activation: "swish"}),
     layer.NewDense(3, layer.Float32, layer.DenseConfig{Activation: "softmax"}),
@@ -103,8 +103,6 @@ dataset, e := data.NewSingleFileDataset(
 Train a model:
 ```go
 m.Fit(
-    "learn", // trainSignature
-    "evaluate", // evaluateSignature
     dataset,
     model.FitConfig{
         Epochs:     10,

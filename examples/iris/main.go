@@ -52,6 +52,7 @@ func main() {
 
 	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and execute it to save the model in a format we can load and train
 	// A python binary must be available to use for this to work
+	// The batchSize MUST match the batch size in the call to Fit or Evaluate
 	e = m.CompileAndLoad(3)
 	if e != nil {
 		return
@@ -104,9 +105,10 @@ func main() {
 
 	logger.InfoF("main", "Training model: %s", saveDir)
 
-	// Train the model. "learn" and "evaluate" are important literal values and match the function names in the generated tensorflow model
+	// Train the model.
 	// Most of this should look familiar to anyone who has used tensorflow/keras
 	// The key points are:
+	//      The batchSize MUST match the batch size in the call to CompileAndLoad
 	//      We pass the data through 10 times (Epochs: 10)
 	//      We enable validation, which will evaluate the model on the validation portion of the dataset above (Validation: true)
 	//      We continuously (and concurrently) pre-fetch 10 batches to speed up training, though with 150 samples this has almost no effect

@@ -18,6 +18,8 @@ github.com/codingbeard/cbutil v0.2.2 h1:gvg9OR8HTy4KjI9QZYR3xIXmbhUCcLyzEHAJobLC
 github.com/codingbeard/cbutil v0.2.2/go.mod h1:vRhjpt/xuuK2c18/fdeXIhAH9RahcTbmLsnXAegwa2I=
 github.com/codingbeard/go-logger v0.0.0-20201005090617-a00c36603e2d h1:h7weE1UPcHtmxxffB+VRrbhODK4ZTEbxgwlgch8kLyA=
 github.com/codingbeard/go-logger v0.0.0-20201005090617-a00c36603e2d/go.mod h1:ENUwEHKjjshoxA7n4rpndQbHg3YfQX06uRGKyxX+NW4=
+github.com/codingbeard/tensorflow/tensorflow/go v0.0.0-20210519172502-4018d721b591 h1:h+uGPfClkjj5KQQ0ucYI9YHeRItvtieaa1LfhMU/lkA=
+github.com/codingbeard/tensorflow/tensorflow/go v0.0.0-20210519172502-4018d721b591/go.mod h1:0LCzFWUL71lYeHtxlL/15k/+5ZKVzJk6Z+hLX1UBoUQ=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
 github.com/coreos/go-etcd v2.0.0+incompatible/go.mod h1:Jez6KQU2B/sWsbdaef3ED8NzMklzPG4d5KIOhIy30Tk=
 github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
