@@ -23,7 +23,6 @@ var (
 
 type TfkgModel struct {
 	model        *tf.SavedModel
-	baseModelDir string
 	layers       []layer.Layer
 	isSequential bool
 	pbCache      []byte
@@ -40,7 +39,6 @@ func NewSequentialModel(
 	return &TfkgModel{
 		isSequential: true,
 		layers:       layers,
-		baseModelDir: tempModelDir,
 		errorHandler: errorHandler,
 		logger:       logger,
 	}
@@ -63,13 +61,51 @@ func LoadModel(
 		return nil, e
 	}
 
+	// TODO: verify that the loaded model is in fact a compatible tfkg model
+
 	return &TfkgModel{
 		model:        m,
-		baseModelDir: dir,
 		pbCache:      pbCache,
 		errorHandler: errorHandler,
 		logger:       logger,
 	}, nil
+}
+
+func (m *TfkgModel) Predict(inputs ...*tf.Tensor) (*tf.Tensor, error) {
+	if len(inputs) < 1 {
+		e := fmt.Errorf("no inputs provided")
+		m.errorHandler.Error(e)
+		return nil, e
+	}
+	var predictOutputs []tf.Output
+	output := 0
+	for _, info := range m.model.Signatures["predict"].Outputs {
+		parts := strings.Split(info.Name, ":")
+		if len(parts) != 2 {
+			e := fmt.Errorf("error getting output for predict signature in fit")
+			m.errorHandler.Error(e)
+			return nil, e
+		}
+		name := parts[0]
+		predictOutputs = append(predictOutputs, m.model.Graph.Operation(name).Output(output))
+		output++
+	}
+	predictInputs := map[tf.Output]*tf.Tensor{}
+	for i, inputTensor := range inputs {
+		predictInputs[m.model.Graph.Operation(fmt.Sprintf("predict_inputs_%d", i)).Output(0)] = inputTensor
+	}
+
+	results, e := m.model.Session.Run(
+		predictInputs,
+		predictOutputs,
+		nil,
+	)
+	if e != nil {
+		m.errorHandler.Error(e)
+		return nil, e
+	}
+
+	return results[0], nil
 }
 
 type FitConfig struct {
@@ -83,12 +119,10 @@ type FitConfig struct {
 }
 
 func (m *TfkgModel) Fit(
-	trainSignature string,
-	valSignature string,
 	dataset data.Dataset,
 	config FitConfig,
 ) {
-	trainSig := m.model.Signatures[trainSignature]
+	trainSig := m.model.Signatures["learn"]
 	var trainOutputs []tf.Output
 	output := 0
 	for _, info := range trainSig.Outputs {
@@ -124,14 +158,14 @@ func (m *TfkgModel) Fit(
 			SetMode(data.GeneratorModeTrain).
 			GeneratorChan(config.BatchSize, config.PreFetch)
 
-		labelOp := m.model.Graph.Operation(fmt.Sprintf("%s_%s", trainSignature, "y")).Output(0)
+		labelOp := m.model.Graph.Operation(fmt.Sprintf("learn_%s", "y")).Output(0)
 		// TODO: change class weights to a single tensor
-		posWeightOp := m.model.Graph.Operation(fmt.Sprintf("%s_%s", trainSignature, "pos_weight")).Output(0)
-		negWeightOp := m.model.Graph.Operation(fmt.Sprintf("%s_%s", trainSignature, "neg_weight")).Output(0)
+		posWeightOp := m.model.Graph.Operation(fmt.Sprintf("learn_%s", "pos_weight")).Output(0)
+		negWeightOp := m.model.Graph.Operation(fmt.Sprintf("learn_%s", "neg_weight")).Output(0)
 
 		var inputOps []tf.Output
 		for offset := range dataset.GetColumnNames() {
-			inputOps = append(inputOps, m.model.Graph.Operation(fmt.Sprintf("%s_inputs_%d", trainSignature, offset)).Output(0))
+			inputOps = append(inputOps, m.model.Graph.Operation(fmt.Sprintf("learn_inputs_%d", offset)).Output(0))
 		}
 
 		halt := false
@@ -225,7 +259,7 @@ func (m *TfkgModel) Fit(
 			met.Reset()
 		}
 		if config.Validation {
-			valSig := m.model.Signatures[valSignature]
+			valSig := m.model.Signatures["evaluate"]
 			output := 0
 			var valOutputs []tf.Output
 			for _, info := range valSig.Outputs {
@@ -244,14 +278,14 @@ func (m *TfkgModel) Fit(
 				SetMode(data.GeneratorModeVal).
 				GeneratorChan(config.BatchSize, config.PreFetch)
 
-			valLabelOp := m.model.Graph.Operation(fmt.Sprintf("%s_%s", valSignature, "y")).Output(0)
+			valLabelOp := m.model.Graph.Operation(fmt.Sprintf("evaluate_%s", "y")).Output(0)
 			// TODO: change class weights to a single tensor
-			valPosWeightOp := m.model.Graph.Operation(fmt.Sprintf("%s_%s", valSignature, "pos_weight")).Output(0)
-			valNegWeightOp := m.model.Graph.Operation(fmt.Sprintf("%s_%s", valSignature, "neg_weight")).Output(0)
+			valPosWeightOp := m.model.Graph.Operation(fmt.Sprintf("evaluate_%s", "pos_weight")).Output(0)
+			valNegWeightOp := m.model.Graph.Operation(fmt.Sprintf("evaluate_%s", "neg_weight")).Output(0)
 
 			var valInputOps []tf.Output
 			for offset := range dataset.GetColumnNames() {
-				valInputOps = append(valInputOps, m.model.Graph.Operation(fmt.Sprintf("%s_inputs_%d", valSignature, offset)).Output(0))
+				valInputOps = append(valInputOps, m.model.Graph.Operation(fmt.Sprintf("evaluate_inputs_%d", offset)).Output(0))
 			}
 
 			batch = 1
@@ -346,7 +380,6 @@ type EvaluateConfig struct {
 }
 
 func (m *TfkgModel) Evaluate(
-	evaluateSignature string,
 	mode data.GeneratorMode,
 	dataset data.Dataset,
 	config EvaluateConfig,
@@ -362,7 +395,7 @@ func (m *TfkgModel) Evaluate(
 			return
 		}
 	}
-	evaluateSig := m.model.Signatures[evaluateSignature]
+	evaluateSig := m.model.Signatures["evaluate"]
 	output := 0
 	var evaluateOutputs []tf.Output
 	for _, info := range evaluateSig.Outputs {
@@ -381,14 +414,14 @@ func (m *TfkgModel) Evaluate(
 		SetMode(mode).
 		GeneratorChan(config.BatchSize, config.PreFetch)
 
-	evaluateLabelOp := m.model.Graph.Operation(fmt.Sprintf("%s_%s", evaluateSignature, "y")).Output(0)
+	evaluateLabelOp := m.model.Graph.Operation(fmt.Sprintf("evaluate_%s", "y")).Output(0)
 	// TODO: change class weights to a single tensor
-	evaluatePosWeightOp := m.model.Graph.Operation(fmt.Sprintf("%s_%s", evaluateSignature, "pos_weight")).Output(0)
-	evaluateNegWeightOp := m.model.Graph.Operation(fmt.Sprintf("%s_%s", evaluateSignature, "neg_weight")).Output(0)
+	evaluatePosWeightOp := m.model.Graph.Operation(fmt.Sprintf("evaluate_%s", "pos_weight")).Output(0)
+	evaluateNegWeightOp := m.model.Graph.Operation(fmt.Sprintf("evaluate_%s", "neg_weight")).Output(0)
 
 	var evaluateInputOps []tf.Output
 	for offset := range dataset.GetColumnNames() {
-		evaluateInputOps = append(evaluateInputOps, m.model.Graph.Operation(fmt.Sprintf("%s_inputs_%d", evaluateSignature, offset)).Output(0))
+		evaluateInputOps = append(evaluateInputOps, m.model.Graph.Operation(fmt.Sprintf("evaluate_inputs_%d", offset)).Output(0))
 	}
 
 	batch := 1

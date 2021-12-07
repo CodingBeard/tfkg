@@ -9,7 +9,7 @@
 
 ## Find your version
 Versions starting with v0 are liable to change radically.
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.2`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.3`
 
 ## Requirements
 - Docker if using the provided container
@@ -132,6 +132,50 @@ m.Fit(
             },
         },
     },
+)
+```
+Load and predict using a saved TFKG model:
+```go
+divisor := preprocessor.NewDivisor(errorHandler)
+e = divisor.Load(filepath.Join(cacheDir, "petal_sizes-divisor.json"))
+if e != nil {
+    errorHandler.Error(e)
+    return
+}
+
+processedInput, e := divisor.Divide([]float32{6.0, 3.0, 4.8, 1.8})
+if e != nil {
+    return
+}
+
+inputTensor, e := tf.NewTensor([][]float32{processedInput})
+if e != nil {
+    errorHandler.Error(e)
+    return
+}
+
+m, e = model.LoadModel(errorHandler, logger, saveDir)
+if e != nil {
+    errorHandler.Error(e)
+    return
+}
+
+outputTensor, e := m.Predict(inputTensor)
+if e != nil {
+    return
+}
+
+outputValues := outputTensor.Value().([][]float32)
+
+logger.InfoF(
+    "main",
+    "Predicted classes: %s: %f, %s: %f, %s: %f",
+    "Iris-setosa",
+    outputValues[0][0],
+    "Iris-versicolor",
+    outputValues[0][1],
+    "Iris-virginica",
+    outputValues[0][2],
 )
 ```
 

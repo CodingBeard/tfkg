@@ -114,8 +114,6 @@ func main() {
 	//		We log the training results to stdout (Verbose:1, callback.Logger)
 	//		We save the best model based on the accuracy metric at the end of the validation stage of each epoch (callback.Checkpoint)
 	m.Fit(
-		"learn",
-		"evaluate",
 		dataset,
 		model.FitConfig{
 			Epochs:     10,
@@ -145,32 +143,89 @@ func main() {
 		},
 	)
 
-	logger.InfoF("main", "Finished")
+	logger.InfoF("main", "Finished training")
+
+	// Load the saved divisor we fit automatically above
+	divisor := preprocessor.NewDivisor(errorHandler)
+	e = divisor.Load(filepath.Join(cacheDir, "petal_sizes-divisor.json"))
+	if e != nil {
+		errorHandler.Error(e)
+		return
+	}
+
+	// Process the input value in the same way the model was trained, scaling the values to between 0 and 1
+	processedInput, e := divisor.Divide([]float32{6.0, 3.0, 4.8, 1.8})
+	if e != nil {
+		return
+	}
+
+	// Create an input tensor using the processed values
+	inputTensor, e := tf.NewTensor([][]float32{processedInput})
+	if e != nil {
+		errorHandler.Error(e)
+		return
+	}
+
+	// You do not need to load the model right after training, but this shows the weights were saved
+	m, e = model.LoadModel(errorHandler, logger, saveDir)
+	if e != nil {
+		errorHandler.Error(e)
+		return
+	}
+
+	// Predict the class of the input (should be Iris-virginica / 2)
+	// Note that due to the automatic conversion of the labels in the dataset the classes are: Iris-setosa: 0, Iris-versicolor: 1, Iris-virginica: 2
+	// These are the order of the classes in the unshuffled csv dataset
+	outputTensor, e := m.Predict(inputTensor)
+	if e != nil {
+		return
+	}
+
+	// Cast the tensor to [][]float32
+	outputValues := outputTensor.Value().([][]float32)
+
+	logger.InfoF(
+		"main",
+		"Predicted classes: %s: %f, %s: %f, %s: %f",
+		"Iris-setosa",
+		outputValues[0][0],
+		"Iris-versicolor",
+		outputValues[0][1],
+		"Iris-virginica",
+		outputValues[0][2],
+	)
 
 	/*
 		Example output:
-			2021-12-06 12:10:32.183 : log.go:147 : Logger initialised
-			2021-12-06 12:10:35.358 : data.go:75 : Initialising single file dataset at: examples/iris/data/iris.data
-			2021-12-06 12:10:35.366 : data.go:149 : Loading line offsets and stats from cache file
-			2021-12-06 12:10:35.366 : data.go:155 : Found 151 rows. Got class counts: map[int]int{0:50, 1:50, 2:50}
-			2021-12-06 12:10:35.369 : data.go:261 : Loaded Pre-Processor: petal_sizes
-			2021-12-06 12:10:35.370 : data.go:269 : Loaded All Pre-Processors
-			2021-12-06 12:10:35.371 : main.go:94 : Shuffling dataset
-			2021-12-06 12:10:35.371 : main.go:97 : Training model: examples/iris/saved_models/trained_model
-			2021-12-06 12:10:35.540 : logger.go:102 : End 1 5/5 (0s/0s) loss: 1.0395 acc: 0.0000 val_loss: 1.0090 val_acc: 0.0000
-			2021-12-06 12:10:35.591 : logger.go:102 : End 2 5/5 (0s/0s) loss: 0.8690 acc: 0.1894 val_loss: 0.7775 val_acc: 0.4667
-			2021-12-06 12:10:35.646 : logger.go:79 : Saved
-			2021-12-06 12:10:35.693 : logger.go:102 : End 3 5/5 (0s/0s) loss: 0.6382 acc: 0.6212 val_loss: 0.5085 val_acc: 0.6667
-			2021-12-06 12:10:35.712 : logger.go:79 : Saved
-			2021-12-06 12:10:35.759 : logger.go:102 : End 4 5/5 (0s/0s) loss: 0.4717 acc: 0.7045 val_loss: 0.3765 val_acc: 0.6667
-			2021-12-06 12:10:35.802 : logger.go:102 : End 5 5/5 (0s/0s) loss: 0.3755 acc: 0.8333 val_loss: 0.3027 val_acc: 0.8667
-			2021-12-06 12:10:35.823 : logger.go:79 : Saved
-			2021-12-06 12:10:35.869 : logger.go:102 : End 6 5/5 (0s/0s) loss: 0.3004 acc: 0.8864 val_loss: 0.2368 val_acc: 0.8667
-			2021-12-06 12:10:35.913 : logger.go:102 : End 7 5/5 (0s/0s) loss: 0.2385 acc: 0.9091 val_loss: 0.1730 val_acc: 1.0000
-			2021-12-06 12:10:35.935 : logger.go:79 : Saved
-			2021-12-06 12:10:35.980 : logger.go:102 : End 8 5/5 (0s/0s) loss: 0.1930 acc: 0.9318 val_loss: 0.1272 val_acc: 1.0000
-			2021-12-06 12:10:36.026 : logger.go:102 : End 9 5/5 (1s/1s) loss: 0.1644 acc: 0.9318 val_loss: 0.0984 val_acc: 1.0000
-			2021-12-06 12:10:36.073 : logger.go:102 : End 10 5/5 (0s/0s) loss: 0.1471 acc: 0.9394 val_loss: 0.0801 val_acc: 1.0000
-			2021-12-06 12:10:36.074 : main.go:131 : Finished
+			2021-12-07 06:16:33.676 : log.go:147 : Logger initialised
+			Initialising model
+			Tracing learn
+			Tracing evaluate
+			Tracing predict
+			Saving model
+			Completed model base
+			2021-12-07 06:16:37.111 : single_file_dataset.go:66 : Initialising single file dataset at: examples/iris/data/iris.data
+			2021-12-07 06:16:37.115 : single_file_dataset.go:140 : Loading line offsets and stats from cache file
+			2021-12-07 06:16:37.116 : single_file_dataset.go:146 : Found 151 rows. Got class counts: map[int]int{0:50, 1:50, 2:50}
+			2021-12-07 06:16:37.117 : single_file_dataset.go:253 : Loaded Pre-Processor: petal_sizes
+			2021-12-07 06:16:37.118 : single_file_dataset.go:261 : Loaded All Pre-Processors
+			2021-12-07 06:16:37.118 : main.go:101 : Shuffling dataset
+			2021-12-07 06:16:37.119 : main.go:105 : Training model: examples/iris/saved_models/trained_model
+			2021-12-07 06:16:37.301 : logger.go:102 : End 1 5/5 (0s/0s) loss: 1.0304 acc: 0.0000 val_loss: 0.9951 val_acc: 0.0000
+			2021-12-07 06:16:37.365 : logger.go:102 : End 2 5/5 (0s/0s) loss: 0.8511 acc: 0.2348 val_loss: 0.7440 val_acc: 0.6000
+			2021-12-07 06:16:37.423 : logger.go:79 : Saved
+			2021-12-07 06:16:37.470 : logger.go:102 : End 3 5/5 (0s/0s) loss: 0.6179 acc: 0.6439 val_loss: 0.4908 val_acc: 0.6667
+			2021-12-07 06:16:37.490 : logger.go:79 : Saved
+			2021-12-07 06:16:37.536 : logger.go:102 : End 4 5/5 (0s/0s) loss: 0.4633 acc: 0.7197 val_loss: 0.3696 val_acc: 0.6667
+			2021-12-07 06:16:37.583 : logger.go:102 : End 5 5/5 (0s/0s) loss: 0.3738 acc: 0.8258 val_loss: 0.3011 val_acc: 0.8667
+			2021-12-07 06:16:37.606 : logger.go:79 : Saved
+			2021-12-07 06:16:37.653 : logger.go:102 : End 6 5/5 (0s/0s) loss: 0.3030 acc: 0.8864 val_loss: 0.2409 val_acc: 0.8667
+			2021-12-07 06:16:37.703 : logger.go:102 : End 7 5/5 (0s/0s) loss: 0.2438 acc: 0.9015 val_loss: 0.1806 val_acc: 1.0000
+			2021-12-07 06:16:37.722 : logger.go:79 : Saved
+			2021-12-07 06:16:37.770 : logger.go:102 : End 8 5/5 (0s/0s) loss: 0.1987 acc: 0.9318 val_loss: 0.1348 val_acc: 1.0000
+			2021-12-07 06:16:37.817 : logger.go:102 : End 9 5/5 (0s/0s) loss: 0.1689 acc: 0.9394 val_loss: 0.1048 val_acc: 1.0000
+			2021-12-07 06:16:37.867 : logger.go:102 : End 10 5/5 (0s/0s) loss: 0.1500 acc: 0.9394 val_loss: 0.0851 val_acc: 1.0000
+			2021-12-07 06:16:37.869 : main.go:146 : Finished training
+			2021-12-07 06:16:37.895 : main.go:178 : Predicted classes: Iris-setosa: 0.000037, Iris-versicolor: 0.148679, Iris-virginica: 0.851284
 	*/
 }
