@@ -3,16 +3,19 @@
 ## This is experimental and quite nasty under the hood*
 
 ## Support
-- macOS: running docker container, no GPU acceleration
-- Ubuntu 18.04: binary execution on linux ubuntu with CUDA 11.2 and Python 3.8, with GPU acceleration
+- macOS Intel: running docker container, no GPU acceleration
+- macOS M1 Apple Silicon: running docker container, no GPU acceleration
+- Ubuntu 18.04 amd64: binary execution on linux ubuntu with CUDA 11.2 and Python 3.8, with GPU acceleration
 - Windows: ?
 
 ## Find your version
 Versions starting with v0 are liable to change radically.
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.4`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.5`
 
 ## Requirements
 - Docker if using the provided container
+- Run `make init-docker` first to build the container
+- If you're using a M1 Apple Silicon Mac on macOS use `make init-docker-m1`
 - For GPU support in the container see: https://www.tensorflow.org/install/docker
 
 **If not using the container: Make sure to install the correct versions to match the version of this library**
@@ -192,6 +195,52 @@ This means while the model is technically defined and trained in Golang, it just
 
 If some kind soul wants to replicate Keras and Autograph to generate the Graph in Golang, feel free to make a pull request. I may eventually do it, but it is not likely. There is a branch origin/scratch which allows you to investigate the graph of a saved model.
 
+
+## Tensorflow C and Python library in a docker container on M1 Apple Silicon
+
+See: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/lib_package/README.md
+
+See: https://www.tensorflow.org/install/source#docker_linux_builds
+
+Docker did not play nicely with the amd64 precompiled Tensorflow C library so I had to compile it from source with avx disabled on a different linux amd64 machine. 
+
+The compiled libraries and licenses are in `./docker/tf-jupyter-golang-m1`
+
+These are the steps I took to compile the library from sources to make it work:
+
+```
+// On a linux amd64 machine with docker installed:
+git clone https://github.com/tensorflow/tensorflow
+cd tensorflow
+git checkout v2.6.0
+docker run -it -w /tensorflow_src -v $PWD:/mnt -v $PWD:/tensorflow_src -e HOST_PERMS="$(id -u):$(id -g)" tensorflow/tensorflow:devel-gpu bash
+> apt update && apt install apt-transport-https curl gnupg
+> curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor > bazel.gpg && \
+    mv bazel.gpg /etc/apt/trusted.gpg.d/ && \
+    echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
+> apt update && apt install bazel-3.7.2 nano
+> nano .bazelrc
+// add the lines after the existing build:cuda lines:
+build:cuda --linkopt=-lm
+build:cuda --linkopt=-ldl
+build:cuda --host_linkopt=-lm
+build:cuda --host_linkopt=-ldl
+> ./configure 
+// take the defaults EXCEPT :
+// ... "--config=opt" is specified [Default is -Wno-sign-compare]: -mno-avx
+// The below will compile it for a specific GPU, find your gpu's compute capability and enter it twice separated by a comma (3000 series is 8.6)
+// ... TensorFlow only supports compute capabilities >= 3.5 [Default is: 3.5,7.0]: 8.6,8.6
+> bazel-3.7.2 build --config=cuda --config=opt //tensorflow/tools/lib_package:libtensorflow
+> mkdir output
+> cp bazel-bin/tensorflow/tools/lib_package/libtensorflow.tar.gz ./output/
+> cp bazel-bin/tensorflow/tools/lib_package/clicenses.tar ./output/
+> rm -r bazel-*
+> bazel-3.7.2 build --config=cuda --config=opt //tensorflow/tools/pip_package:build_pip_package
+> ./bazel-bin/tensorflow/tools/pip_package/build_pip_package ./output/tf-2.6.0-gpu-noavx
+> quit
+// copy the libs and wheel from ./output into the TFKG project under ./docker/tf-jupyter-golang-m1
+...
+```
 
 ## Acknowledgements
 

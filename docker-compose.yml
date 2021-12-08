@@ -2,9 +2,7 @@ version: "2"
 
 services:
   tf-jupyter-golang:
-    build:
-      context: ./docker/tf-jupyter-golang
-      dockerfile: Dockerfile
+    image: tf-jupyter-golang
     command: sleep infinity
     volumes:
       - .:/tfkg
