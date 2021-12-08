@@ -24,7 +24,7 @@ type DenseConfig struct {
 	BiasInitializer   string
 }
 
-func NewDense(units int, dType DataType, optionalConfig ...DenseConfig) *Dense {
+func NewDense(units int, dType DataType, optionalConfig ...DenseConfig) func(inputs ...Layer) Layer {
 	var config DenseConfig
 	if len(optionalConfig) == 1 {
 		config = optionalConfig[0]
@@ -46,15 +46,18 @@ func NewDense(units int, dType DataType, optionalConfig ...DenseConfig) *Dense {
 		config.BiasInitializer = "zeros"
 	}
 
-	return &Dense{
-		units:             units,
-		shape:             tf.MakeShape(-1, int64(units)),
-		name:              config.Name,
-		dtype:             dType,
-		useBias:           config.UseBias,
-		kernelInitializer: config.KernelInitializer,
-		biasInitializer:   config.BiasInitializer,
-		activation:        config.Activation,
+	return func(inputs ...Layer) Layer {
+		return &Dense{
+			units:             units,
+			shape:             tf.MakeShape(-1, int64(units)),
+			name:              config.Name,
+			dtype:             dType,
+			useBias:           config.UseBias,
+			kernelInitializer: config.KernelInitializer,
+			biasInitializer:   config.BiasInitializer,
+			activation:        config.Activation,
+			input:             inputs[0],
+		}
 	}
 }
 
@@ -70,8 +73,8 @@ func (d *Dense) SetInput(inputs []Layer) {
 	d.input = inputs[0]
 }
 
-func (d *Dense) GetImport() string {
-	return "from tensorflow.keras.layers import Dense"
+func (d *Dense) GetInputs() []Layer {
+	return []Layer{d.input}
 }
 
 func (d *Dense) GetName() string {

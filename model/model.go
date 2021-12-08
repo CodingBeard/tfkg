@@ -34,14 +34,49 @@ type TfkgModel struct {
 func NewSequentialModel(
 	logger *cblog.Logger,
 	errorHandler *cberrors.ErrorsContainer,
-	layers ...layer.Layer,
+	input layer.Layer,
+	layers ...func(inputs ...layer.Layer) layer.Layer,
 ) *TfkgModel {
+	layersWithInputs := []layer.Layer{
+		input,
+	}
+	lastLayer := input
+	for _, layerFunc := range layers {
+		l := layerFunc(lastLayer)
+		layersWithInputs = append(layersWithInputs, l)
+		lastLayer = l
+	}
 	return &TfkgModel{
 		isSequential: true,
-		layers:       layers,
+		layers:       layersWithInputs,
 		errorHandler: errorHandler,
 		logger:       logger,
 	}
+}
+
+func NewModel(
+	logger *cblog.Logger,
+	errorHandler *cberrors.ErrorsContainer,
+	output layer.Layer,
+) *TfkgModel {
+	return &TfkgModel{
+		isSequential: false,
+		layers:       getPreviousLayers(output, []layer.Layer{}),
+		errorHandler: errorHandler,
+		logger:       logger,
+	}
+}
+
+func getPreviousLayers(l layer.Layer, layers []layer.Layer) []layer.Layer {
+	if len(l.GetInputs()) > 0 {
+		for _, input := range l.GetInputs() {
+			layers = getPreviousLayers(input, layers)
+		}
+	}
+
+	layers = append(layers, l)
+
+	return layers
 }
 
 func LoadModel(
@@ -677,6 +712,7 @@ type pythonConfig struct {
 }
 
 func (m *TfkgModel) CompileAndLoad(batchSize int) error {
+	m.logger.InfoF("model", "Compiling and loading model. If anything goes wrong python error messages will be printed out.")
 	modelConfig, e := m.generateKerasDefinitionJson()
 	if e != nil {
 		return e
@@ -764,7 +800,6 @@ func (m *TfkgModel) generateKerasDefinitionJson() (string, error) {
 	var inputLayerConfigs [][]interface{}
 	var outputLayerConfigs [][]interface{}
 	var layerConfigs []interface{}
-	var lastLayer layer.Layer
 	for i, l := range m.layers {
 		if _, ok := l.(*layer.Input); ok {
 			inputLayerConfigs = append(inputLayerConfigs, []interface{}{
@@ -772,12 +807,6 @@ func (m *TfkgModel) generateKerasDefinitionJson() (string, error) {
 				0,
 				0,
 			})
-		} else {
-			if m.isSequential {
-				l.SetInput([]layer.Layer{lastLayer})
-			} else {
-				panic("functional model code generation not supported yet")
-			}
 		}
 		if i+1 == len(m.layers) {
 			outputLayerConfigs = append(outputLayerConfigs, []interface{}{
@@ -787,7 +816,6 @@ func (m *TfkgModel) generateKerasDefinitionJson() (string, error) {
 			})
 		}
 		layerConfigs = append(layerConfigs, l.GetKerasLayerConfig())
-		lastLayer = l
 	}
 	config := kerasModelConfigStruct{
 		ClassName: "Functional",
@@ -832,7 +860,9 @@ logging.disable(logging.WARNING)
 
 config = json.load(sys.stdin)
 
-model = tf.keras.models.model_from_json(config["model_config"])
+model = tf.keras.models.model_from_json(config["model_config"], custom_objects={
+    "ConcatenateLayer": tf.keras.layers.Concatenate,
+})
 learn_input_signature = [
     tf.TensorSpec(shape=(None, 1), dtype=tf.int32),
     tf.TensorSpec(shape=1, dtype=tf.float32),

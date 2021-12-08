@@ -15,6 +15,10 @@ examples-iris:
 	docker-compose up -d tf-jupyter-golang
 	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg && go run examples/iris/main.go"
 
+examples-multiple-inputs:
+	docker-compose up -d tf-jupyter-golang
+	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg && go run examples/multiple_inputs/main.go"
+
 test-python:
 	docker-compose up -d tf-jupyter-golang
 	docker-compose exec tf-jupyter-golang sh -c "cd /tfkg && cat config.txt | python test.py"

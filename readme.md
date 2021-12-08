@@ -10,7 +10,7 @@
 
 ## Find your version
 Versions starting with v0 are liable to change radically.
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.6`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.7`
 
 ## Requirements
 - Docker if using the provided container
@@ -32,12 +32,13 @@ Versions starting with v0 are liable to change radically.
     - Float/Int normalization to between 0-1
 
 ## Keras model types supported
-- `tensorflow.keras.Sequential`
-- Functional coming soon
+- `tensorflow.keras.Sequential` (Single input)
+- `tensorflow.keras.Model` (Multiple input)
 
 ## Keras Layers supported
 - `tensorflow.keras.layers.Input`
 - `tensorflow.keras.layers.Dense`
+- `tensorflow.keras.layers.Concatenate`
 - More coming soon
 - Interfaced - you can define custom layers
 

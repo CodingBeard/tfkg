@@ -48,7 +48,7 @@ type Layer interface {
 	GetShape() tf.Shape
 	GetDtype() DataType
 	SetInput(inputs []Layer)
-	GetImport() string
+	GetInputs() []Layer
 	GetName() string
 	GetKerasLayerConfig() interface{}
 }

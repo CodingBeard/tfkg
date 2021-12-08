@@ -59,8 +59,8 @@ func (i *Input) SetInput(inputs []Layer) {
 
 }
 
-func (i *Input) GetImport() string {
-	return "from tensorflow.keras.layers import Input"
+func (i *Input) GetInputs() []Layer {
+	return []Layer{}
 }
 
 func (i *Input) GetName() string {
