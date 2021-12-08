@@ -10,7 +10,7 @@
 
 ## Find your version
 Versions starting with v0 are liable to change radically.
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.5`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.6`
 
 ## Requirements
 - Docker if using the provided container
@@ -204,7 +204,7 @@ See: https://www.tensorflow.org/install/source#docker_linux_builds
 
 Docker did not play nicely with the amd64 precompiled Tensorflow C library so I had to compile it from source with avx disabled on a different linux amd64 machine. 
 
-The compiled libraries and licenses are in `./docker/tf-jupyter-golang-m1`
+The compiled libraries and licenses can be found at: https://github.com/CodingBeard/tfkg/releases/tag/v0.2.6.5 and need to be placed in `./docker/tf-jupyter-golang-m1/`
 
 These are the steps I took to compile the library from sources to make it work:
 
