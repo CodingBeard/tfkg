@@ -10,7 +10,7 @@
 
 ## Find your version
 Versions starting with v0 are liable to change radically.
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.7`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.8`
 
 ## Requirements
 - Docker if using the provided container
@@ -82,27 +82,33 @@ e = m.CompileAndLoad(
 Load a dataset:
 ```go
 dataset, e := data.NewSingleFileDataset(
-    logger,
+  logger,
+  errorHandler,
+  "examples/iris/data/iris.data",
+  cacheDir,
+  4, //categoryOffset
+  0.8, //trainPercent
+  0.1, //valPercent
+  0.1, //testPercent
+  preprocessor.NewProcessor(
     errorHandler,
-    "examples/iris/data/iris.data", // filePath
-    cacheDir,
-    4, // categoryOffset
-    0.8, // trainPercentage
-    0.1, // valPercentage
-    0.1, // testPercentage
-    preprocessor.NewProcessor(
-        errorHandler,
-        cacheDir,
-        "petal_sizes", // name
-        0, // offset
-        4, // dataLength
-        true, // requiresFit
-        preprocessor.NewDivisor(errorHandler),
-        nil, // tokenizer
-        preprocessor.ReadCsvFloat32s,
-        preprocessor.ConvertDivisorToFloat32SliceTensor,
-    ),
+    "petal_sizes",
+    preprocessor.ProcessorConfig{
+      CacheDir:    cacheDir,
+      LineOffset:  0,
+      DataLength:  4,
+      RequiresFit: true,
+      Divisor:     preprocessor.NewDivisor(errorHandler),
+      Reader:      preprocessor.ReadCsvFloat32s,
+      Converter:   preprocessor.ConvertDivisorToFloat32SliceTensor,
+    },
+  ),
 )
+
+e = dataset.SaveProcessors(saveDir)
+if e != nil {
+    return
+}
 ```
 Train a model:
 ```go
@@ -138,31 +144,29 @@ m.Fit(
 ```
 Load and predict using a saved TFKG model:
 ```go
-divisor := preprocessor.NewDivisor(errorHandler)
-e = divisor.Load(filepath.Join(cacheDir, "petal_sizes-divisor.json"))
+inference, e := data.NewInference(
+  logger,
+  errorHandler,
+  saveDir,
+  preprocessor.NewProcessor(
+    errorHandler,
+    "petal_sizes",
+    preprocessor.ProcessorConfig{
+      Divisor:   preprocessor.NewDivisor(errorHandler),
+      Converter: preprocessor.ConvertDivisorToFloat32SliceTensor,
+    },
+  ),
+)
 if e != nil {
-    errorHandler.Error(e)
     return
 }
 
-processedInput, e := divisor.Divide([]float32{6.0, 3.0, 4.8, 1.8})
+inputTensors, e := inference.GenerateInputs([][]float32{{6.0, 3.0, 4.8, 1.8}})
 if e != nil {
     return
 }
 
-inputTensor, e := tf.NewTensor([][]float32{processedInput})
-if e != nil {
-    errorHandler.Error(e)
-    return
-}
-
-m, e = model.LoadModel(errorHandler, logger, saveDir)
-if e != nil {
-    errorHandler.Error(e)
-    return
-}
-
-outputTensor, e := m.Predict(inputTensor)
+outputTensor, e := m.Predict(inputTensors...)
 if e != nil {
     return
 }
@@ -170,14 +174,14 @@ if e != nil {
 outputValues := outputTensor.Value().([][]float32)
 
 logger.InfoF(
-    "main",
-    "Predicted classes: %s: %f, %s: %f, %s: %f",
-    "Iris-setosa",
-    outputValues[0][0],
-    "Iris-versicolor",
-    outputValues[0][1],
-    "Iris-virginica",
-    outputValues[0][2],
+  "main",
+  "Predicted classes: %s: %f, %s: %f, %s: %f",
+  "Iris-setosa",
+  outputValues[0][0],
+  "Iris-versicolor",
+  outputValues[0][1],
+  "Iris-virginica",
+  outputValues[0][2],
 )
 ```
 

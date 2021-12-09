@@ -83,19 +83,26 @@ func main() {
 		0.1,
 		preprocessor.NewProcessor(
 			errorHandler,
-			cacheDir,
 			"petal_sizes",
-			0,
-			4,
-			true,
-			preprocessor.NewDivisor(errorHandler),
-			nil,
-			preprocessor.ReadCsvFloat32s,
-			preprocessor.ConvertDivisorToFloat32SliceTensor,
+			preprocessor.ProcessorConfig{
+				CacheDir:    cacheDir,
+				LineOffset:  0,
+				DataLength:  4,
+				RequiresFit: true,
+				Divisor:     preprocessor.NewDivisor(errorHandler),
+				Reader:      preprocessor.ReadCsvFloat32s,
+				Converter:   preprocessor.ConvertDivisorToFloat32SliceTensor,
+			},
 		),
 	)
 	if e != nil {
 		errorHandler.Error(e)
+		return
+	}
+
+	// This will save our divisor under savePath
+	e = dataset.SaveProcessors(saveDir)
+	if e != nil {
 		return
 	}
 
@@ -147,38 +154,37 @@ func main() {
 
 	logger.InfoF("main", "Finished training")
 
-	// Load the saved divisor we fit automatically above
-	divisor := preprocessor.NewDivisor(errorHandler)
-	e = divisor.Load(filepath.Join(cacheDir, "petal_sizes-divisor.json"))
+	// Create an inference provider, with a processor which will accept our input of [][]float32 and turn it into a tensor
+	// We pass in the location of the processors we saved above in dataset.SaveProcessors
+	// Note that the name of the processor must match the name used in the dataset above, as that will load the correct divisor config
+	inference, e := data.NewInference(
+		logger,
+		errorHandler,
+		saveDir,
+		preprocessor.NewProcessor(
+			errorHandler,
+			"petal_sizes",
+			preprocessor.ProcessorConfig{
+				Divisor:   preprocessor.NewDivisor(errorHandler),
+				Converter: preprocessor.ConvertDivisorToFloat32SliceTensor,
+			},
+		),
+	)
 	if e != nil {
-		errorHandler.Error(e)
 		return
 	}
 
-	// Process the input value in the same way the model was trained, scaling the values to between 0 and 1
-	processedInput, e := divisor.Divide([]float32{6.0, 3.0, 4.8, 1.8})
+	// This will take our input and pass it through the processors defined above to create tensors
+	// Note that we are passing in a [][]float32 as m.Predict is designed to be able to predict on multiple samples
+	inputTensors, e := inference.GenerateInputs([][]float32{{6.0, 3.0, 4.8, 1.8}})
 	if e != nil {
-		return
-	}
-
-	// Create an input tensor using the processed values
-	inputTensor, e := tf.NewTensor([][]float32{processedInput})
-	if e != nil {
-		errorHandler.Error(e)
-		return
-	}
-
-	// You do not need to load the model right after training, but this shows the weights were saved
-	m, e = model.LoadModel(errorHandler, logger, saveDir)
-	if e != nil {
-		errorHandler.Error(e)
 		return
 	}
 
 	// Predict the class of the input (should be Iris-virginica / 2)
 	// Note that due to the automatic conversion of the labels in the dataset the classes are: Iris-setosa: 0, Iris-versicolor: 1, Iris-virginica: 2
 	// These are the order of the classes in the unshuffled csv dataset
-	outputTensor, e := m.Predict(inputTensor)
+	outputTensor, e := m.Predict(inputTensors...)
 	if e != nil {
 		return
 	}

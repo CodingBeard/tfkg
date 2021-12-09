@@ -132,55 +132,61 @@ func main() {
 		0.1,
 		preprocessor.NewProcessor(
 			errorHandler,
-			cacheDir,
 			"sepal_length",
-			0,
-			1,
-			true,
-			preprocessor.NewDivisor(errorHandler),
-			nil,
-			preprocessor.ReadCsvFloat32s,
-			preprocessor.ConvertDivisorToFloat32SliceTensor,
+			preprocessor.ProcessorConfig{
+				CacheDir:    cacheDir,
+				LineOffset:  0,
+				RequiresFit: true,
+				Divisor:     preprocessor.NewDivisor(errorHandler),
+				Reader:      preprocessor.ReadCsvFloat32s,
+				Converter:   preprocessor.ConvertDivisorToFloat32SliceTensor,
+			},
 		),
 		preprocessor.NewProcessor(
 			errorHandler,
-			cacheDir,
 			"sepal_width",
-			1,
-			1,
-			true,
-			preprocessor.NewDivisor(errorHandler),
-			nil,
-			preprocessor.ReadCsvFloat32s,
-			preprocessor.ConvertDivisorToFloat32SliceTensor,
+			preprocessor.ProcessorConfig{
+				CacheDir:    cacheDir,
+				LineOffset:  1,
+				RequiresFit: true,
+				Divisor:     preprocessor.NewDivisor(errorHandler),
+				Reader:      preprocessor.ReadCsvFloat32s,
+				Converter:   preprocessor.ConvertDivisorToFloat32SliceTensor,
+			},
 		),
 		preprocessor.NewProcessor(
 			errorHandler,
-			cacheDir,
 			"petal_length",
-			2,
-			1,
-			true,
-			preprocessor.NewDivisor(errorHandler),
-			nil,
-			preprocessor.ReadCsvFloat32s,
-			preprocessor.ConvertDivisorToFloat32SliceTensor,
+			preprocessor.ProcessorConfig{
+				CacheDir:    cacheDir,
+				LineOffset:  2,
+				RequiresFit: true,
+				Divisor:     preprocessor.NewDivisor(errorHandler),
+				Reader:      preprocessor.ReadCsvFloat32s,
+				Converter:   preprocessor.ConvertDivisorToFloat32SliceTensor,
+			},
 		),
 		preprocessor.NewProcessor(
 			errorHandler,
-			cacheDir,
 			"petal_width",
-			3,
-			1,
-			true,
-			preprocessor.NewDivisor(errorHandler),
-			nil,
-			preprocessor.ReadCsvFloat32s,
-			preprocessor.ConvertDivisorToFloat32SliceTensor,
+			preprocessor.ProcessorConfig{
+				CacheDir:    cacheDir,
+				LineOffset:  3,
+				RequiresFit: true,
+				Divisor:     preprocessor.NewDivisor(errorHandler),
+				Reader:      preprocessor.ReadCsvFloat32s,
+				Converter:   preprocessor.ConvertDivisorToFloat32SliceTensor,
+			},
 		),
 	)
 	if e != nil {
 		errorHandler.Error(e)
+		return
+	}
+
+	// This will save our divisor under savePath
+	e = dataset.SaveProcessors(saveDir)
+	if e != nil {
 		return
 	}
 
@@ -232,72 +238,6 @@ func main() {
 
 	logger.InfoF("main", "Finished training")
 
-	// Load the saved divisors we fit automatically above
-	divisor1 := preprocessor.NewDivisor(errorHandler)
-	e = divisor1.Load(filepath.Join(cacheDir, "sepal_length-divisor.json"))
-	if e != nil {
-		errorHandler.Error(e)
-		return
-	}
-	divisor2 := preprocessor.NewDivisor(errorHandler)
-	e = divisor2.Load(filepath.Join(cacheDir, "sepal_width-divisor.json"))
-	if e != nil {
-		errorHandler.Error(e)
-		return
-	}
-	divisor3 := preprocessor.NewDivisor(errorHandler)
-	e = divisor3.Load(filepath.Join(cacheDir, "petal_length-divisor.json"))
-	if e != nil {
-		errorHandler.Error(e)
-		return
-	}
-	divisor4 := preprocessor.NewDivisor(errorHandler)
-	e = divisor4.Load(filepath.Join(cacheDir, "petal_width-divisor.json"))
-	if e != nil {
-		errorHandler.Error(e)
-		return
-	}
-
-	// Process the input value in the same way the model was trained, scaling the values to between 0 and 1
-	processedInput1, e := divisor1.Divide([]float32{6.0})
-	if e != nil {
-		return
-	}
-	processedInput2, e := divisor2.Divide([]float32{3.0})
-	if e != nil {
-		return
-	}
-	processedInput3, e := divisor3.Divide([]float32{4.8})
-	if e != nil {
-		return
-	}
-	processedInput4, e := divisor4.Divide([]float32{1.8})
-	if e != nil {
-		return
-	}
-
-	// Create a input tensors using the processed values
-	inputTensor1, e := tf.NewTensor([][]float32{processedInput1})
-	if e != nil {
-		errorHandler.Error(e)
-		return
-	}
-	inputTensor2, e := tf.NewTensor([][]float32{processedInput2})
-	if e != nil {
-		errorHandler.Error(e)
-		return
-	}
-	inputTensor3, e := tf.NewTensor([][]float32{processedInput3})
-	if e != nil {
-		errorHandler.Error(e)
-		return
-	}
-	inputTensor4, e := tf.NewTensor([][]float32{processedInput4})
-	if e != nil {
-		errorHandler.Error(e)
-		return
-	}
-
 	// You do not need to load the model right after training, but this shows the weights were saved
 	m, e = model.LoadModel(errorHandler, logger, saveDir)
 	if e != nil {
@@ -305,10 +245,66 @@ func main() {
 		return
 	}
 
+	// Create an inference provider, with four processors which will accept our inputs of [][]float32 and turn it into a tensor
+	// We pass in the location of the processors we saved above in dataset.SaveProcessors
+	// Note that the name of the processor must match the name used in the dataset above, as that will load the correct divisor config
+	inference, e := data.NewInference(
+		logger,
+		errorHandler,
+		saveDir,
+		preprocessor.NewProcessor(
+			errorHandler,
+			"sepal_length",
+			preprocessor.ProcessorConfig{
+				Divisor:   preprocessor.NewDivisor(errorHandler),
+				Converter: preprocessor.ConvertDivisorToFloat32SliceTensor,
+			},
+		),
+		preprocessor.NewProcessor(
+			errorHandler,
+			"sepal_width",
+			preprocessor.ProcessorConfig{
+				Divisor:   preprocessor.NewDivisor(errorHandler),
+				Converter: preprocessor.ConvertDivisorToFloat32SliceTensor,
+			},
+		),
+		preprocessor.NewProcessor(
+			errorHandler,
+			"petal_length",
+			preprocessor.ProcessorConfig{
+				Divisor:   preprocessor.NewDivisor(errorHandler),
+				Converter: preprocessor.ConvertDivisorToFloat32SliceTensor,
+			},
+		),
+		preprocessor.NewProcessor(
+			errorHandler,
+			"petal_width",
+			preprocessor.ProcessorConfig{
+				Divisor:   preprocessor.NewDivisor(errorHandler),
+				Converter: preprocessor.ConvertDivisorToFloat32SliceTensor,
+			},
+		),
+	)
+	if e != nil {
+		return
+	}
+
+	// This will take our inputs and pass it through the processors defined above to create tensors
+	// Note that we are passing in [][]float32 values as m.Predict is designed to be able to predict on multiple samples
+	inputTensors, e := inference.GenerateInputs(
+		[][]float32{{6.0}},
+		[][]float32{{3.0}},
+		[][]float32{{4.8}},
+		[][]float32{{1.8}},
+	)
+	if e != nil {
+		return
+	}
+
 	// Predict the class of the input (should be Iris-virginica / 2)
 	// Note that due to the automatic conversion of the labels in the dataset the classes are: Iris-setosa: 0, Iris-versicolor: 1, Iris-virginica: 2
 	// These are the order of the classes in the unshuffled csv dataset
-	outputTensor, e := m.Predict(inputTensor1, inputTensor2, inputTensor3, inputTensor4)
+	outputTensor, e := m.Predict(inputTensors...)
 	if e != nil {
 		return
 	}

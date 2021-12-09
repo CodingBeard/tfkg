@@ -23,29 +23,33 @@ type Processor struct {
 	errorHandler *cberrors.ErrorsContainer
 }
 
+type ProcessorConfig struct {
+	CacheDir    string
+	LineOffset  int
+	DataLength  int
+	RequiresFit bool
+	Divisor     *RegressionDivisor
+	Tokenizer   *Tokenizer
+	Reader      func(column []string) interface{}
+	Converter   func(column interface{}) (*tf.Tensor, error)
+}
+
 func NewProcessor(
 	errorHandler *cberrors.ErrorsContainer,
-	cacheDir,
 	name string,
-	lineOffset int,
-	dataLength int,
-	requiresFit bool,
-	divisor *RegressionDivisor,
-	tokenizer *Tokenizer,
-	reader func(column []string) interface{},
-	converter func(column interface{}) (*tf.Tensor, error),
+	config ProcessorConfig,
 ) *Processor {
 	return &Processor{
 		errorHandler: errorHandler,
-		cacheDir:     cacheDir,
 		Name:         name,
-		LineOffset:   lineOffset,
-		DataLength:   dataLength,
-		RequiresFit:  requiresFit,
-		divisor:      divisor,
-		tokenizer:    tokenizer,
-		reader:       reader,
-		converter:    converter,
+		cacheDir:     config.CacheDir,
+		LineOffset:   config.LineOffset,
+		DataLength:   config.DataLength,
+		RequiresFit:  config.RequiresFit,
+		divisor:      config.Divisor,
+		tokenizer:    config.Tokenizer,
+		reader:       config.Reader,
+		converter:    config.Converter,
 	}
 }
 
@@ -75,6 +79,10 @@ func (p *Processor) Fit(column []string) error {
 	return nil
 }
 
+func (p *Processor) SetLoadDir(dir string) {
+	p.cacheDir = dir
+}
+
 func (p *Processor) Load() error {
 	if p.divisor != nil {
 		e := p.divisor.Load(filepath.Join(p.cacheDir, fmt.Sprintf("%s-divisor.json", p.Name)))
@@ -91,24 +99,31 @@ func (p *Processor) Load() error {
 }
 
 func (p *Processor) FinishFit() error {
+	if p.tokenizer != nil {
+		p.tokenizer.FinishFit()
+	}
+	return p.Save(p.cacheDir)
+}
+
+func (p *Processor) Save(saveDir string) error {
 	if p.divisor != nil {
-		e := p.divisor.Save(filepath.Join(p.cacheDir, fmt.Sprintf("%s-divisor.json", p.Name)))
+		e := p.divisor.Save(filepath.Join(saveDir, fmt.Sprintf("%s-divisor.json", p.Name)))
 		if e != nil {
 			p.errorHandler.Error(e)
 			return e
 		}
 	} else if p.tokenizer != nil {
-		p.tokenizer.FinishFit()
-		e := p.tokenizer.Save(filepath.Join(p.cacheDir, fmt.Sprintf("%s-tokenizer.json", p.Name)))
+		e := p.tokenizer.Save(filepath.Join(saveDir, fmt.Sprintf("%s-tokenizer.json", p.Name)))
 		if e != nil {
 			p.errorHandler.Error(e)
 			return e
 		}
 	}
+
 	return nil
 }
 
-func (p *Processor) Process(columnRows []string) (*tf.Tensor, error) {
+func (p *Processor) ProcessString(columnRows []string) (*tf.Tensor, error) {
 	read := p.reader(columnRows)
 	if p.divisor != nil {
 		var dividedRows [][]float32
@@ -131,4 +146,28 @@ func (p *Processor) Process(columnRows []string) (*tf.Tensor, error) {
 	}
 
 	return p.converter(read)
+}
+
+func (p *Processor) ProcessInterface(columnRows interface{}) (*tf.Tensor, error) {
+	if p.divisor != nil {
+		var dividedRows [][]float32
+		for _, columnRow := range columnRows.([][]float32) {
+			divided, e := p.divisor.Divide(columnRow)
+			if e != nil {
+				p.errorHandler.Error(e)
+				return nil, e
+			}
+			dividedRows = append(dividedRows, divided)
+		}
+		return p.converter(dividedRows)
+	} else if p.tokenizer != nil {
+		var tokenizedStrings [][]int32
+		for _, columnRow := range columnRows.([]string) {
+			tokenized := p.tokenizer.Tokenize(columnRow)
+			tokenizedStrings = append(tokenizedStrings, tokenized)
+		}
+		return p.converter(tokenizedStrings)
+	}
+
+	return p.converter(columnRows)
 }

@@ -23,6 +23,7 @@ type Dataset interface {
 	GeneratorChan(batchSize int, preFetch int) chan Batch
 	Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, error)
 	Reset() error
+	SaveProcessors(saveDir string) error
 }
 
 type Batch struct {

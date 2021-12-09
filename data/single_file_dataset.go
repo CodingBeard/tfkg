@@ -375,6 +375,9 @@ func (d *SingleFileDataset) SetMode(mode GeneratorMode) Dataset {
 func (d *SingleFileDataset) getRow() ([]string, error) {
 
 	if d.shuffled {
+		if len(d.lineOffsets) <= d.generatorOffset {
+			return nil, ErrGeneratorEnd
+		}
 		offset := d.lineOffsets[d.generatorOffset]
 		_, e := d.file.Seek(offset, io.SeekStart)
 		if e != nil {
@@ -542,7 +545,7 @@ func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, e
 	}
 
 	for offset, processor := range d.columnProcessors {
-		process, e := processor.Process(xStrings[offset])
+		process, e := processor.ProcessString(xStrings[offset])
 		if e != nil {
 			return nil, nil, e
 		}
@@ -572,5 +575,20 @@ func (d *SingleFileDataset) Reset() error {
 		d.reader = csv.NewReader(d.file)
 	}
 
+	return nil
+}
+
+func (d *SingleFileDataset) SaveProcessors(saveDir string) error {
+	e := os.MkdirAll(saveDir, os.ModePerm)
+	if e != nil {
+		d.errorHandler.Error(e)
+		return e
+	}
+	for _, processor := range d.columnProcessors {
+		e := processor.Save(saveDir)
+		if e != nil {
+			return e
+		}
+	}
 	return nil
 }
