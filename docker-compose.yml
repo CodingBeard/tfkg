@@ -7,3 +7,16 @@ services:
     volumes:
       - .:/tfkg
       - .:/go/src/tfkg
+  tf-jupyter-golang-gpu:
+    image: tf-jupyter-golang
+    command: sleep infinity
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    volumes:
+      - .:/tfkg
+      - .:/go/src/tfkg

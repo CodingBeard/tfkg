@@ -15,9 +15,17 @@ examples-iris:
 	docker-compose up -d tf-jupyter-golang
 	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg && go run examples/iris/main.go"
 
+examples-iris-gpu:
+	docker-compose up -d tf-jupyter-golang-gpu
+	docker-compose exec tf-jupyter-golang-gpu sh -c "cd /go/src/tfkg && go run examples/iris/main.go"
+
 examples-multiple-inputs:
 	docker-compose up -d tf-jupyter-golang
 	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg && go run examples/multiple_inputs/main.go"
+
+examples-multiple-inputs-gpu:
+	docker-compose up -d tf-jupyter-golang-gpu
+	docker-compose exec tf-jupyter-golang-gpu sh -c "cd /go/src/tfkg && go run examples/multiple_inputs/main.go"
 
 test-python:
 	docker-compose up -d tf-jupyter-golang

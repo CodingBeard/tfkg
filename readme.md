@@ -2,31 +2,39 @@
 
 ## This is experimental and quite nasty under the hood*
 
+## Summary
+TFKG is a library for defining, training, saving, and running Tensorflow/Keras models with single GPU acceleration all in Golang.
+
+## The future of this project
+See `ideas-todo.md` for what's in store
+
 ## Support
 - macOS Intel: running docker container, no GPU acceleration
 - macOS M1 Apple Silicon: running docker container, no GPU acceleration
-- Ubuntu 18.04 amd64: binary execution on linux ubuntu with CUDA 11.2 and Python 3.8, with GPU acceleration
-- Windows: ?
+- Ubuntu 18.04 amd64: running docker container tf-jupyter-golang-gpu with GPU acceleration
+- Ubuntu 18.04 amd64: binary execution with CUDA 11.2, cuDNN 8.1, Python 3.8, with GPU acceleration
+- Windows 11 amd64: running docker container tf-jupyter-golang-gpu with GPU acceleration
 
 ## Find your version
 Versions starting with v0 are liable to change radically.
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.8`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.9`
 
 ## Requirements
 - Docker if using the provided container
 - Run `make init-docker` first to build the container
 - If you're using a M1 Apple Silicon Mac on macOS use `make init-docker-m1`
-- For GPU support in the container see: https://www.tensorflow.org/install/docker
+- For GPU support in the container see: https://www.tensorflow.org/install/docker#gpu_support
+- For GPU support on Windows 11 in the container see: https://docs.nvidia.com/cuda/wsl-user-guide/index.html
 
 **If not using the container: Make sure to install the correct versions to match the version of this library**
 - Tensorflow C library: https://www.tensorflow.org/install/lang_c
 - Python 3.8 - the binary "python" must be on your path and the correct version
 - Tensorflow Python library: https://www.tensorflow.org/install
+- CUDA 11.2 and cuDNN 8.1 if using GPU acceleration: https://www.tensorflow.org/install/gpu#hardware_requirements
 
 ## Features
 - Nvidia CUDA support on applicable platforms during Golang training/evaluation due to using the Tensorflow C library
-- Define, Train, evaluate, and save Tensorflow compatible models in Golang
-- Load models created with this library in Golang
+- Define, train, evaluate, save, load, and infer Tensorflow compatible models all in Golang
 - Load, shuffle, and preprocess csv datasets efficiently, even very large ones (tested on 330GB csv file)
     - String Tokenizer
     - Float/Int normalization to between 0-1
@@ -52,7 +60,8 @@ Versions starting with v0 are liable to change radically.
 - Python Tensorflow Libraries are still required to use this library, though the docker container has it all
 - This is an incomplete port of Tensorflow/Keras: There are many layers, metrics, and optimisers not yet ported
 - There is no community support or documentation. You must understand Tensorflow/Keras and Golang well to have a chance of getting this working on a new project
-- Loading/Training models saved by vanilla python Tensorflow/Keras is not supported, and may never be
+- Loading/Training models saved by vanilla python Tensorflow/Keras is not supported, but it may be possible
+- Multiple GPU training is not supported 
 - Image datasets and preprocessing is not yet supported
 - Class weighting only works for datasets with two categories currently: negative/positive. It /will/ cause unintended side effects if you have more than two categories with imbalanced classes
 

@@ -149,6 +149,9 @@ func (p *Processor) ProcessString(columnRows []string) (*tf.Tensor, error) {
 }
 
 func (p *Processor) ProcessInterface(columnRows interface{}) (*tf.Tensor, error) {
+	if p.reader != nil {
+		return p.ProcessString(columnRows.([]string))
+	}
 	if p.divisor != nil {
 		var dividedRows [][]float32
 		for _, columnRow := range columnRows.([][]float32) {
