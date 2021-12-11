@@ -52,3 +52,4 @@ Allow custom python layers by offering a method to load the requisite python fil
 - Intelligent hyperparameter optimisation
 - Optionally filter out tensorflow c logs if possible
 - Log levels
+- Method on dataset to validate if it meets the expected configuration 

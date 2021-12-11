@@ -124,12 +124,15 @@ func main() {
 	dataset, e := data.NewSingleFileDataset(
 		logger,
 		errorHandler,
-		"examples/iris/data/iris.data",
-		cacheDir,
-		4,
-		0.8,
-		0.1,
-		0.1,
+		data.SingleFileDatasetConfig{
+			FilePath:          "examples/iris/data/iris.data",
+			CacheDir:          cacheDir,
+			CategoryOffset:    4,
+			TrainPercent:      0.8,
+			ValPercent:        0.1,
+			TestPercent:       0.1,
+			IgnoreParseErrors: true,
+		},
 		preprocessor.NewProcessor(
 			errorHandler,
 			"sepal_length",
@@ -256,7 +259,6 @@ func main() {
 			errorHandler,
 			"sepal_length",
 			preprocessor.ProcessorConfig{
-				Divisor:   preprocessor.NewDivisor(errorHandler),
 				Converter: preprocessor.ConvertDivisorToFloat32SliceTensor,
 			},
 		),
@@ -264,7 +266,6 @@ func main() {
 			errorHandler,
 			"sepal_width",
 			preprocessor.ProcessorConfig{
-				Divisor:   preprocessor.NewDivisor(errorHandler),
 				Converter: preprocessor.ConvertDivisorToFloat32SliceTensor,
 			},
 		),
@@ -272,7 +273,6 @@ func main() {
 			errorHandler,
 			"petal_length",
 			preprocessor.ProcessorConfig{
-				Divisor:   preprocessor.NewDivisor(errorHandler),
 				Converter: preprocessor.ConvertDivisorToFloat32SliceTensor,
 			},
 		),
@@ -280,7 +280,6 @@ func main() {
 			errorHandler,
 			"petal_width",
 			preprocessor.ProcessorConfig{
-				Divisor:   preprocessor.NewDivisor(errorHandler),
 				Converter: preprocessor.ConvertDivisorToFloat32SliceTensor,
 			},
 		),

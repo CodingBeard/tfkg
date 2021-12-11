@@ -27,6 +27,10 @@ examples-multiple-inputs-gpu:
 	docker-compose up -d tf-jupyter-golang-gpu
 	docker-compose exec tf-jupyter-golang-gpu sh -c "cd /go/src/tfkg && go run examples/multiple_inputs/main.go"
 
+examples-jobs:
+	docker-compose up -d tf-jupyter-golang
+	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg && go run examples/jobs/main.go"
+
 test-python:
 	docker-compose up -d tf-jupyter-golang
-	docker-compose exec tf-jupyter-golang sh -c "cd /tfkg && cat config.txt | python test.py"
+	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg && python test.py"

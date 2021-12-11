@@ -875,17 +875,17 @@ zero_inputs = []
 for model_layer in model.layers:
     if type(model_layer) == tf.keras.layers.InputLayer:
         input_shape = [config["batch_size"]]
-        for dim in model_layer.input_shape[0][3:]:
+        for dim in model_layer.input_shape[0][1:]:
             input_shape.append(dim)
         zero_inputs.append(
             tf.zeros(shape=input_shape, dtype=model_layer.dtype)
         )
         learn_input_signature.append(tf.TensorSpec(
-            shape=model_layer.input_shape[0][2:],
+            shape=model_layer.input_shape[0],
             dtype=model_layer.dtype,
         ))
         predict_input_signature.append(tf.TensorSpec(
-            shape=model_layer.input_shape[0][2:],
+            shape=model_layer.input_shape[0],
             dtype=model_layer.dtype,
         ))
 

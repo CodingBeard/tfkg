@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/codingbeard/cberrors"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
+	"os"
 	"path/filepath"
 )
 
@@ -53,6 +54,10 @@ func NewProcessor(
 	}
 }
 
+func (p *Processor) Tokenizer() *Tokenizer {
+	return p.tokenizer
+}
+
 func (p *Processor) Fit(column []string) error {
 	value := p.reader(column)
 	if p.divisor != nil {
@@ -84,13 +89,24 @@ func (p *Processor) SetLoadDir(dir string) {
 }
 
 func (p *Processor) Load() error {
+	divisorConfigPath := filepath.Join(p.cacheDir, fmt.Sprintf("%s-divisor.json", p.Name))
+	tokenizerConfigPath := filepath.Join(p.cacheDir, fmt.Sprintf("%s-tokenizer.json", p.Name))
+	_, e := os.Stat(divisorConfigPath)
+	if e == nil {
+		p.divisor = NewDivisor(p.errorHandler)
+	} else {
+		_, e := os.Stat(tokenizerConfigPath)
+		if e == nil {
+			p.tokenizer = NewTokenizer(p.errorHandler, -1, -1)
+		}
+	}
 	if p.divisor != nil {
-		e := p.divisor.Load(filepath.Join(p.cacheDir, fmt.Sprintf("%s-divisor.json", p.Name)))
+		e := p.divisor.Load(divisorConfigPath)
 		if e != nil {
 			return e
 		}
 	} else if p.tokenizer != nil {
-		e := p.tokenizer.Load(filepath.Join(p.cacheDir, fmt.Sprintf("%s-tokenizer.json", p.Name)))
+		e := p.tokenizer.Load(tokenizerConfigPath)
 		if e != nil {
 			return e
 		}

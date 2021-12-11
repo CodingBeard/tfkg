@@ -30,6 +30,8 @@ type SingleFileDataset struct {
 	filePath          string
 	file              *os.File
 	reader            *csv.Reader
+	ignoreParseErrors bool
+	skipHeaders       bool
 	shuffled          bool
 	generatorOffset   int
 	cacheDir          string
@@ -51,50 +53,63 @@ type SingleFileDataset struct {
 	errorHandler *cberrors.ErrorsContainer
 }
 
+type SingleFileDatasetConfig struct {
+	FilePath          string
+	CacheDir          string
+	CategoryOffset    int
+	TrainPercent      float32
+	ValPercent        float32
+	TestPercent       float32
+	IgnoreParseErrors bool
+	SkipHeaders       bool
+}
+
 func NewSingleFileDataset(
 	logger *cblog.Logger,
 	errorHandler *cberrors.ErrorsContainer,
-	filePath string,
-	cacheDir string,
-	categoryOffset int,
-	trainPercent float32,
-	valPercent float32,
-	testPercent float32,
+	config SingleFileDatasetConfig,
 	columnProcessors ...*preprocessor.Processor,
 ) (*SingleFileDataset, error) {
 
-	logger.InfoF("data", "Initialising single file dataset at: %s", filePath)
+	logger.InfoF("data", "Initialising single file dataset at: %s", config.FilePath)
 
-	file, e := os.Open(filePath)
+	file, e := os.Open(config.FilePath)
 	if e != nil {
 		errorHandler.Error(e)
 		return nil, e
 	}
 
 	d := &SingleFileDataset{
-		logger:           logger,
-		errorHandler:     errorHandler,
-		filePath:         filePath,
-		file:             file,
-		reader:           csv.NewReader(file),
-		cacheDir:         cacheDir,
-		categoryOffset:   categoryOffset,
-		columnProcessors: columnProcessors,
-		trainPercent:     trainPercent,
-		valPercent:       valPercent,
-		testPercent:      testPercent,
-		ClassCounts:      make(map[int]int),
+		logger:            logger,
+		errorHandler:      errorHandler,
+		filePath:          config.FilePath,
+		file:              file,
+		reader:            csv.NewReader(file),
+		skipHeaders:       config.SkipHeaders,
+		ignoreParseErrors: config.IgnoreParseErrors,
+		cacheDir:          config.CacheDir,
+		categoryOffset:    config.CategoryOffset,
+		columnProcessors:  columnProcessors,
+		trainPercent:      config.TrainPercent,
+		valPercent:        config.ValPercent,
+		testPercent:       config.TestPercent,
+		ClassCounts:       make(map[int]int),
 	}
 
-	e = os.MkdirAll(cacheDir, os.ModePerm)
+	e = os.MkdirAll(config.CacheDir, os.ModePerm)
 	if e != nil && e != os.ErrExist {
 		errorHandler.Error(e)
 		return nil, e
 	}
 
-	if _, e := os.Stat(filepath.Join(cacheDir, "category-tokenizer.json")); e == nil {
-		d.categoryTokenizer = preprocessor.NewTokenizer(errorHandler, 1, -1, true)
-		e = d.categoryTokenizer.Load(filepath.Join(cacheDir, "category-tokenizer.json"))
+	if _, e := os.Stat(filepath.Join(config.CacheDir, "category-tokenizer.json")); e == nil {
+		d.categoryTokenizer = preprocessor.NewTokenizer(
+			errorHandler,
+			1,
+			-1,
+			preprocessor.TokenizerConfig{IsCategoryTokenizer: true, DisableFiltering: true},
+		)
+		e = d.categoryTokenizer.Load(filepath.Join(config.CacheDir, "category-tokenizer.json"))
 		if e != nil {
 			errorHandler.Error(e)
 			return nil, e
@@ -156,21 +171,25 @@ func (d *SingleFileDataset) readLineOffsets() error {
 
 	lastPrint := time.Now().Unix()
 	progress, lastProgress := 0, 0
-
+	skippedHeaders := false
 	for true {
 		readBytes, e := reader.ReadBytes('\n')
 
 		if errors.Is(e, io.EOF) {
 			break
 		}
-
-		offset += int64(len(readBytes))
-		d.lineOffsets = append(d.lineOffsets, offset)
-		d.Count++
+		if !skippedHeaders && d.skipHeaders {
+			skippedHeaders = true
+			offset += int64(len(readBytes))
+			continue
+		}
 
 		csvReader := csv.NewReader(bytes.NewBuffer(readBytes))
 		line, e := csvReader.Read()
 		if e != nil && !errors.Is(e, io.EOF) {
+			if d.ignoreParseErrors {
+				continue
+			}
 			d.errorHandler.Error(e)
 			return e
 		}
@@ -178,6 +197,9 @@ func (d *SingleFileDataset) readLineOffsets() error {
 			continue
 		}
 		if len(line) < d.categoryOffset {
+			if d.ignoreParseErrors {
+				continue
+			}
 			e = fmt.Errorf("len(line) (%d) < d.categoryOffset (%d)", len(line), d.categoryOffset)
 			d.errorHandler.Error(e)
 			return e
@@ -189,12 +211,20 @@ func (d *SingleFileDataset) readLineOffsets() error {
 		// TODO: this magical behaviour could be nicer
 		if e != nil {
 			if d.categoryTokenizer == nil {
-				d.categoryTokenizer = preprocessor.NewTokenizer(d.errorHandler, 1, -1, true)
+				d.categoryTokenizer = preprocessor.NewTokenizer(
+					d.errorHandler,
+					1,
+					-1,
+					preprocessor.TokenizerConfig{IsCategoryTokenizer: true, DisableFiltering: true},
+				)
 			}
 			d.categoryTokenizer.Fit(category)
-			d.categoryTokenizer.FinishFit()
 			categoryInt = int(d.categoryTokenizer.Tokenize(category)[0])
 		}
+
+		offset += int64(len(readBytes))
+		d.lineOffsets = append(d.lineOffsets, offset)
+		d.Count++
 
 		count := d.ClassCounts[categoryInt]
 		count++
@@ -221,7 +251,6 @@ func (d *SingleFileDataset) readLineOffsets() error {
 	}
 
 	if d.categoryTokenizer != nil {
-		d.categoryTokenizer.FinishFit()
 		e = d.categoryTokenizer.Save(filepath.Join(d.cacheDir, "category-tokenizer.json"))
 		if e != nil {
 			d.errorHandler.Error(e)
@@ -238,6 +267,10 @@ func (d *SingleFileDataset) readLineOffsets() error {
 	d.logger.InfoF("data", "Found %d rows. Got class counts: %#v", d.Count, d.ClassCounts)
 
 	return nil
+}
+
+func (d *SingleFileDataset) NumCategoricalClasses() int {
+	return len(d.ClassCounts)
 }
 
 func (d *SingleFileDataset) Len() int {
@@ -286,22 +319,34 @@ func (d *SingleFileDataset) fitPreProcessors() error {
 					defer swg.Done()
 					if processor.DataLength > 1 {
 						if len(row) <= processor.LineOffset+processor.DataLength {
+							if d.ignoreParseErrors {
+								return
+							}
 							e = fmt.Errorf("row did not contain enough columns for processor %s at offset %d", processor.Name, processor.LineOffset)
 							return
 						}
 						// TODO: find a nicer way to capture multiple columns in a row
 						e = processor.Fit([]string{strings.Join(row[processor.LineOffset:processor.LineOffset+processor.DataLength], ",")})
 						if e != nil {
+							if d.ignoreParseErrors {
+								return
+							}
 							d.errorHandler.Error(e)
 							loopError = e
 						}
 					} else {
 						if len(row) <= processor.LineOffset {
+							if d.ignoreParseErrors {
+								return
+							}
 							e = fmt.Errorf("row did not contain enough columns for processor %s at offset %d", processor.Name, processor.LineOffset)
 							return
 						}
 						e = processor.Fit([]string{row[processor.LineOffset]})
 						if e != nil {
+							if d.ignoreParseErrors {
+								return
+							}
 							d.errorHandler.Error(e)
 							loopError = e
 						}
@@ -498,28 +543,44 @@ func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, e
 			continue
 		}
 
-		var lineError bool
+		var lineError error
 		for offset, processor := range d.columnProcessors {
 			if processor.DataLength > 1 {
 				if len(row) <= processor.LineOffset+processor.DataLength {
-					lineError = true
+					lineError = fmt.Errorf(
+						"row did not contain enough columns for processor %s at offset %d and length %d",
+						processor.Name,
+						processor.LineOffset,
+						processor.DataLength,
+					)
 				} else {
 					// TODO: find a nicer way to capture multiple columns in a row
 					xStrings[offset] = append(xStrings[offset], strings.Join(row[processor.LineOffset:processor.LineOffset+processor.DataLength], ","))
 				}
 			} else {
 				if len(row) <= processor.LineOffset {
-					lineError = true
+					lineError = fmt.Errorf(
+						"row did not contain enough columns for processor %s at offset %d",
+						processor.Name,
+						processor.LineOffset,
+					)
 				} else {
 					xStrings[offset] = append(xStrings[offset], row[processor.LineOffset])
 				}
 			}
 		}
-		if lineError {
-			continue
+		if lineError != nil {
+			if d.ignoreParseErrors {
+				continue
+			}
+			d.errorHandler.Error(e)
+			return nil, nil, e
 		}
 
 		if len(row) <= d.categoryOffset {
+			if d.ignoreParseErrors {
+				continue
+			}
 			e = fmt.Errorf("row did not contain enough columns for categoryOffset at %d", d.categoryOffset)
 			d.errorHandler.Error(e)
 			return nil, nil, e
@@ -532,6 +593,9 @@ func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, e
 		} else {
 			yInt, e = strconv.Atoi(row[d.categoryOffset])
 			if e != nil {
+				if d.ignoreParseErrors {
+					continue
+				}
 				d.errorHandler.Error(e)
 				return nil, nil, e
 			}

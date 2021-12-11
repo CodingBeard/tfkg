@@ -13,34 +13,59 @@ import (
 type Tokenizer struct {
 	isCategoryTokenizer bool
 	dictionary          map[string]int
-	wordCounts          map[string]int
+	wordCounts          map[string]*wordCount
+	uniqueWordCount     int
 	maxLen              int
 	numWords            int
+	filter              string
+	disableFiltering    bool
 	lock                *sync.Mutex
 
 	errorHandler *cberrors.ErrorsContainer
 }
 
+type wordCount struct {
+	count int
+	order int
+}
+
 type tokenizerConfig struct {
-	MaxLen    int            `json:"max_len"`
-	WordIndex map[string]int `json:"word_index"`
+	MaxLen           int            `json:"max_len"`
+	WordIndex        map[string]int `json:"word_index"`
+	Filter           string         `json:"filter"`
+	DisableFiltering bool           `json:"disable_filtering"`
+}
+
+type TokenizerConfig struct {
+	IsCategoryTokenizer bool
+	Filters             string
+	DisableFiltering    bool
 }
 
 func NewTokenizer(
 	errorHandler *cberrors.ErrorsContainer,
 	maxLen int,
 	numWords int,
-	isCategoryTokenizer bool,
+	configs ...TokenizerConfig,
 ) *Tokenizer {
-	if isCategoryTokenizer {
+	config := TokenizerConfig{}
+	if len(configs) > 0 {
+		config = configs[0]
+	}
+	if config.IsCategoryTokenizer {
 		numWords = 1000000
 	}
+	if config.Filters == "" {
+		config.Filters = "!\"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n"
+	}
 	return &Tokenizer{
-		isCategoryTokenizer: isCategoryTokenizer,
+		isCategoryTokenizer: config.IsCategoryTokenizer,
 		dictionary:          make(map[string]int),
-		wordCounts:          make(map[string]int),
+		wordCounts:          make(map[string]*wordCount),
 		maxLen:              maxLen,
 		numWords:            numWords,
+		filter:              config.Filters,
+		disableFiltering:    config.DisableFiltering,
 		lock:                &sync.Mutex{},
 		errorHandler:        errorHandler,
 	}
@@ -61,14 +86,19 @@ func (t *Tokenizer) Load(configFile string) error {
 
 	t.dictionary = config.WordIndex
 	t.maxLen = config.MaxLen
+	t.numWords = len(config.WordIndex)
+	t.filter = config.Filter
+	t.disableFiltering = config.DisableFiltering
 
 	return nil
 }
 
 func (t *Tokenizer) Save(configFile string) error {
 	jsonBytes, e := json.Marshal(tokenizerConfig{
-		MaxLen:    t.maxLen,
-		WordIndex: t.dictionary,
+		MaxLen:           t.maxLen,
+		WordIndex:        t.dictionary,
+		Filter:           t.filter,
+		DisableFiltering: t.disableFiltering,
 	})
 	if e != nil {
 		t.errorHandler.Error(e)
@@ -84,11 +114,24 @@ func (t *Tokenizer) Save(configFile string) error {
 	return nil
 }
 
+func (t *Tokenizer) NumWords() int {
+	return len(t.dictionary)
+}
+
+func (t *Tokenizer) MaxLen() int {
+	return t.maxLen
+}
+
 func (t *Tokenizer) clean(sentence string) string {
 	for strings.Contains(sentence, "  ") {
 		sentence = strings.ReplaceAll(sentence, "  ", " ")
 	}
 
+	if !t.disableFiltering {
+		for _, char := range t.filter {
+			sentence = strings.ReplaceAll(sentence, string(char), "")
+		}
+	}
 	sentence = strings.ReplaceAll(sentence, "\x00", "")
 
 	sentence = strings.ToLower(sentence)
@@ -101,12 +144,21 @@ func (t *Tokenizer) split(sentence string) []string {
 }
 
 func (t *Tokenizer) Fit(sentence string) {
+	previousUniqueWordCount := t.uniqueWordCount
 	words := t.split(t.clean(sentence))
 
 	for _, word := range words {
 		t.lock.Lock()
 		count := t.wordCounts[word]
-		count++
+		if count == nil {
+			count = &wordCount{
+				count: 1,
+				order: t.uniqueWordCount,
+			}
+			t.uniqueWordCount++
+		} else {
+			count.count++
+		}
 		t.wordCounts[word] = count
 		t.lock.Unlock()
 	}
@@ -121,7 +173,7 @@ func (t *Tokenizer) Fit(sentence string) {
 		for word, count := range t.wordCounts {
 			kvs = append(kvs, kv{
 				k: word,
-				v: count,
+				v: count.count,
 			})
 		}
 
@@ -135,22 +187,45 @@ func (t *Tokenizer) Fit(sentence string) {
 
 		t.lock.Unlock()
 	}
+	if t.isCategoryTokenizer {
+		if t.uniqueWordCount > previousUniqueWordCount {
+			t.FinishFit()
+		}
+	}
 }
 
 func (t *Tokenizer) FinishFit() {
 	t.lock.Lock()
 	defer t.lock.Unlock()
-
 	type kv struct {
 		k string
 		v int
 	}
 	var kvs []kv
 
+	if t.isCategoryTokenizer {
+		t.dictionary = make(map[string]int)
+		for word, count := range t.wordCounts {
+			kvs = append(kvs, kv{
+				k: word,
+				v: count.order,
+			})
+		}
+
+		sort.Slice(kvs, func(i, j int) bool {
+			return kvs[i].v < kvs[j].v
+		})
+
+		for i, count := range kvs {
+			t.dictionary[count.k] = i
+		}
+		return
+	}
+
 	for word, count := range t.wordCounts {
 		kvs = append(kvs, kv{
 			k: word,
-			v: count,
+			v: count.count,
 		})
 	}
 
@@ -163,13 +238,8 @@ func (t *Tokenizer) FinishFit() {
 		totalWords = t.numWords
 	}
 
-	delta := 1
-	if t.isCategoryTokenizer {
-		delta = 0
-	}
-
 	for i := 0; i < totalWords; i++ {
-		t.dictionary[kvs[i].k] = i + delta
+		t.dictionary[kvs[i].k] = i + 1
 	}
 }
 

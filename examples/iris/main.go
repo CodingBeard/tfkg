@@ -40,24 +40,6 @@ func main() {
 	// Error handler with stack traces
 	errorHandler := cberrors.NewErrorContainer(iowriterprovider.New(logger))
 
-	// Define a simple keras style Sequential model with two hidden Dense layers
-	m := model.NewSequentialModel(
-		logger,
-		errorHandler,
-		layer.NewInput(tf.MakeShape(-1, 4), layer.Float32),
-		layer.NewDense(100, layer.Float32, layer.DenseConfig{Activation: "swish"}),
-		layer.NewDense(100, layer.Float32, layer.DenseConfig{Activation: "swish"}),
-		layer.NewDense(3, layer.Float32, layer.DenseConfig{Activation: "softmax"}),
-	)
-
-	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and execute it to save the model in a format we can load and train
-	// A python binary must be available to use for this to work
-	// The batchSize MUST match the batch size in the call to Fit or Evaluate
-	e = m.CompileAndLoad(3)
-	if e != nil {
-		return
-	}
-
 	// Where the cached tokenizers and divisors will go, if you change your data you'll need to clear this
 	cacheDir := "examples/iris/training-cache"
 
@@ -75,12 +57,15 @@ func main() {
 	dataset, e := data.NewSingleFileDataset(
 		logger,
 		errorHandler,
-		"examples/iris/data/iris.data",
-		cacheDir,
-		4,
-		0.8,
-		0.1,
-		0.1,
+		data.SingleFileDatasetConfig{
+			FilePath:          "examples/iris/data/iris.data",
+			CacheDir:          cacheDir,
+			CategoryOffset:    4,
+			TrainPercent:      0.8,
+			ValPercent:        0.1,
+			TestPercent:       0.1,
+			IgnoreParseErrors: true,
+		},
 		preprocessor.NewProcessor(
 			errorHandler,
 			"petal_sizes",
@@ -110,12 +95,31 @@ func main() {
 	// This will shuffle the data in a deterministic fashion, change 1 to time.Now().UnixNano() for a different shuffle each training session
 	dataset.Shuffle(1)
 
+	// Define a simple keras style Sequential model with two hidden Dense layers
+	m := model.NewSequentialModel(
+		logger,
+		errorHandler,
+		layer.NewInput(tf.MakeShape(-1, 4), layer.Float32),
+		layer.NewDense(100, layer.Float32, layer.DenseConfig{Activation: "swish"}),
+		layer.NewDense(100, layer.Float32, layer.DenseConfig{Activation: "swish"}),
+		layer.NewDense(dataset.NumCategoricalClasses(), layer.Float32, layer.DenseConfig{Activation: "softmax"}),
+	)
+
+	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and execute it to save the model in a format we can load and train
+	// A python binary must be available to use for this to work
+	// The batchSize MUST match the batchSize in the call to Fit or Evaluate
+	batchSize := 3
+	e = m.CompileAndLoad(batchSize)
+	if e != nil {
+		return
+	}
+
 	logger.InfoF("main", "Training model: %s", saveDir)
 
 	// Train the model.
 	// Most of this should look familiar to anyone who has used tensorflow/keras
 	// The key points are:
-	//      The batchSize MUST match the batch size in the call to CompileAndLoad
+	//      The batchSize MUST match the batchSize in the call to CompileAndLoad
 	//      We pass the data through 10 times (Epochs: 10)
 	//      We enable validation, which will evaluate the model on the validation portion of the dataset above (Validation: true)
 	//      We continuously (and concurrently) pre-fetch 10 batches to speed up training, though with 150 samples this has almost no effect
@@ -127,7 +131,7 @@ func main() {
 		model.FitConfig{
 			Epochs:     10,
 			Validation: true,
-			BatchSize:  3,
+			BatchSize:  batchSize,
 			PreFetch:   10,
 			Verbose:    1,
 			Metrics: []metric.Metric{
@@ -165,7 +169,6 @@ func main() {
 			errorHandler,
 			"petal_sizes",
 			preprocessor.ProcessorConfig{
-				Divisor:   preprocessor.NewDivisor(errorHandler),
 				Converter: preprocessor.ConvertDivisorToFloat32SliceTensor,
 			},
 		),

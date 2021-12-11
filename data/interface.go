@@ -16,6 +16,7 @@ var (
 
 type Dataset interface {
 	Len() int
+	NumCategoricalClasses() int
 	SetMode(mode GeneratorMode) Dataset
 	Shuffle(seed int64)
 	Unshuffle() error

@@ -5,8 +5,7 @@ services:
     image: tf-jupyter-golang
     command: sleep infinity
     volumes:
-      - .:/tfkg
-      - .:/go/src/tfkg
+      - .:/go/src/tfkg:delegated
   tf-jupyter-golang-gpu:
     image: tf-jupyter-golang
     command: sleep infinity
@@ -18,5 +17,4 @@ services:
               count: 1
               capabilities: [ gpu ]
     volumes:
-      - .:/tfkg
-      - .:/go/src/tfkg
+      - .:/go/src/tfkg:delegated

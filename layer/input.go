@@ -81,10 +81,7 @@ type kerasInputConfig struct {
 }
 
 func (i *Input) GetKerasLayerConfig() interface{} {
-	shape := []interface{}{
-		nil,
-		nil,
-	}
+	var shape []interface{}
 
 	dims, _ := i.shape.ToSlice()
 
