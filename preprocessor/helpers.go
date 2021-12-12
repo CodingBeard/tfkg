@@ -70,6 +70,28 @@ func ConvertInt32SliceToTensor(columns interface{}) (*tf.Tensor, error) {
 	return tensor, nil
 }
 
+func ConvertInterfaceFloat32SliceToTensor(columns interface{}) (*tf.Tensor, error) {
+	interfaceSlice, ok := columns.([]interface{})
+	if !ok {
+		e := fmt.Errorf("could not convert columns to []interface{}")
+		return nil, e
+	}
+	var columnsFloats [][]float32
+	for _, iSlice := range interfaceSlice {
+		floatSlice, ok := iSlice.([]float32)
+		if !ok {
+			e := fmt.Errorf("could not convert sub slice to []float32")
+			return nil, e
+		}
+		columnsFloats = append(columnsFloats, floatSlice)
+	}
+	tensor, e := tf.NewTensor(columnsFloats)
+	if e != nil {
+		return nil, e
+	}
+	return tensor, nil
+}
+
 func ReadStringNop(columns []string) interface{} {
 	return columns
 }

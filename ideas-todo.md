@@ -39,8 +39,6 @@ Allow custom python layers by offering a method to load the requisite python fil
 - More real world examples
 - Make logger and errorhandler interfaces so users can provide their own
 - Add logic to catch possible errors before python compilation of model
-- Move python code into a .py file and add it as a resource to the binary/go generate it
-- Modify class weighting logic in the python file to allow for more than two classes
 - Callback to save train/saved/test stats to database
 - Optimise single file dataset with multiple concurrent readers to improve performance
 - Save the keras model json on model creation, and load config to add correct layers into a TFKG model

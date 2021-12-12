@@ -25,7 +25,7 @@ See `ideas-todo.md` for what's in store
 
 Versions starting with v0 are liable to change radically.
 
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.10`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.11`
 
 ## Requirements
 
@@ -55,6 +55,7 @@ Linux environments are recommended, no GPU support on macOS and docker volumes a
 - Load, shuffle, and preprocess csv datasets efficiently, even very large ones (tested on 300+GB csv file on a nvme ssd)
     - String Tokenizer
     - Float/Int normalization to between 0-1
+- Automatic class weighting for imbalanced datasets
 
 ## Keras model types supported
 
@@ -62,7 +63,7 @@ Linux environments are recommended, no GPU support on macOS and docker volumes a
 - `tensorflow.keras.Model` (Multiple input)
 
 ## Keras Layers supported
-
+Many of the implemented layers do not have all the configurable properties found in Keras
 - `tensorflow.keras.layers.Input`
 - `tensorflow.keras.layers.Dense`
 - `tensorflow.keras.layers.Concatenate`
@@ -93,8 +94,6 @@ Linux environments are recommended, no GPU support on macOS and docker volumes a
 - Loading/Training models saved by vanilla python Tensorflow/Keras is not supported, but it may be possible
 - Using multiple GPU training is not supported
 - Image datasets and preprocessing is not yet supported
-- Class weighting only works for datasets with two categories currently: negative/positive. It /will/ cause unintended
-  side effects if you have more than two categories with imbalanced classes
 
 ## Examples:
 
@@ -103,6 +102,7 @@ Linux environments are recommended, no GPU support on macOS and docker volumes a
 | Sequential | Iris                 | Categorical Classification | Input, Dense                               | `./examples/iris`            |
 | Functional | Iris                 | Categorical Classification | Input, Dense, Concatenate                  | `./examples/multiple_inputs` |
 | Functional | Fraudulent Job Specs | Categorical Classification | Input, Embedding, LSTM, Concatenate, Dense | `./examples/jobs`            |
+| Sequential | Random imbalanced    | Categorical Classification | Input, Dense                               | `./examples/class_weights`   |
 
 To test it out run:
 

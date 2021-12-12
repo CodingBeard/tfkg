@@ -24,8 +24,9 @@ import (
 )
 
 type SingleFileDataset struct {
-	ClassCounts map[int]int
-	Count       int
+	ClassCounts  map[int]int
+	ClassWeights map[int]float32
+	Count        int
 
 	filePath          string
 	file              *os.File
@@ -94,6 +95,7 @@ func NewSingleFileDataset(
 		valPercent:        config.ValPercent,
 		testPercent:       config.TestPercent,
 		ClassCounts:       make(map[int]int),
+		ClassWeights:      make(map[int]float32),
 	}
 
 	e = os.MkdirAll(config.CacheDir, os.ModePerm)
@@ -134,9 +136,10 @@ func NewSingleFileDataset(
 }
 
 type fileStatsCache struct {
-	LineOffsets []int64
-	Count       int
-	ClassCounts map[int]int
+	LineOffsets  []int64
+	Count        int
+	ClassCounts  map[int]int
+	ClassWeights map[int]float32
 }
 
 func (d *SingleFileDataset) readLineOffsets() error {
@@ -157,8 +160,9 @@ func (d *SingleFileDataset) readLineOffsets() error {
 		d.lineOffsets = cache.LineOffsets
 		d.Count = cache.Count
 		d.ClassCounts = cache.ClassCounts
+		d.ClassWeights = cache.ClassWeights
 
-		d.logger.InfoF("data", "Found %d rows. Got class counts: %#v", d.Count, d.ClassCounts)
+		d.logger.InfoF("data", "Found %d rows. Got class counts: %#v Got class weights: %#v", d.Count, d.ClassCounts, d.ClassWeights)
 
 		return nil
 	}
@@ -240,10 +244,21 @@ func (d *SingleFileDataset) readLineOffsets() error {
 	}
 	fmt.Println()
 
+	majorClassCount := 0
+	for _, count := range d.ClassCounts {
+		if count > majorClassCount {
+			majorClassCount = count
+		}
+	}
+	for class, count := range d.ClassCounts {
+		d.ClassWeights[class] = float32(majorClassCount) / float32(count)
+	}
+
 	cacheBytes, e := json.Marshal(fileStatsCache{
-		LineOffsets: d.lineOffsets,
-		Count:       d.Count,
-		ClassCounts: d.ClassCounts,
+		LineOffsets:  d.lineOffsets,
+		Count:        d.Count,
+		ClassCounts:  d.ClassCounts,
+		ClassWeights: d.ClassWeights,
 	})
 	if e != nil {
 		d.errorHandler.Error(e)
@@ -264,7 +279,7 @@ func (d *SingleFileDataset) readLineOffsets() error {
 		return e
 	}
 
-	d.logger.InfoF("data", "Found %d rows. Got class counts: %#v", d.Count, d.ClassCounts)
+	d.logger.InfoF("data", "Found %d rows. Got class counts: %#v Got class weights: %#v", d.Count, d.ClassCounts, d.ClassWeights)
 
 	return nil
 }
@@ -326,7 +341,7 @@ func (d *SingleFileDataset) fitPreProcessors() error {
 							return
 						}
 						// TODO: find a nicer way to capture multiple columns in a row
-						e = processor.Fit([]string{strings.Join(row[processor.LineOffset:processor.LineOffset+processor.DataLength], ",")})
+						e = processor.FitString([]string{strings.Join(row[processor.LineOffset:processor.LineOffset+processor.DataLength], ",")})
 						if e != nil {
 							if d.ignoreParseErrors {
 								return
@@ -342,7 +357,7 @@ func (d *SingleFileDataset) fitPreProcessors() error {
 							e = fmt.Errorf("row did not contain enough columns for processor %s at offset %d", processor.Name, processor.LineOffset)
 							return
 						}
-						e = processor.Fit([]string{row[processor.LineOffset]})
+						e = processor.FitString([]string{row[processor.LineOffset]})
 						if e != nil {
 							if d.ignoreParseErrors {
 								return
@@ -479,31 +494,9 @@ func (d *SingleFileDataset) GetColumnNames() []string {
 func (d *SingleFileDataset) GeneratorChan(batchSize int, preFetch int) chan Batch {
 	generatorChan := make(chan Batch, preFetch)
 
-	// TODO: change class weights to a single tensor
-	var posWeight, negWeight float32
-	if d.ClassCounts[1] > d.ClassCounts[0] {
-		posWeight = float32(d.ClassCounts[0]) / float32(d.ClassCounts[1])
-		negWeight = 1
-	} else {
-		posWeight = 1
-		negWeight = float32(d.ClassCounts[1]) / float32(d.ClassCounts[0])
-	}
-
-	posWeightTensor, e := tf.NewTensor(posWeight)
-	if e != nil {
-		d.errorHandler.Error(e)
-		return nil
-	}
-
-	negWeightTensor, e := tf.NewTensor(negWeight)
-	if e != nil {
-		d.errorHandler.Error(e)
-		return nil
-	}
-
 	go func() {
 		for true {
-			x, y, e := d.Generate(batchSize)
+			x, y, classWeights, e := d.Generate(batchSize)
 
 			if errors.Is(e, ErrGeneratorEnd) {
 				close(generatorChan)
@@ -516,10 +509,9 @@ func (d *SingleFileDataset) GeneratorChan(batchSize int, preFetch int) chan Batc
 			}
 
 			generatorChan <- Batch{
-				X:         x,
-				Y:         y,
-				PosWeight: posWeightTensor,
-				NegWeight: negWeightTensor,
+				X:            x,
+				Y:            y,
+				ClassWeights: classWeights,
 			}
 		}
 	}()
@@ -527,7 +519,7 @@ func (d *SingleFileDataset) GeneratorChan(batchSize int, preFetch int) chan Batc
 	return generatorChan
 }
 
-func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, error) {
+func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, *tf.Tensor, error) {
 	var x []*tf.Tensor
 
 	xStrings := make([][]string, len(d.columnProcessors))
@@ -536,7 +528,7 @@ func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, e
 	for true {
 		row, e := d.getRow()
 		if errors.Is(e, ErrGeneratorEnd) {
-			return nil, nil, e
+			return nil, nil, nil, e
 		}
 
 		if len(row) == 0 {
@@ -574,7 +566,7 @@ func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, e
 				continue
 			}
 			d.errorHandler.Error(e)
-			return nil, nil, e
+			return nil, nil, nil, e
 		}
 
 		if len(row) <= d.categoryOffset {
@@ -583,7 +575,7 @@ func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, e
 			}
 			e = fmt.Errorf("row did not contain enough columns for categoryOffset at %d", d.categoryOffset)
 			d.errorHandler.Error(e)
-			return nil, nil, e
+			return nil, nil, nil, e
 		}
 
 		var yInt int
@@ -597,7 +589,7 @@ func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, e
 					continue
 				}
 				d.errorHandler.Error(e)
-				return nil, nil, e
+				return nil, nil, nil, e
 			}
 		}
 
@@ -611,19 +603,30 @@ func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, e
 	for offset, processor := range d.columnProcessors {
 		process, e := processor.ProcessString(xStrings[offset])
 		if e != nil {
-			return nil, nil, e
+			return nil, nil, nil, e
 		}
 
 		x = append(x, process)
 	}
 
+	var classWeights []float32
+	for _, yInt32 := range yInts {
+		classWeights = append(classWeights, d.ClassWeights[int(yInt32[0])])
+	}
+
+	classWeightsTensor, e := tf.NewTensor(classWeights)
+	if e != nil {
+		d.errorHandler.Error(e)
+		return nil, nil, nil, e
+	}
+
 	y, e := tf.NewTensor(yInts)
 	if e != nil {
 		d.errorHandler.Error(e)
-		return nil, nil, e
+		return nil, nil, nil, e
 	}
 
-	return x, y, nil
+	return x, y, classWeightsTensor, nil
 }
 
 func (d *SingleFileDataset) Reset() error {

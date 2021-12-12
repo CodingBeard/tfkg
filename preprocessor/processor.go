@@ -58,7 +58,7 @@ func (p *Processor) Tokenizer() *Tokenizer {
 	return p.tokenizer
 }
 
-func (p *Processor) Fit(column []string) error {
+func (p *Processor) FitString(column []string) error {
 	value := p.reader(column)
 	if p.divisor != nil {
 		floatValues, ok := value.([][]float32)
@@ -74,6 +74,31 @@ func (p *Processor) Fit(column []string) error {
 		stringValues, ok := value.([]string)
 		if !ok {
 			e := fmt.Errorf("error casting read value to string for preprocessor %s, value was: %#v", p.Name, value)
+			p.errorHandler.Error(e)
+			return e
+		}
+		for _, stringValue := range stringValues {
+			p.tokenizer.Fit(stringValue)
+		}
+	}
+	return nil
+}
+
+func (p *Processor) FitInterface(column interface{}) error {
+	if p.divisor != nil {
+		floatValues, ok := column.([][]float32)
+		if !ok {
+			e := fmt.Errorf("error casting read value to []float32 for preprocessor %s, value was: %#v", p.Name, column)
+			p.errorHandler.Error(e)
+			return e
+		}
+		for _, floatValue := range floatValues {
+			p.divisor.Fit(floatValue)
+		}
+	} else if p.tokenizer != nil {
+		stringValues, ok := column.([]string)
+		if !ok {
+			e := fmt.Errorf("error casting read value to string for preprocessor %s, value was: %#v", p.Name, column)
 			p.errorHandler.Error(e)
 			return e
 		}

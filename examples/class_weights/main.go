@@ -1,0 +1,145 @@
+package main
+
+import (
+	"github.com/codingbeard/cberrors"
+	"github.com/codingbeard/cberrors/iowriterprovider"
+	"github.com/codingbeard/cblog"
+	"github.com/codingbeard/tfkg/callback"
+	"github.com/codingbeard/tfkg/data"
+	"github.com/codingbeard/tfkg/layer"
+	"github.com/codingbeard/tfkg/metric"
+	"github.com/codingbeard/tfkg/model"
+	"github.com/codingbeard/tfkg/preprocessor"
+	tf "github.com/galeone/tensorflow/tensorflow/go"
+	"math/rand"
+	"os"
+	"path/filepath"
+)
+
+func main() {
+	// Create a logger pointed at the save dir
+	logger, e := cblog.NewLogger(cblog.LoggerConfig{
+		LogLevel:           cblog.DebugLevel,
+		Format:             "%{time:2006-01-02 15:04:05.000} : %{file}:%{line} : %{message}",
+		LogToFile:          true,
+		FilePath:           filepath.Join("examples/class_weights", "training.log"),
+		FilePerm:           os.ModePerm,
+		LogToStdOut:        true,
+		SetAsDefaultLogger: true,
+	})
+	if e != nil {
+		panic(e)
+	}
+
+	// Error handler with stack traces
+	errorHandler := cberrors.NewErrorContainer(iowriterprovider.New(logger))
+
+	// Create a new Values dataset, we can pass in values without having to read from a CSV file
+	dataset, e := data.NewValuesDataset(
+		logger,
+		errorHandler,
+		data.ValuesDatasetConfig{
+			TrainPercent: 0.8,
+			ValPercent:   0.1,
+			TestPercent:  0.1,
+		},
+		preprocessor.NewProcessor(
+			errorHandler,
+			"floats",
+			preprocessor.ProcessorConfig{
+				LineOffset: 0,
+				Converter:  preprocessor.ConvertInterfaceFloat32SliceToTensor,
+			},
+		),
+	)
+	if e != nil {
+		errorHandler.Error(e)
+		return
+	}
+
+	var y []interface{}
+	var x []interface{}
+	// generate random input data with imbalanced classes, if class_weighting works the accuracy should be 0
+	for i := 0; i < 100000; i++ {
+		y = append(y, int32(0))
+		y = append(y, int32(1))
+		y = append(y, int32(1))
+		y = append(y, int32(2))
+		y = append(y, int32(2))
+		y = append(y, int32(2))
+		for j := 0; j < 6; j++ {
+			x = append(x, []float32{
+				rand.Float32(),
+				rand.Float32(),
+				rand.Float32(),
+				rand.Float32(),
+			})
+		}
+	}
+
+	e = dataset.SetValues(y, x)
+	if e != nil {
+		errorHandler.Error(e)
+		return
+	}
+
+	logger.InfoF("main", "Shuffling dataset")
+	// This will shuffle the data in a deterministic fashion, change 1 to time.Now().UnixNano() for a different shuffle each training session
+	dataset.Shuffle(1)
+
+	// Define a simple keras style Sequential model with two hidden Dense layers
+	m := model.NewSequentialModel(
+		logger,
+		errorHandler,
+		layer.NewInput(tf.MakeShape(-1, 4), layer.Float32),
+		layer.NewDense(100, layer.Float32, layer.DenseConfig{Activation: "swish"}),
+		layer.NewDense(100, layer.Float32, layer.DenseConfig{Activation: "swish"}),
+		layer.NewDense(3, layer.Float32, layer.DenseConfig{Activation: "softmax"}),
+	)
+
+	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and execute it to save the model in a format we can load and train
+	// A python binary must be available to use for this to work
+	// The batchSize MUST match the batchSize in the call to Fit or Evaluate
+	batchSize := 1000
+	e = m.CompileAndLoad(batchSize)
+	if e != nil {
+		return
+	}
+
+	logger.InfoF("main", "Training model")
+
+	// Train the model.
+	// Most of this should look familiar to anyone who has used tensorflow/keras
+	// The key points are:
+	//      The batchSize MUST match the batchSize in the call to CompileAndLoad
+	//      We pass the data through 10 times (Epochs: 10)
+	//      We enable validation, which will evaluate the model on the validation portion of the dataset above (Validation: true)
+	//      We continuously (and concurrently) pre-fetch 10 batches to speed up training, though with 150 samples this has almost no effect
+	// 		We calculate the accuracy of the model on training and validation datasets (metric.SparseCategoricalAccuracy)
+	//		We log the training results to stdout (Verbose:1, callback.Logger)
+	m.Fit(
+		dataset,
+		model.FitConfig{
+			Epochs:     10,
+			Validation: true,
+			BatchSize:  batchSize,
+			PreFetch:   10,
+			Verbose:    1,
+			Metrics: []metric.Metric{
+				&metric.SparseCategoricalAccuracy{
+					Name:       "acc",
+					Confidence: 0.5,
+					Average:    true,
+				},
+			},
+			Callbacks: []callback.Callback{
+				&callback.Logger{
+					FileLogger: logger,
+				},
+			},
+		},
+	)
+
+	logger.InfoF("main", "Finished training")
+
+}

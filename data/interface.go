@@ -22,15 +22,13 @@ type Dataset interface {
 	Unshuffle() error
 	GetColumnNames() []string
 	GeneratorChan(batchSize int, preFetch int) chan Batch
-	Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, error)
+	Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, *tf.Tensor, error)
 	Reset() error
 	SaveProcessors(saveDir string) error
 }
 
 type Batch struct {
-	X []*tf.Tensor
-	Y *tf.Tensor
-	// TODO: change class weights to a single tensor
-	PosWeight *tf.Tensor
-	NegWeight *tf.Tensor
+	X            []*tf.Tensor
+	Y            *tf.Tensor
+	ClassWeights *tf.Tensor
 }
