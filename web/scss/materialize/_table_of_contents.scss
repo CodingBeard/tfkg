@@ -1,0 +1,33 @@
+/***************
+    Nav List
+***************/
+.table-of-contents {
+  &.fixed {
+      position: fixed;
+    }
+
+  li {
+    padding: calculateRem(2px) 0;
+  }
+  a {
+    display: inline-block;
+    font-weight: 300;
+    color: #757575;
+    padding-left: calculateRem(16px);
+    height: 1.5rem;
+    line-height: 1.5rem;
+    letter-spacing: .4;
+    display: inline-block;
+
+    &:hover {
+      color: lighten(#757575, 20%);
+      padding-left: calculateRem(15px);
+      border-left: calculateRem(1px) solid $primary-color;
+    }
+    &.active {
+      font-weight: 500;
+      padding-left: calculateRem(14px);
+      border-left: calculateRem(2px) solid $primary-color;
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{{ extends "-global-/cbwebcommon/master.gohtml" }}
+{{- /*gotype: webshield/web/module/home.HomeViewModel*/ -}}
+{{- define "content" }}
+    {{ template "-global-/cbwebcommon/nav.gohtml" .}}
+    <div class="header center hide-on-med-and-down">
+        {{ .GetMasterViewModel.GetPageTitle }}
+    </div>
+{{ end -}}
+{{- define "javascript" }}
+  <script type="text/javascript">
+    $(document).ready(function () {
+      $('.sidenav').sidenav();
+    });
+  </script>
+{{ end -}}

@@ -18,3 +18,27 @@ services:
               capabilities: [ gpu ]
     volumes:
       - .:/go/src/tfkg:delegated
+  web:
+    image: golang:1.17
+    working_dir: /go/src/tfkg/web
+    command: go run main.go
+    volumes:
+      - .:/go/src/tfkg:delegated
+    ports:
+      - 8082:80
+  web-development:
+    build:
+      context: docker/web
+      dockerfile: Dockerfile
+    command: sleep infinity
+    volumes:
+      - .:/go/src/tfkg:delegated
+    ports:
+      - 8082:80
+  frontend:
+    image: node:13.8
+    command: sleep infinity
+    volumes:
+      - .:/app
+    ports:
+      - 3000:3000

@@ -1,0 +1,386 @@
+// ==========================================================================
+// Materialize variables
+// ==========================================================================
+//
+// Table of Contents:
+//
+//  1. Colors
+//  2. Badges
+//  3. Buttons
+//  4. Cards
+//  5. Carousel
+//  6. Collapsible
+//  7. Chips
+//  8. Date + Time Picker
+//  9. Dropdown
+//  10. Forms
+//  11. Global
+//  12. Grid
+//  13. Navigation Bar
+//  14. Side Navigation
+//  15. Photo Slider
+//  16. Spinners | Loaders
+//  17. Tabs
+//  18. Tables
+//  19. Toasts
+//  20. Typography
+//  21. Footer
+//  22. Flow Text
+//  23. Collections
+//  24. Progress Bar
+
+
+
+// 1. Colors
+// ==========================================================================
+
+$primary-color: #131216 !default;
+$primary-color-light: lighten($primary-color, 15%) !default;
+$primary-color-dark: darken($primary-color, 15%) !default;
+
+$secondary-color: #236caf !default;
+$success-color: color("green", "base") !default;
+$error-color: #bf0d42 !default;
+$link-color: #3688c6 !default;
+
+$surface: #1a1b1e;
+$surface-font-color: #c7c8c9;
+
+$surface-00dp-bg-color: lighten($surface, 0%);
+$surface-01dp-bg-color: lighten($surface, 5%);
+$surface-02dp-bg-color: lighten($surface, 7%);
+$surface-03dp-bg-color: lighten($surface, 8%);
+$surface-04dp-bg-color: lighten($surface, 9%);
+$surface-06dp-bg-color: lighten($surface, 11%);
+$surface-08dp-bg-color: lighten($surface, 12%);
+$surface-12dp-bg-color: lighten($surface, 14%);
+$surface-16dp-bg-color: lighten($surface, 15%);
+$surface-24dp-bg-color: lighten($surface, 16%);
+
+// 2. Badges
+// ==========================================================================
+
+$badge-bg-color: $secondary-color !default;
+$badge-height: 1.375rem !default;
+
+
+// 3. Buttons
+// ==========================================================================
+
+// Shared styles
+$button-border: none !default;
+$button-background-focus: lighten($secondary-color, 4%) !default;
+$button-font-size: 0.9rem !default;
+$button-icon-font-size: 1.3rem !default;
+$button-height: 2.5rem !default;
+$button-padding: 0 1rem !default;
+$button-radius: 0.1rem !default;
+
+// Disabled styles
+$button-disabled-background: #DFDFDF !default;
+$button-disabled-color: #9F9F9F !default;
+
+// Raised buttons
+$button-raised-background: $secondary-color !default;
+$button-raised-background-hover: lighten($button-raised-background, 5%) !default;
+$button-raised-color: #fff !default;
+
+// Large buttons
+$button-large-font-size: 1rem !default;
+$button-large-icon-font-size: 1.6rem !default;
+$button-large-height: $button-height * 1.5 !default;
+$button-floating-large-size: 3.5rem !default;
+
+// Small buttons
+$button-small-font-size: 0.8rem !default;
+$button-small-icon-font-size: 1.2rem !default;
+$button-small-height: $button-height * .9 !default;
+$button-floating-small-size: $button-height * .9 !default;
+
+// Tiny buttons
+$button-tiny-font-size: 0.6rem !default;
+$button-tiny-icon-font-size: 1rem !default;
+$button-tiny-height: $button-height * .6 !default;
+$button-floating-tiny-size: $button-height * .6 !default;
+
+// Flat buttons
+$button-flat-color: $surface-font-color !default;
+$button-flat-disabled-color: lighten(#999, 10%) !default;
+
+// Floating buttons
+$button-floating-background: $secondary-color !default;
+$button-floating-background-hover: $button-floating-background !default;
+$button-floating-color: #fff !default;
+$button-floating-size: 2.5rem !default;
+$button-floating-radius: 50% !default;
+
+
+// 4. Cards
+// ==========================================================================
+
+$card-padding: 1.5rem !default;
+$card-bg-color: $surface !default;
+$card-link-color: color("orange", "accent-2") !default;
+$card-link-color-light: lighten($card-link-color, 20%) !default;
+
+
+// 5. Carousel
+// ==========================================================================
+
+$carousel-height: 25rem !default;
+$carousel-item-height: $carousel-height / 2 !default;
+$carousel-item-width: $carousel-item-height !default;
+
+
+// 6. Collapsible
+// ==========================================================================
+
+$collapsible-height: 3rem !default;
+$collapsible-line-height: $collapsible-height !default;
+$collapsible-header-color: #fff !default;
+$collapsible-border-color: #ddd !default;
+
+
+// 7. Chips
+// ==========================================================================
+
+$chip-bg-color: $secondary-color !default;
+$chip-border-color: #9e9e9e !default;
+$chip-selected-color: $secondary-color !default;
+$chip-margin: 0.3125rem !default;
+
+
+// 8. Date + Time Picker
+// ==========================================================================
+
+$datepicker-display-font-size: 2.8rem;
+$datepicker-calendar-header-color: #999;
+$datepicker-weekday-color: rgba(0, 0, 0, .87) !default;
+$datepicker-weekday-bg: darken($secondary-color, 7%) !default;
+$datepicker-date-bg: $secondary-color !default;
+$datepicker-year: rgba(255, 255, 255, .7) !default;
+$datepicker-focus: rgba(0,0,0, .05) !default;
+$datepicker-selected: $secondary-color !default;
+$datepicker-selected-outfocus: desaturate(lighten($secondary-color, 35%), 15%) !default;
+$datepicker-day-focus: transparentize(desaturate($secondary-color, 5%), .75) !default;
+$datepicker-disabled-day-color: rgba(0, 0, 0, .3) !default;
+
+$timepicker-clock-color: rgba(0, 0, 0, .87) !default;
+$timepicker-clock-plate-bg: #eee !default;
+
+
+// 9. Dropdown
+// ==========================================================================
+
+$dropdown-bg-color: #fff !default;
+$dropdown-hover-bg-color: #eee !default;
+$dropdown-color: $secondary-color !default;
+$dropdown-item-height: 3.125rem !default;
+
+
+// 10. Forms
+// ==========================================================================
+
+// Text Inputs + Textarea
+$input-caret-color: $surface-font-color;
+$input-color: $surface-font-color;
+$input-height: 3rem !default;
+$input-border-color: $surface-font-color !default;
+$input-border: 0.0625rem solid $input-border-color !default;
+$input-background: #fff !default;
+$input-error-color: $error-color !default;
+$input-success-color: $success-color !default;
+$input-focus-color: $secondary-color !default;
+$input-font-size: 1rem !default;
+$input-margin-bottom: 0.5rem;
+$input-margin: 0 0 $input-margin-bottom 0 !default;
+$input-padding: 0 !default;
+$label-font-size: .8rem !default;
+$input-disabled-color: #c7c8c9 !default;
+$input-disabled-solid-color: #949494 !default;
+$input-disabled-border: 0.0625rem dotted $input-disabled-color !default;
+$input-invalid-border: 0.0625rem solid $input-error-color !default;
+$input-icon-size: 2rem;
+$placeholder-text-color: $surface-font-color !default;
+
+// Radio Buttons
+$radio-fill-color: $secondary-color !default;
+$radio-empty-color: #5a5a5a !default;
+$radio-border: 0.125rem solid $radio-fill-color !default;
+
+// Range
+$range-height: 0.875rem !default;
+$range-width: 0.875 !default;
+$track-height: 0.1875rem !default;
+
+// Select
+$select-border: 0.0625rem solid $surface !default;
+$select-background: $surface-01dp-bg-color !default;
+$select-caret-color: $surface-font-color;
+$select-focus: 0.0625rem solid lighten($secondary-color, 47%) !default;
+$select-option-hover: rgba(255,255,255,.02) !default;
+$select-option-focus: rgba(255,255,255,.02) !default;
+$select-option-selected: rgba(0,0,0,.03) !default;
+$select-padding: 0.3125rem !default;
+$select-radius: 0.125 !default;
+$select-disabled-color: $input-disabled-color !default;
+
+
+// Switches
+$switch-bg-color: $secondary-color !default;
+$switch-checked-lever-bg: desaturate(lighten($switch-bg-color, 25%), 25%) !default;
+$switch-unchecked-bg: #F1F1F1 !default;
+$switch-unchecked-lever-bg: rgba(0,0,0,.38) !default;
+$switch-radius: 0.9375rem !default;
+
+
+// 11. Global
+// ==========================================================================
+
+// Media Query Ranges
+$small-screen-up: 601px !default;
+$medium-screen-up: 993px !default;
+$large-screen-up: 1201px !default;
+$small-screen: 600px !default;
+$medium-screen: 992px !default;
+$large-screen: 1200px !default;
+$screen-1440p: 2500px !default;
+$screen-4k: 3800px !default;
+
+$medium-and-up: "only screen and (min-width : #{$small-screen-up})" !default;
+$large-and-up: "only screen and (min-width : #{$medium-screen-up})" !default;
+$extra-large-and-up: "only screen and (min-width : #{$large-screen-up})" !default;
+$extra-large-1440p-and-up: "only screen and (min-width : #{$screen-1440p})" !default;
+$extra-large-4k-and-up: "only screen and (min-width : #{$screen-4k})" !default;
+$small-and-down: "only screen and (max-width : #{$small-screen})" !default;
+$medium-and-down: "only screen and (max-width : #{$medium-screen})" !default;
+$medium-only: "only screen and (min-width : #{$small-screen-up}) and (max-width : #{$medium-screen})" !default;
+
+
+// 12. Grid
+// ==========================================================================
+
+$num-cols: 12 !default;
+$gutter-width: 1.5rem !default;
+$element-top-margin: $gutter-width/3 !default;
+$element-bottom-margin: ($gutter-width*2)/3 !default;
+
+
+// 13. Navigation Bar
+// ==========================================================================
+
+$navbar-color: #2a292d;
+$navbar-height: 4rem !default;
+$navbar-line-height: $navbar-height !default;
+$navbar-height-mobile: 3.5rem !default;
+$navbar-line-height-mobile: $navbar-height-mobile !default;
+$navbar-font-size: 1rem !default;
+$navbar-font-color: #c7c8c9 !default;
+$navbar-brand-font-size: 2.1rem !default;
+
+// 14. Side Navigation
+// ==========================================================================
+
+$sidenav-width: 18.75rem !default;
+$sidenav-font-size: 0.875rem !default;
+$sidenav-font-color: #3688c6 !default;
+$sidenav-active-font-color: #d7d7d7 !default;
+$sidenav-subheader-color: #9AA0A6 !default;
+$sidenav-bg-color: #2a292d !default;
+$sidenav-link-bg-hover: #333236;
+$sidenav-padding: 1rem !default;
+$sidenav-item-height: 3rem !default;
+$sidenav-line-height: $sidenav-item-height !default;
+
+
+// 15. Photo Slider
+// ==========================================================================
+
+$slider-bg-color: color('grey', 'base') !default;
+$slider-bg-color-light: color('grey', 'lighten-2') !default;
+$slider-indicator-color: color('green', 'base') !default;
+
+
+// 16. Spinners | Loaders
+// ==========================================================================
+
+$spinner-default-color: $secondary-color !default;
+
+
+// 17. Tabs
+// ==========================================================================
+
+$tabs-underline-color: $secondary-color!default;
+$tabs-text-color: $surface-font-color !default;
+$tabs-bg-color: $primary-color !default;
+
+
+// 18. Tables
+// ==========================================================================
+
+$table-border-color: rgba(0,0,0,.12) !default;
+$table-striped-color: rgba(242, 242, 242, 0.5) !default;
+
+
+// 19. Toasts
+// ==========================================================================
+
+$toast-height: 3rem !default;
+$toast-color: #323232 !default;
+$toast-text-color: #fff !default;
+$toast-action-color: #eeff41;
+
+
+// 20. Typography
+// ==========================================================================
+
+$font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif !default;
+$off-black: rgba(0, 0, 0, 0.87) !default;
+// Header Styles
+$h1-fontsize: 4.2rem !default;
+$h2-fontsize: 3.56rem !default;
+$h3-fontsize: 2.92rem !default;
+$h4-fontsize: 2.28rem !default;
+$h5-fontsize: 1.64rem !default;
+$h6-fontsize: 1.15rem !default;
+
+
+// 21. Footer
+// ==========================================================================
+
+$footer-font-color: #fff !default;
+$footer-bg-color: $primary-color !default;
+$footer-copyright-font-color: rgba(255,255,255,.8) !default;
+$footer-copyright-bg-color: rgba(51,51,51,.08) !default;
+
+
+// 22. Flow Text
+// ==========================================================================
+
+$range : $large-screen - $small-screen !default;
+$intervals: 20 !default;
+$interval-size: $range / $intervals !default;
+
+
+// 23. Collections
+// ==========================================================================
+
+$collection-border-color: darken($surface-02dp-bg-color, 5%) !default;
+$collection-bg-color: $surface-02dp-bg-color !default;
+$collection-active-bg-color: $secondary-color !default;
+$collection-active-color: lighten($secondary-color, 55%) !default;
+$collection-hover-bg-color: lighten($surface-02dp-bg-color, 5%) !default;
+$collection-link-color: $secondary-color !default;
+$collection-line-height: 1.5rem !default;
+
+
+// 24. Progress Bar
+// ==========================================================================
+
+$progress-bar-color: $secondary-color !default;
+
+
+// 25. Material Table
+// ==========================================================================
+
+$material-table-border-bottom: $surface-08dp-bg-color;

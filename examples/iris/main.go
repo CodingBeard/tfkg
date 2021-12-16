@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/codingbeard/cberrors"
 	"github.com/codingbeard/cberrors/iowriterprovider"
 	"github.com/codingbeard/cblog"
@@ -13,11 +14,12 @@ import (
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func main() {
 	// This is where the trained model will be saved
-	saveDir := "examples/iris/saved_models/trained_model"
+	saveDir := filepath.Join("../../logs", fmt.Sprintf("iris-%d", time.Now().Unix()))
 	e := os.MkdirAll(saveDir, os.ModePerm)
 	if e != nil {
 		panic(e)
@@ -41,7 +43,7 @@ func main() {
 	errorHandler := cberrors.NewErrorContainer(iowriterprovider.New(logger))
 
 	// Where the cached tokenizers and divisors will go, if you change your data you'll need to clear this
-	cacheDir := "examples/iris/training-cache"
+	cacheDir := "training-cache"
 
 	// Create a dataset for training and evaluation. iris.data is in the format: float32, float32, float32, float32, className
 	// This means our categoryOffset is 4. The dataset will automatically pass this value in as the label Tensor when training and evaluating
@@ -58,7 +60,7 @@ func main() {
 		logger,
 		errorHandler,
 		data.SingleFileDatasetConfig{
-			FilePath:          "examples/iris/data/iris.data",
+			FilePath:          "data/iris.data",
 			CacheDir:          cacheDir,
 			CategoryOffset:    4,
 			TrainPercent:      0.8,
@@ -152,6 +154,18 @@ func main() {
 					Compare:    callback.CheckpointCompareMax,
 					SaveDir:    saveDir,
 				},
+				&callback.RecordStats{
+					OnEvent:        callback.EventEnd,
+					OnMode:         callback.ModeVal,
+					RecordDir:      saveDir,
+					RecordFileName: "train_stats.csv",
+				},
+				&callback.RecordStats{
+					OnEvent:        callback.EventSave,
+					OnMode:         callback.ModeVal,
+					RecordDir:      saveDir,
+					RecordFileName: "saved_stats.csv",
+				},
 			},
 		},
 	)
@@ -215,13 +229,13 @@ func main() {
 			Tracing predict
 			Saving model
 			Completed model base
-			2021-12-07 06:16:37.111 : single_file_dataset.go:66 : Initialising single file dataset at: examples/iris/data/iris.data
+			2021-12-07 06:16:37.111 : single_file_dataset.go:66 : Initialising single file dataset at: data/iris.data
 			2021-12-07 06:16:37.115 : single_file_dataset.go:140 : Loading line offsets and stats from cache file
 			2021-12-07 06:16:37.116 : single_file_dataset.go:146 : Found 151 rows. Got class counts: map[int]int{0:50, 1:50, 2:50}
 			2021-12-07 06:16:37.117 : single_file_dataset.go:253 : Loaded Pre-Processor: petal_sizes
 			2021-12-07 06:16:37.118 : single_file_dataset.go:261 : Loaded All Pre-Processors
 			2021-12-07 06:16:37.118 : main.go:101 : Shuffling dataset
-			2021-12-07 06:16:37.119 : main.go:105 : Training model: examples/iris/saved_models/trained_model
+			2021-12-07 06:16:37.119 : main.go:105 : Training model: ../../logs/iris-
 			2021-12-07 06:16:37.301 : logger.go:102 : End 1 5/5 (0s/0s) loss: 1.0304 acc: 0.0000 val_loss: 0.9951 val_acc: 0.0000
 			2021-12-07 06:16:37.365 : logger.go:102 : End 2 5/5 (0s/0s) loss: 0.8511 acc: 0.2348 val_loss: 0.7440 val_acc: 0.6000
 			2021-12-07 06:16:37.423 : logger.go:79 : Saved

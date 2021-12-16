@@ -1,0 +1,240 @@
+.sidenav {
+  position: fixed;
+  width: $sidenav-width;
+  left: 0;
+  top: 0;
+  margin: 0;
+  transform: translateX(-100%);
+  height: 100%;
+  height: calc(100% + calculateRem(60px));
+  height: -moz-calc(100%); //Temporary Firefox Fix
+  padding-bottom: calculateRem(60px);
+  background-color: $sidenav-bg-color;
+  z-index: 999;
+  overflow-y: auto;
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateX(-105%);
+
+  @extend .z-depth-1;
+
+  // Right Align
+  &.right-aligned {
+    right: 0;
+    transform: translateX(105%);
+    left: auto;
+    transform: translateX(100%);
+  }
+
+  .collapsible {
+    margin: 0;
+  }
+
+
+  li {
+    float: none;
+    line-height: $sidenav-line-height;
+
+    &.active { background-color: rgba(0,0,0,.05); }
+  }
+
+  li > a {
+    color: $sidenav-font-color;
+    display: block;
+    font-size: $sidenav-font-size;
+    font-weight: 500;
+    height: $sidenav-item-height;
+    line-height: $sidenav-line-height;
+    padding: 0 ($sidenav-padding * 2);
+
+    &:hover { background-color: $sidenav-link-bg-hover;}
+
+    &.btn, &.btn-large, &.btn-flat, &.btn-floating {
+      margin: calculateRem(10px) calculateRem(15px);
+    }
+
+    &.btn,
+    &.btn-large,
+    &.btn-floating { color: $button-raised-color; }
+    &.btn-flat { color: $button-flat-color; }
+
+    &.btn:hover,
+    &.btn-large:hover { background-color: lighten($button-raised-background, 5%); }
+    &.btn-floating:hover { background-color: $button-raised-background; }
+
+    & > i,
+    & > [class^="mdi-"], li > a > [class*="mdi-"],
+    & > i.material-icons {
+      float: left;
+      height: $sidenav-item-height;
+      line-height: $sidenav-line-height;
+      margin: 0 ($sidenav-padding * 2) 0 0;
+      width: $sidenav-item-height / 2;
+      color: rgba(0,0,0,.54);
+    }
+  }
+
+  li.active > a {
+    &:hover { background-color: $secondary-color;}
+  }
+
+  li > .brand-logo {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 1vh;
+    padding-bottom: 1vh;
+    height: 4rem;
+    font-size: 2.1rem;
+    color: $sidenav-subheader-color;
+
+    &:hover { background-color: $sidenav-bg-color;}
+  }
+
+  .divider {
+    margin: 0;
+  }
+
+  .subheader {
+    &:hover {
+      background-color: transparent;
+    }
+
+    cursor: initial;
+    margin-left: -0.5vw;
+    pointer-events: none;
+    color: $sidenav-subheader-color;
+    font-size: $sidenav-font-size;
+    font-weight: 500;
+    line-height: $sidenav-line-height;
+  }
+
+  .user-view {
+    position: relative;
+    padding: ($sidenav-padding * 2) ($sidenav-padding * 2) 0;
+    margin-bottom: $sidenav-padding / 2;
+
+    & > a {
+      &:hover { background-color: transparent; }
+      height: auto;
+      padding: 0;
+    }
+
+    .background {
+      overflow: hidden;
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: -1;
+    }
+
+    .circle, .name, .email {
+      display: block;
+    }
+
+    .circle {
+      height: calculateRem(64px);
+      width: calculateRem(64px);
+    }
+
+    .name,
+    .email {
+      font-size: $sidenav-font-size;
+      line-height: $sidenav-line-height / 2;
+    }
+
+    .name {
+      margin-top: calculateRem(16px);
+      font-weight: 500;
+    }
+
+    .email {
+      padding-bottom: calculateRem(16px);
+      font-weight: 400;
+    }
+  }
+}
+
+
+// Touch interaction
+.drag-target {
+  // Right Align
+  &.right-aligned {
+    right: 0;
+  }
+
+  height: 100%;
+  width: calculateRem(10px);
+  position: fixed;
+  top: 0;
+  z-index: 998;
+}
+
+
+// Fixed Sidenav shown
+.sidenav.sidenav-fixed {
+  // Right Align
+  &.right-aligned {
+    right: 0;
+    left: auto;
+  }
+
+  left: 0;
+  transform: translateX(0);
+  position: fixed;
+}
+
+// Fixed Sidenav hide on smaller
+@media #{$medium-and-down} {
+  .sidenav {
+    &.sidenav-fixed {
+      transform: translateX(-105%);
+
+      &.right-aligned {
+        transform: translateX(105%);
+      }
+    }
+
+    > a {
+      padding: 0 $sidenav-padding;
+    }
+
+    .user-view {
+      padding: $sidenav-padding $sidenav-padding 0;
+    }
+  }
+}
+
+
+.sidenav .collapsible-body > ul:not(.collapsible) > li.active,
+.sidenav.sidenav-fixed .collapsible-body > ul:not(.collapsible) > li.active {
+  background-color: $primary-color;
+  a {
+    color: $sidenav-bg-color;
+  }
+}
+.sidenav > li.active {
+  border-radius: 0 5px 5px 0;
+  margin-right: 1.15rem;
+  background-color: $secondary-color;
+  a {
+    color: $sidenav-active-font-color;
+  }
+}
+.sidenav .collapsible-body {
+  padding: 0;
+}
+
+
+.sidenav-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  height: 120vh;
+  background-color: rgba(0,0,0,.5);
+  z-index: 997;
+  display: none;
+}

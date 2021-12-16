@@ -13,7 +13,6 @@ import (
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"math/rand"
 	"os"
-	"path/filepath"
 )
 
 func main() {
@@ -22,7 +21,7 @@ func main() {
 		LogLevel:           cblog.DebugLevel,
 		Format:             "%{time:2006-01-02 15:04:05.000} : %{file}:%{line} : %{message}",
 		LogToFile:          true,
-		FilePath:           filepath.Join("examples/class_weights", "training.log"),
+		FilePath:           "training.log",
 		FilePerm:           os.ModePerm,
 		LogToStdOut:        true,
 		SetAsDefaultLogger: true,

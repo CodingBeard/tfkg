@@ -20,7 +20,6 @@ Use a python object with differing functions for the loss types, pass the loss t
 Allow custom python layers by offering a method to load the requisite python files
 
 ### Web server
-- A tensorboard style ui for examining saved models with train/saved/test stats
 - Queueing jobs with below training orchestration
 - Hyperparameter tuning
  

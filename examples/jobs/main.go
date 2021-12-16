@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/codingbeard/cberrors"
 	"github.com/codingbeard/cberrors/iowriterprovider"
 	"github.com/codingbeard/cblog"
@@ -13,11 +14,12 @@ import (
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func main() {
 	// This is where the trained model will be saved
-	saveDir := "examples/jobs/saved_models/trained_model"
+	saveDir := filepath.Join("../../logs", fmt.Sprintf("jobs-%d", time.Now().Unix()))
 	e := os.MkdirAll(saveDir, os.ModePerm)
 	if e != nil {
 		panic(e)
@@ -41,7 +43,7 @@ func main() {
 	errorHandler := cberrors.NewErrorContainer(iowriterprovider.New(logger))
 
 	// Where the cached tokenizers and divisors will go, if you change your data you'll need to clear this
-	cacheDir := "examples/jobs/training-cache"
+	cacheDir := "training-cache"
 
 	// We define data processors for the title, location, department, company_profile, description, and requirements. These names will be used for the tokenizer or divisor cache file
 	// The lineOffset is the offset in the data file
@@ -136,7 +138,7 @@ func main() {
 		logger,
 		errorHandler,
 		data.SingleFileDatasetConfig{
-			FilePath:          "examples/jobs/data/fake_job_postings.csv",
+			FilePath:          "data/fake_job_postings.csv",
 			CacheDir:          cacheDir,
 			CategoryOffset:    17,
 			TrainPercent:      0.8,
@@ -329,6 +331,18 @@ func main() {
 					Compare:    callback.CheckpointCompareMax,
 					SaveDir:    saveDir,
 				},
+				&callback.RecordStats{
+					OnEvent:        callback.EventEnd,
+					OnMode:         callback.ModeVal,
+					RecordDir:      saveDir,
+					RecordFileName: "train_stats.csv",
+				},
+				&callback.RecordStats{
+					OnEvent:        callback.EventSave,
+					OnMode:         callback.ModeVal,
+					RecordDir:      saveDir,
+					RecordFileName: "saved_stats.csv",
+				},
 			},
 		},
 	)
@@ -439,36 +453,31 @@ func main() {
 
 	/*
 		Example output:
-			2021-12-11 12:15:29.145 : single_file_dataset.go:166 : Reading line offsets and counting stats
-			2021-12-11 12:15:29.233 : single_file_dataset.go:267 : Found 17879 rows. Got class counts: map[int]int{0:17013, 1:866}
-			2021-12-11 12:15:29.233 : single_file_dataset.go:298 : Fitting Pre-Processors
-			Fitting preprocessors: 17476 17476/s2021-12-11 12:15:30.025 : single_file_dataset.go:155 : Loading line offsets and stats from cache file
-			2021-12-11 12:15:30.025 : single_file_dataset.go:161 : Found 17879 rows. Got class counts: map[int]int{0:17013, 1:866}
-			2021-12-11 12:15:30.025 : single_file_dataset.go:398 : Fit tokenizers
-			2021-12-11 12:15:30.026 : main.go:168 : Shuffling dataset
-			2021-12-11 12:15:30.027 : model.go:715 : Compiling and loading model. If anything goes wrong python error messages will be printed out.
-			Initialising model
-			Tracing learn
-			Tracing evaluate
-			Tracing predict
-			Saving model
-			Completed model base
-			2021-12-11 12:15:57.609 : main.go:294 : Training model: examples/jobs/saved_models/trained_model
-			2021-12-11 12:16:11.290 : logger.go:102 : End 1 8/8 (10s/10s) loss: 0.0650 acc: 0.7875 val_loss: 0.0729 val_acc: 0.9537
-			2021-12-11 12:16:11.713 : logger.go:79 : Saved
-			2021-12-11 12:16:20.775 : logger.go:102 : End 2 8/8 (9s/9s) loss: 0.0339 acc: 0.8660 val_loss: 0.0277 val_acc: 0.9156
-			2021-12-11 12:16:29.844 : logger.go:102 : End 3 8/8 (9s/9s) loss: 0.0170 acc: 0.9183 val_loss: 0.0288 val_acc: 0.9444
-			2021-12-11 12:16:38.930 : logger.go:102 : End 4 8/8 (9s/9s) loss: 0.0097 acc: 0.9541 val_loss: 0.0331 val_acc: 0.9425
-			2021-12-11 12:16:47.940 : logger.go:102 : End 5 8/8 (8s/8s) loss: 0.0071 acc: 0.9661 val_loss: 0.0329 val_acc: 0.9150
-			2021-12-11 12:16:57.036 : logger.go:102 : End 6 8/8 (9s/9s) loss: 0.0059 acc: 0.9661 val_loss: 0.0711 val_acc: 0.9675
-			2021-12-11 12:16:57.044 : logger.go:79 : Saved
-			2021-12-11 12:17:06.176 : logger.go:102 : End 7 8/8 (9s/9s) loss: 0.0057 acc: 0.9752 val_loss: 0.0643 val_acc: 0.9550
-			2021-12-11 12:17:15.332 : logger.go:102 : End 8 8/8 (9s/9s) loss: 0.0036 acc: 0.9819 val_loss: 0.0736 val_acc: 0.9462
-			2021-12-11 12:17:24.489 : logger.go:102 : End 9 8/8 (9s/9s) loss: 0.0046 acc: 0.9754 val_loss: 0.0471 val_acc: 0.9250
-			2021-12-11 12:17:33.080 : logger.go : Train 10 68/71 (9s/9s) loss: 0.0041 acc: 0.9755 | Prefetched 32021-12-11 12:17:33.629857: I tensorflow/cc/saved_model/reader.cc:38] Reading SavedModel from: examples/jobs/saved_models/trained_model
-			2021-12-11 12:17:33.629 : logger.go:102 : End 10 8/8 (9s/9s) loss: 0.0042 acc: 0.9753 val_loss: 0.0551 val_acc: 0.9244
-			2021-12-11 12:17:33.629 : main.go:336 : Finished training
-			2021-12-11 12:17:35.103 : inference.go:26 : Initialising inference provider with processors loaded from: examples/jobs/saved_models/trained_model
-			2021-12-11 12:17:36.200 : main.go:435 : Predicted classes: [1 7.840193e-11]
+			2021-12-16 18:31:13.908 : log.go:147 : Logger initialised
+			2021-12-16 18:31:13.913 : single_file_dataset.go:75 : Initialising single file dataset at: data/iris.data
+			2021-12-16 18:31:13.928 : single_file_dataset.go:158 : Loading line offsets and stats from cache file
+			2021-12-16 18:31:13.930 : single_file_dataset.go:165 : Found 150 rows. Got class counts: map[int]int{0:50, 1:50, 2:50} Got class weights: map[int]float32{0:1, 1:1, 2:1}
+			2021-12-16 18:31:13.936 : single_file_dataset.go:301 : Loaded Pre-Processor: petal_sizes
+			2021-12-16 18:31:13.938 : single_file_dataset.go:309 : Loaded All Pre-Processors
+			2021-12-16 18:31:13.946 : main.go:96 : Shuffling dataset
+			2021-12-16 18:31:13.947 : model.go:705 : Compiling and loading model. If anything goes wrong python error messages will be printed out.
+			2021-12-16 18:31:27.189 : main.go:119 : Training model: ../../logs/iris-1639679473
+			2021-12-16 18:31:28.141 : logger.go:102 : End 1 5/5 (1s/1s) loss: 1.0205 acc: 0.0256 val_loss: 1.0300 val_acc: 0.0667
+			2021-12-16 18:31:28.377 : logger.go:79 : Saved
+			2021-12-16 18:31:28.537 : logger.go:102 : End 2 5/5 (0s/0s) loss: 0.8546 acc: 0.2955 val_loss: 0.7449 val_acc: 0.6667
+			2021-12-16 18:31:28.578 : logger.go:79 : Saved
+			2021-12-16 18:31:28.743 : logger.go:102 : End 3 5/5 (0s/0s) loss: 0.6240 acc: 0.6742 val_loss: 0.4640 val_acc: 0.7333
+			2021-12-16 18:31:28.788 : logger.go:79 : Saved
+			2021-12-16 18:31:28.951 : logger.go:102 : End 4 5/5 (0s/0s) loss: 0.4676 acc: 0.6818 val_loss: 0.3371 val_acc: 0.7333
+			2021-12-16 18:31:29.114 : logger.go:102 : End 5 5/5 (1s/1s) loss: 0.3801 acc: 0.7803 val_loss: 0.2649 val_acc: 1.0000
+			2021-12-16 18:31:29.154 : logger.go:79 : Saved
+			2021-12-16 18:31:29.322 : logger.go:102 : End 6 5/5 (0s/0s) loss: 0.3067 acc: 0.9242 val_loss: 0.2028 val_acc: 1.0000
+			2021-12-16 18:31:29.481 : logger.go:102 : End 7 5/5 (0s/0s) loss: 0.2399 acc: 0.9470 val_loss: 0.1583 val_acc: 1.0000
+			2021-12-16 18:31:29.643 : logger.go:102 : End 8 5/5 (0s/0s) loss: 0.1906 acc: 0.9545 val_loss: 0.1324 val_acc: 0.9333
+			2021-12-16 18:31:29.810 : logger.go:102 : End 9 5/5 (0s/0s) loss: 0.1601 acc: 0.9470 val_loss: 0.1143 val_acc: 0.9333
+			2021-12-16 18:31:29.969 : logger.go:102 : End 10 5/5 (0s/0s) loss: 0.1416 acc: 0.9621 val_loss: 0.1006 val_acc: 0.9333
+			2021-12-16 18:31:29.972 : main.go:173 : Finished training
+			2021-12-16 18:31:29.973 : inference.go:26 : Initialising inference provider with processors loaded from: ../../logs/iris-1639679473
+			2021-12-16 18:31:30.101 : main.go:212 : Predicted classes: Iris-setosa: 0.000068, Iris-versicolor: 0.320184, Iris-virginica: 0.679748
 	*/
 }

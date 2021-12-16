@@ -1,0 +1,23 @@
+.error {
+  background-color: $error-color;
+}
+
+.error-text {
+  color: $error-color;
+}
+
+.success {
+  background-color: $success-color;
+}
+
+.success-text {
+  color: $success-color;
+}
+
+.row {
+  margin-bottom: 0;
+}
+
+.secondary-background {
+  background-color: $secondary-color;
+}

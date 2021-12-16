@@ -1,0 +1,348 @@
+{{ extends "-global-/cbwebcommon/master.gohtml" }}
+{{- /*gotype: webshield/web/module/metrics.ModelsViewModel*/ -}}
+{{- define "content" }}
+    <div class="header center hide-on-med-and-down">
+        {{ .GetMasterViewModel.GetPageTitle }}
+    </div>
+    <div class="row">
+        <div class="col s12 l10 offset-l1 center-align">
+            <a class="btn-small" href="/">Home</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col s12 l10 offset-l1">
+            <div class="card surface-01dp">
+                <form>
+                    {{range $index, $item := .GetLogNames}}
+                        <label class="toggle-vis col s2" data-column="{{$index}}" data-column-name="{{$item}}">
+                            <input type="checkbox" />
+                            <span>{{$item}}</span>
+                        </label>
+                    {{end}}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col s12 l10 offset-l1">
+            <div class="card material-table surface-01dp">
+                <div class="table-header">
+                    Metrics
+                </div>
+                <table id="{{.GetDataTable.GetTableId}}">
+                    <thead>
+                    <tr>
+                        {{range .GetDataTable.GetColumns}}
+                            {{if .GetFilterable}}
+                                <th class="material-table-searchable">{{.GetTitle}}</th>
+                            {{else}}
+                                <th>{{.GetTitle}}</th>
+                            {{end}}
+                        {{end}}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{{ end -}}
+{{- define "javascript" }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.sidenav').sidenav();
+        });
+    </script>
+    <script type="text/javascript">
+        // Used to figure out the index of the columns by name
+        let columnNames = {{.GetDataTable.GetColumnsJson}};
+
+        //replace all of the headers with search boxes
+        $('#{{.GetDataTable.GetTableId}} .material-table-searchable').each(
+            function (k, v) {
+                let title = $(this).text();
+                $(this).html(
+                    '<input type="text" name="' + title + '" placeholder="' + title + '" />');
+            }
+        );
+
+        let editableColumns = [
+            {{range .GetDataTable.GetColumns}}
+            {
+                editable: {{if .GetEditable}}true{{else}}false{{end}},
+                name: "{{.GetTitle}}",
+                editableName: "{{.GetEditableName}}"
+            },
+            {{end}}
+        ];
+
+        // DataTable
+        let {{.GetDataTable.GetTableId}} = $('#{{.GetDataTable.GetTableId}}').DataTable(
+            {
+                {{if .GetDataTable.HasData}}
+                data:        {{.GetDataTable.GetDataJson}},
+                {{end}}
+                {{if .GetDataTable.IsAjax}}
+                ajax:        {{.GetDataTable.GetAjaxRoute}},
+                {{end}}
+                "oLanguage": {
+                    "sInfo":       "_START_-_END_ of _TOTAL_",
+                    "sLengthMenu": '<span>Rows per page:</span><select class="browser-default">' +
+                        '<option value="-1">All</option>' +
+                        '<option value="10">10</option>' +
+                        '<option value="20">20</option>' +
+                        '<option value="30">30</option>' +
+                        '<option value="40">40</option>' +
+                        '<option value="50">50</option>' +
+                        '</select></div>'
+                },
+                "pageLength":-1,
+                "order": [[ 0, "desc" ],[ 1, "desc" ],[ 4, "desc" ]],
+                buttons: [
+                    {
+                        extend:   'csv',
+                        filename: '{{.GetDataTable.GetTableId}}',
+                        text:     '<i class="material-icons">file_download</i>'
+                    }
+                ],
+                bAutoWidth:  false,
+                drawCallback: function () {
+                    $('#{{.GetDataTable.GetTableId}} .material-table-edit-row').off('click').on('click', function (evt) {
+                        let data = {};
+                        $(this).parent().parent().find("td").each(
+                            function (k, v) {
+                                if (editableColumns[k].editable) {
+                                    let value = $(this).text();
+                                    if (value !== "") {
+                                        data[editableColumns[k].editableName] = value;
+                                    }
+                                }
+                            }
+                        );
+
+                        if (typeof dataTableEditCallback != "undefined" && typeof dataTableEditCallback["{{.GetDataTable.GetTableId}}"] == "function") {
+                            dataTableEditCallback["{{.GetDataTable.GetTableId}}"](data);
+                        }
+                    });
+                    {{if .GetDataTable.GroupByColumn}}
+                    let api = this.api();
+                    let rows = api.rows( {page:'current'} ).nodes();
+                    let last = null;
+
+                    api.column({{.GetDataTable.GroupColumnOffset}}, {page:'current'} ).data().each( function ( group, i ) {
+                        if ( last !== group ) {
+                            $(rows).eq( i ).before(
+                                '<tr class="group"><td><a target="_blank" href="/metrics/model?modelName='+group+'">'+group+'</a></td>' +
+                                '<td>' +
+                                '<form method="POST">' +
+                                '<input type="hidden" name="model-name" value="'+group+'">' +
+                                '<input type="submit" name="hide-model" value="Hide Model" class="btn-flat btn-small">' +
+                                '</form>' +
+                                '</td>' +
+                                '</tr>'
+                            );
+
+                            last = group;
+                        }
+                    } );
+                    {{end}}
+                }
+            }
+        );
+
+        $('.dataTables_filter').remove();
+
+        // stores all active filters
+        let filters = {};
+        // filted out columnFilter query objects which could have been pasted in from link so we can remove them if the filter is changed
+        let preExistingUrl = window.location.href.replace(/columnFilter\[[^\]]+\]=[^&]+/g, '');
+
+        // attach the filter function to each of the inputs
+        {{.GetDataTable.GetTableId}}.columns().eq(0).each(
+            function (colIdx) {
+                $('input', {{.GetDataTable.GetTableId}}.column(colIdx).header()).on('keyup change', function () {
+                        updateQuery(colIdx, $(this).attr('name'), this.value);
+                    }
+                );
+            }
+        );
+
+        // Used to get columnFilters if the user pasted in a link containing filters
+        function parseQuery(qstr)
+        {
+            let query = {};
+            let a = (qstr[0] === '?' ? qstr.substr(1) : qstr).split('&');
+            for (let i = 0; i < a.length; i++)
+            {
+                let b = a[i].split('=');
+                query[decodeURIComponent(b[0])] = decodeURIComponent(b[1] || '');
+            }
+            return query;
+        }
+
+        // Apply any filters which were pasted into the url
+        let query = parseQuery(window.location.search);
+        $.each(query, function (k, v) {
+            if (k.indexOf('columnFilter[') !== -1)
+            {
+                let columnName = k.replace(/columnFilter\[([^\]]+)\]/g, "$1");
+
+                if (columnNames.indexOf(columnName) !== -1)
+                {
+                    updateQuery(columnNames.indexOf(columnName), columnName, v);
+                    $('input[name="' + columnName + '"]').val(v);
+                }
+            }
+        });
+
+        // Update the column search
+        function updateQuery(colIdx, name, value)
+        {
+            {{.GetDataTable.GetTableId}}.column(colIdx)
+            .search(value)
+            .draw();
+
+            if (value != '')
+            {
+                filters[name] = value;
+            }
+            else
+            {
+                delete filters[name];
+            }
+
+            $('#filters-enabled').empty();
+
+            $.each(filters, function (k, v) {
+                $('#filters-enabled').append('<li>' + k + ': ' + v + '</li>');
+            });
+
+            if (history.pushState)
+            {
+                let filterString = '';
+
+                $.each(filters, function (k, v) {
+                    filterString += 'columnFilter[' + k + ']=' + encodeURI(v) + '&'
+                });
+
+                if (filterString.length)
+                {
+                    if (preExistingUrl.indexOf('?') !== -1)
+                    {
+                        if (preExistingUrl.substring(preExistingUrl.length - 1) == '&')
+                        {
+                            let newurl = preExistingUrl + filterString.substring(
+                                0, filterString.length - 1);
+                        }
+                        else
+                        {
+                            let newurl = preExistingUrl + '&' + filterString.substring(
+                                0, filterString.length - 1);
+                        }
+
+                    }
+                    else
+                    {
+                        let newurl = preExistingUrl + '?' + filterString.substring(
+                            0, filterString.length - 1);
+                    }
+                    window.history.pushState({path: newurl}, '', newurl);
+                }
+                else
+                {
+                    window.history.pushState({path: preExistingUrl}, '', preExistingUrl);
+                }
+            }
+        }
+
+        $('#{{.GetDataTable.GetTableId}} .material-table-edit-row').on('click', function (evt) {
+            let data = {};
+            $(this).parent().parent().find("td").each(
+                function (k, v) {
+                    if (editableColumns[k].editable) {
+                        let value = $(this).text();
+                        if (value !== "") {
+                            data[editableColumns[k].editableName] = value;
+                        }
+                    }
+                }
+            );
+
+            if (typeof dataTableEditCallback != "undefined" && typeof dataTableEditCallback["{{.GetDataTable.GetTableId}}"] == "function") {
+                dataTableEditCallback["{{.GetDataTable.GetTableId}}"](data);
+            }
+        });
+    </script>
+    <script type="application/javascript">
+
+        $(document).ready(function () {
+            for (let i = 6; i < columnNames.length; i++) {
+                var column = modelmetrics.column(i);
+                column.visible(false);
+            }
+            columnsVisible = {};
+            let preExistingColumnsUrl = window.location.href.replace(/&columns\[[^\]]+\]=[^&]+/g, '');
+            $('.toggle-vis').on( 'click', function (e) {
+                e.preventDefault();
+                var column = modelmetrics.column( parseInt($(this).attr('data-column')) + 6 );
+                column.visible( ! column.visible() );
+                if ($(this).children("input[type=checkbox]").is(':checked')) {
+                    $(this).children("input[type=checkbox]").prop('checked', false);
+                } else {
+                    $(this).children("input[type=checkbox]").prop('checked', true);
+                }
+                columnsVisible[$(this).attr('data-column-name')] = column.visible()
+                if (history.pushState)
+                {
+                    let filterString = '';
+
+                    $.each(columnsVisible, function (k, v) {
+                        filterString += 'columns[' + k + ']=' + encodeURI(v) + '&'
+                    });
+
+                    if (filterString.length)
+                    {
+                        let newurl = ""
+                        if (preExistingColumnsUrl.indexOf('?') !== -1)
+                        {
+                            if (preExistingColumnsUrl.substring(preExistingColumnsUrl.length - 1) == '&')
+                            {
+                                newurl = preExistingColumnsUrl + filterString.substring(
+                                    0, filterString.length - 1);
+                            }
+                            else
+                            {
+                                newurl = preExistingColumnsUrl + '&' + filterString.substring(
+                                    0, filterString.length - 1);
+                            }
+
+                        }
+                        else
+                        {
+                            newurl = preExistingColumnsUrl + '?' + filterString.substring(
+                                0, filterString.length - 1);
+                        }
+                        window.history.pushState({path: newurl}, '', newurl);
+                    }
+                    else
+                    {
+                        window.history.pushState({path: preExistingColumnsUrl}, '', preExistingColumnsUrl);
+                    }
+                }
+            } );
+
+            let query = parseQuery(window.location.search);
+            console.log(query)
+            $.each(query, function (k, v) {
+                if (k.indexOf('columns[') !== -1)
+                {
+                    if (v === "true") {
+                        let columnName = k.replace(/columns\[([^\]]+)\]/g, "$1");
+                        $(".toggle-vis[data-column-name='" + columnName + "']").click();
+                    }
+                }
+            });
+        });
+    </script>
+{{ end -}}

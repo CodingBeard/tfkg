@@ -1,0 +1,20 @@
+env: "prod" # dev | test | prod
+gulp:
+  font:
+    src:
+      - "./web/fonts/**/*"
+    dist: "./web/public/fonts/"
+  scss:
+    inputPaths:
+      - "node_modules"
+      - "web/scss"
+  js:
+    concat:
+      files:
+        - "./web/js/*"
+        - "./node_modules/cbfrontend/js/*"
+      dist: "./web/public/js/"
+assets:
+  src:
+    - "./web/scss/**/*"
+  dist: "./web/public/css/"

@@ -1,0 +1,35 @@
+form {
+  &.login-form {
+    display: inline-block;
+    width: 27rem;
+    padding: 1.5rem 3rem 2rem 3rem;
+  }
+  &.register-form {
+    display: inline-block;
+    width: 27rem;
+    padding: 1.5rem 3rem 2rem 3rem;
+  }
+  padding-bottom: 0;
+  margin-bottom: 0;
+
+  .chips-container {
+    .error-text {
+      margin-top: -.5rem;
+      position: relative;
+      min-height: 1.125rem;
+      display: block;
+      font-size: .75rem;
+    }
+
+    .chips {
+      &.chips-error {
+        border-bottom: .0625rem solid $error-color;
+        box-shadow: 0 0.0625rem 0 0 $error-color;
+      }
+    }
+  }
+}
+
+.dropdown-content {
+  background-color: $surface-02dp-bg-color;
+}

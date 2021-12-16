@@ -1,0 +1,16 @@
+//@import "../../node_modules/cbfrontend/scss/materialize/color-variables";
+//@import "../../node_modules/cbfrontend/scss/materialize/color-classes";
+@import "materialize/color-variables";
+@import "materialize/color-classes";
+@import "variables";
+//@import "../../node_modules/cbfrontend/scss/materialize/materialize";
+@import "materialize/materialize";
+@import "modules/_global.scss";
+@import "modules/_header.scss";
+@import "modules/_navbar.scss";
+@import "modules/_form.scss";
+
+html {
+  min-width: 100vw;
+  min-height: 100vh;
+}

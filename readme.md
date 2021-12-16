@@ -25,7 +25,7 @@ See `ideas-todo.md` for what's in store
 
 Versions starting with v0 are liable to change radically.
 
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.11`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.12`
 
 ## Requirements
 
@@ -52,6 +52,7 @@ Linux environments are recommended, no GPU support on macOS and docker volumes a
 
 - Nvidia CUDA support on applicable platforms during Golang training/evaluation due to using the Tensorflow C library
 - Define, train, evaluate, save, load, and infer Tensorflow compatible models all in Golang
+- Web interface for inspecting model training metrics. Use `make web` to start it
 - Load, shuffle, and preprocess csv datasets efficiently, even very large ones (tested on 300+GB csv file on a nvme ssd)
     - String Tokenizer
     - Float/Int normalization to between 0-1
@@ -104,10 +105,11 @@ Many of the implemented layers do not have all the configurable properties found
 | Functional | Fraudulent Job Specs | Categorical Classification | Input, Embedding, LSTM, Concatenate, Dense | `./examples/jobs`            |
 | Sequential | Random imbalanced    | Categorical Classification | Input, Dense                               | `./examples/class_weights`   |
 
-To test it out run:
+To test it out run the following then head to the web interface on http://localhost:8082
 
 ```
 make init-docker
+make web
 make examples-iris
 ```
 

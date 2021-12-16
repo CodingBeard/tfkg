@@ -1,0 +1,85 @@
+.dropdown-content {
+  &:focus {
+    outline: 0;
+  }
+
+
+  @extend .z-depth-1;
+  background-color: $dropdown-bg-color;
+  margin: 0;
+  display: none;
+  min-width: calculateRem(100px);
+  overflow-y: auto;
+  opacity: 0;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 9999; // TODO: Check if this doesn't break other things
+  transform-origin: 0 0;
+
+
+  li {
+    &:hover, &.active {
+      background-color: $dropdown-hover-bg-color;
+    }
+
+    &:focus {
+      outline: none;
+    }
+
+    &.divider {
+      min-height: 0;
+      height: calculateRem(1px);
+    }
+
+    & > a, & > span {
+      font-size: calculateRem(16px);
+      color: $dropdown-color;
+      display: block;
+      line-height: calculateRem(22px);
+      padding: (($dropdown-item-height - 1.375) / 2) calculateRem(16px);
+    }
+
+    & > span > label {
+      top: calculateRem(1px);
+      left: 0;
+      height: calculateRem(18px);
+    }
+
+    // Icon alignment override
+    & > a > i {
+      height: inherit;
+      line-height: inherit;
+      float: left;
+      margin: 0 calculateRem(24px) 0 0;
+      width: calculateRem(24px);
+    }
+
+
+    clear: both;
+    color: $off-black;
+    cursor: pointer;
+    min-height: $dropdown-item-height;
+    line-height: 1.5rem;
+    width: 100%;
+    text-align: left;
+  }
+}
+
+body.keyboard-focused {
+  .dropdown-content li:focus {
+    background-color: darken($dropdown-hover-bg-color, 8%);
+  }
+}
+
+// Input field specificity bugfix
+.input-field.col .dropdown-content [type="checkbox"] + label {
+  top: calculateRem(1px);
+  left: 0;
+  height: calculateRem(18px);
+  transform: none;
+}
+
+.dropdown-trigger {
+  cursor: pointer;
+}

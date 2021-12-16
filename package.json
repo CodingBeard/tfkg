@@ -1,0 +1,6 @@
+{
+  "name": "tfkg",
+  "dependencies": {
+    "cbfrontend": "^0.0.8"
+  }
+}

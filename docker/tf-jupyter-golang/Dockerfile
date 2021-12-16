@@ -1,6 +1,6 @@
 FROM tensorflow/tensorflow:2.6.0-gpu-jupyter
 
-ENV PATH=$PATH:/usr/local/go/bin
+ENV PATH=$PATH:/usr/local/go/bin:/root/go/bin
 
 RUN apt update && \
   apt-get -y install wget && \

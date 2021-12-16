@@ -1,0 +1,289 @@
+div.material-table {
+  padding: 0;
+
+  table {
+    table-layout: fixed;
+  }
+
+  .column-filters {
+    padding-top: 1em;
+    padding-left: 1em;
+    #filters-enabled {
+      margin: 0;
+      padding-left: 1em;
+    }
+  }
+
+  .table-header {
+    font-size: 1.15rem;
+    height: 4em;
+    padding-left: 1em;
+    padding-right: 0.875em;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    display: flex;
+    -webkit-display: flex;
+    border-bottom: solid 0.0625em $material-table-border-bottom;
+
+    .actions {
+      display: -webkit-flex;
+      margin-left: auto;
+    }
+
+    .btn-flat {
+      min-width: 2.25em;
+      padding: 0 0.5em;
+    }
+
+    input {
+      margin: 0;
+      height: auto;
+    }
+
+    i {
+      color: $surface-font-color;
+      font-size: 1.5em;
+    }
+  }
+
+  .table-footer .footer-item {
+    height: 3.5em;
+    padding-left: 1.5em;
+    padding-right: 0.875em;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    -webkit-align-items: center;
+    align-items: center;
+    font-size: 0.8em !important;
+    color: $surface-font-color;
+
+    &.flex-start {
+      -webkit-justify-content: flex-start;
+      justify-content: flex-start;
+    }
+    &.flex-end {
+      -webkit-justify-content: flex-end;
+      justify-content: flex-end;
+    }
+
+    .dt-button {
+      border: $button-border;
+      border-radius: $button-radius;
+      display: inline-block;
+      height: $button-height;
+      line-height: $button-height;
+      padding: $button-padding;
+      text-transform: uppercase;
+      vertical-align: middle;
+      -webkit-tap-highlight-color: transparent; // Gets rid of tap active state
+      font-size: $button-font-size;
+      outline: 0;
+      i {
+        font-size: $button-icon-font-size;
+        line-height: inherit;
+      }
+      &:focus {
+        background-color: darken($button-raised-background, 10%);
+      }
+      text-decoration: none;
+      text-align: center;
+      letter-spacing: calculateRem(.5px);
+      @extend .z-depth-1;
+      &:hover {
+        background-color: $button-raised-background-hover;
+        @extend .z-depth-1-half;
+      }
+      box-shadow: none;
+      background-color: transparent;
+      color: $button-flat-color;
+      cursor: pointer;
+      transition: background-color .2s;
+      &:focus,
+      &:hover {
+        box-shadow: none;
+      }
+      &:focus {
+        background-color: rgba(0, 0, 0, .1);
+      }
+      &.disabled,
+      &.btn-flat[disabled]  {
+        background-color: transparent !important;
+        color: $button-flat-disabled-color !important;
+        cursor: default;
+      }
+    }
+
+    .dataTables_length {
+      display: -webkit-flex;
+      display: flex;
+    }
+
+    label {
+      font-size: 1em;
+      color: $surface-font-color;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-flex-direction: row;
+      /* works with row or column */
+
+      flex-direction: row;
+      -webkit-align-items: center;
+      align-items: center;
+      -webkit-justify-content: center;
+      justify-content: center;
+    }
+
+    .select-wrapper {
+      display: -webkit-flex;
+      display: flex;
+      -webkit-flex-direction: row;
+      /* works with row or column */
+
+      flex-direction: row;
+      -webkit-align-items: center;
+      align-items: center;
+      -webkit-justify-content: center;
+      justify-content: center;
+    }
+
+    .dataTables_info,
+    .dataTables_length {
+      margin-right: 2em;
+    }
+
+    .material-pagination {
+      display: flex;
+      -webkit-display: flex;
+      margin: 0;
+
+      li:first-child {
+        margin-right: 1.5em;
+      }
+
+      li a {
+        color: $link-color;
+      }
+    }
+
+    .select-wrapper input.select-dropdown {
+      margin: 0;
+      border-bottom: none;
+      height: auto;
+      line-height: normal;
+      font-size: 1em;
+      width: 2.5em;
+      text-align: right;
+    }
+
+    select {
+      color: $surface-font-color;
+      background-color: transparent;
+      width: auto;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      height: auto;
+      margin-left: 1.25em;
+    }
+  }
+
+  .table-title {
+    font-size: 1.25em;
+    color: $surface-font-color;
+  }
+
+  table {
+    tr {
+      td {
+        padding: 0 0 0 0.5em;
+        height: 2em;
+        font-size: 0.8em;
+        color: $surface-font-color;
+        border: solid 0.0625em $material-table-border-bottom;
+        overflow-wrap: break-word;
+
+        a {
+          i {
+            font-size: 1.125em;
+            color: $surface-font-color;
+          }
+        }
+
+        &:first-child {
+          border-left: none;
+        }
+        &:last-child {
+          border-right: none;
+        }
+      }
+    }
+
+    th {
+      font-size: 1em;
+      font-weight: 500;
+      color: $surface-font-color;
+      border: solid 0.0625em $material-table-border-bottom;
+      border-top: none;
+      cursor: pointer;
+      white-space: nowrap;
+      padding: 0;
+      height: 3.5em;
+      padding-left: 0.5em;
+      vertical-align: middle;
+      outline: none !important;
+
+      &.sorting_asc,
+      &.sorting_desc {
+        color: $surface-font-color;
+      }
+
+      &.sorting:after,
+      &.sorting_asc:after,
+      &.sorting_desc:after {
+        font-family: 'Material Icons';
+        font-weight: normal;
+        font-style: normal;
+        font-size: 1em;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        word-wrap: normal;
+        -webkit-font-feature-settings: 'liga';
+        -webkit-font-smoothing: antialiased;
+        content: "arrow_back";
+        -webkit-transform: rotate(90deg);
+        display: none;
+        vertical-align: middle;
+      }
+
+      &.sorting:hover:after,
+      &.sorting_asc:after,
+      &.sorting_desc:after {
+        display: inline-block;
+      }
+
+      &.sorting_desc:after {
+        content: "arrow_forward";
+      }
+
+      &:first-child {
+        border-left: none;
+      }
+      &:last-child {
+        border-right: none;
+      }
+
+      input[type=text]:not(.browser-default) {
+        width: 90%;
+      }
+    }
+
+    tbody tr:hover {
+      background-color: $surface-02dp-bg-color;
+    }
+  }
+}
