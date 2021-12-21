@@ -171,109 +171,112 @@ func main() {
 
 	// Define 6 input paths, one for each of our inputs. They will be passed into an embedding layer and then a LSTM layer
 	titleInput := layer.NewInput(
-		tf.MakeShape(-1, int64(titleProcessor.Tokenizer().MaxLen())),
-		layer.Float32,
-		layer.InputConfig{Name: "title_input"},
+		layer.InputWithInputShape(tf.MakeShape(-1, int64(titleProcessor.Tokenizer().MaxLen()))),
+		layer.InputWithDtype(layer.Float32),
+		layer.InputWithName("title_input"),
 	)
 
 	titleEmbedding := layer.NewEmbedding(
-		titleProcessor.Tokenizer().NumWords()+1,
+		float64(titleProcessor.Tokenizer().NumWords()+1),
 		32,
-		layer.EmbeddingConfig{Name: "title_embedding"},
+		layer.EmbeddingWithName("title_embedding"),
 	)(titleInput)
 
-	titleLSTM := layer.NewLSTM(32, layer.LSTMConfig{Name: "title_lstm"})(titleEmbedding)
+	titleLSTM := layer.NewLSTM(32, layer.LSTMWithName("title_lstm"))(titleEmbedding)
 
 	locationInput := layer.NewInput(
-		tf.MakeShape(-1, int64(locationProcessor.Tokenizer().MaxLen())),
-		layer.Float32,
-		layer.InputConfig{Name: "location_input"},
+		layer.InputWithInputShape(tf.MakeShape(-1, int64(locationProcessor.Tokenizer().MaxLen()))),
+		layer.InputWithDtype(layer.Float32),
+		layer.InputWithName("location_input"),
 	)
 
 	locationEmbedding := layer.NewEmbedding(
-		locationProcessor.Tokenizer().NumWords()+1,
+		float64(locationProcessor.Tokenizer().NumWords()+1),
 		32,
-		layer.EmbeddingConfig{Name: "location_embedding"},
+		layer.EmbeddingWithName("location_embedding"),
 	)(locationInput)
 
-	locationLSTM := layer.NewLSTM(32, layer.LSTMConfig{Name: "location_lstm"})(locationEmbedding)
+	locationLSTM := layer.NewLSTM(32, layer.LSTMWithName("location_lstm"))(locationEmbedding)
 
 	departmentInput := layer.NewInput(
-		tf.MakeShape(-1, int64(departmentProcessor.Tokenizer().MaxLen())),
-		layer.Float32,
-		layer.InputConfig{Name: "department_input"},
+		layer.InputWithInputShape(tf.MakeShape(-1, int64(departmentProcessor.Tokenizer().MaxLen()))),
+		layer.InputWithDtype(layer.Float32),
+		layer.InputWithName("department_input"),
 	)
 
 	departmentEmbedding := layer.NewEmbedding(
-		departmentProcessor.Tokenizer().NumWords()+1,
+		float64(departmentProcessor.Tokenizer().NumWords()+1),
 		32,
-		layer.EmbeddingConfig{Name: "department_embedding"},
+		layer.EmbeddingWithName("department_embedding"),
 	)(departmentInput)
 
-	departmentLSTM := layer.NewLSTM(32, layer.LSTMConfig{Name: "department_lstm"})(departmentEmbedding)
+	departmentLSTM := layer.NewLSTM(32, layer.LSTMWithName("department_lstm"))(departmentEmbedding)
 
 	companyProfileInput := layer.NewInput(
-		tf.MakeShape(-1, int64(companyProfileProcessor.Tokenizer().MaxLen())),
-		layer.Float32,
-		layer.InputConfig{Name: "companyProfile_input"},
+		layer.InputWithInputShape(tf.MakeShape(-1, int64(companyProfileProcessor.Tokenizer().MaxLen()))),
+		layer.InputWithDtype(layer.Float32),
+		layer.InputWithName("companyProfile_input"),
 	)
 
 	companyProfileEmbedding := layer.NewEmbedding(
-		companyProfileProcessor.Tokenizer().NumWords()+1,
+		float64(companyProfileProcessor.Tokenizer().NumWords()+1),
 		32,
-		layer.EmbeddingConfig{Name: "company_profile_embedding"},
+		layer.EmbeddingWithName("company_profile_embedding"),
 	)(companyProfileInput)
 
-	companyProfileLSTM := layer.NewLSTM(32, layer.LSTMConfig{Name: "company_profile_lstm"})(companyProfileEmbedding)
+	companyProfileLSTM := layer.NewLSTM(32, layer.LSTMWithName("company_profile_lstm"))(companyProfileEmbedding)
 
 	descriptionInput := layer.NewInput(
-		tf.MakeShape(-1, int64(descriptionProcessor.Tokenizer().MaxLen())),
-		layer.Float32,
-		layer.InputConfig{Name: "description_input"},
+		layer.InputWithInputShape(tf.MakeShape(-1, int64(descriptionProcessor.Tokenizer().MaxLen()))),
+		layer.InputWithDtype(layer.Float32),
+		layer.InputWithName("description_input"),
 	)
 
 	descriptionEmbedding := layer.NewEmbedding(
-		descriptionProcessor.Tokenizer().NumWords()+1,
+		float64(descriptionProcessor.Tokenizer().NumWords()+1),
 		32,
-		layer.EmbeddingConfig{Name: "description_embedding"},
+		layer.EmbeddingWithName("description_embedding"),
 	)(descriptionInput)
 
-	descriptionLSTM := layer.NewLSTM(32, layer.LSTMConfig{Name: "description_lstm"})(descriptionEmbedding)
+	descriptionLSTM := layer.NewLSTM(32, layer.LSTMWithName("description_lstm"))(descriptionEmbedding)
 
 	requirementsInput := layer.NewInput(
-		tf.MakeShape(-1, int64(requirementsProcessor.Tokenizer().MaxLen())),
-		layer.Float32,
-		layer.InputConfig{Name: "requirements_input"},
+		layer.InputWithInputShape(tf.MakeShape(-1, int64(requirementsProcessor.Tokenizer().MaxLen()))),
+		layer.InputWithDtype(layer.Float32),
+		layer.InputWithName("requirements_input"),
 	)
 
 	requirementsEmbedding := layer.NewEmbedding(
-		requirementsProcessor.Tokenizer().NumWords()+1,
+		float64(requirementsProcessor.Tokenizer().NumWords()+1),
 		32,
-		layer.EmbeddingConfig{Name: "requirements_embedding"},
+		layer.EmbeddingWithName("requirements_embedding"),
 	)(requirementsInput)
 
-	requirementsLSTM := layer.NewLSTM(32, layer.LSTMConfig{Name: "requirements_lstm"})(requirementsEmbedding)
+	requirementsLSTM := layer.NewLSTM(32, layer.LSTMWithName("requirements_lstm"))(requirementsEmbedding)
 
 	// Merge our LSTM layers into a single tensor
-	concatenate := layer.NewConcatenate(-1)(titleLSTM, locationLSTM, departmentLSTM, companyProfileLSTM, descriptionLSTM, requirementsLSTM)
+	concatenate := layer.NewConcatenate()(titleLSTM, locationLSTM, departmentLSTM, companyProfileLSTM, descriptionLSTM, requirementsLSTM)
 
 	// Feed the merged input into a dense network
 	mergedDense1 := layer.NewDense(
 		100,
-		layer.Float32,
-		layer.DenseConfig{Name: "merged_dense_1", Activation: "swish"},
+		layer.DenseWithDtype(layer.Float32),
+		layer.DenseWithName("merged_dense_1"),
+		layer.DenseWithActivation("swish"),
 	)(concatenate)
 	mergedDense2 := layer.NewDense(
 		100,
-		layer.Float32,
-		layer.DenseConfig{Name: "merged_dense_2", Activation: "swish"},
+		layer.DenseWithDtype(layer.Float32),
+		layer.DenseWithName("merged_dense_2"),
+		layer.DenseWithActivation("swish"),
 	)(mergedDense1)
 
 	// Get the number of classes from the dataset if we don't want to count them manually, but in this case it is only 2
 	output := layer.NewDense(
-		dataset.NumCategoricalClasses(),
-		layer.Float32,
-		layer.DenseConfig{Name: "output", Activation: "softmax"},
+		float64(dataset.NumCategoricalClasses()),
+		layer.DenseWithDtype(layer.Float32),
+		layer.DenseWithName("output"),
+		layer.DenseWithActivation("softmax"),
 	)(mergedDense2)
 
 	// Define a keras style Functional model

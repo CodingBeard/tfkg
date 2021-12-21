@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/codingbeard/cberrors"
 	"github.com/codingbeard/cberrors/iowriterprovider"
 	"github.com/codingbeard/cblog"
@@ -13,11 +14,12 @@ import (
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func main() {
 	// This is where the trained model will be saved
-	saveDir := "examples/multiple_inputs/saved_models/trained_model"
+	saveDir := filepath.Join("../../logs", fmt.Sprintf("multiple-inputs-%d", time.Now().Unix()))
 	e := os.MkdirAll(saveDir, os.ModePerm)
 	if e != nil {
 		panic(e)
@@ -41,54 +43,61 @@ func main() {
 	errorHandler := cberrors.NewErrorContainer(iowriterprovider.New(logger))
 
 	// Define four inputs, each going into one of four dense layers. One set for each of the data points in the iris dataset
-	input1 := layer.NewInput(tf.MakeShape(-1, 1), layer.Float32)
+	input1 := layer.NewInput(layer.InputWithInputShape(tf.MakeShape(-1, 1)), layer.InputWithDtype(layer.Float32))
 	dense1 := layer.NewDense(
 		10,
-		layer.Float32,
-		layer.DenseConfig{Name: "dense_1", Activation: "swish"},
+		layer.DenseWithDtype(layer.Float32),
+		layer.DenseWithName("dense_1"),
+		layer.DenseWithActivation("swish"),
 	)(input1)
 
-	input2 := layer.NewInput(tf.MakeShape(-1, 1), layer.Float32)
+	input2 := layer.NewInput(layer.InputWithInputShape(tf.MakeShape(-1, 1)), layer.InputWithDtype(layer.Float32))
 	dense2 := layer.NewDense(
 		10,
-		layer.Float32,
-		layer.DenseConfig{Name: "dense_2", Activation: "swish"},
+		layer.DenseWithDtype(layer.Float32),
+		layer.DenseWithName("dense_2"),
+		layer.DenseWithActivation("swish"),
 	)(input2)
 
-	input3 := layer.NewInput(tf.MakeShape(-1, 1), layer.Float32)
+	input3 := layer.NewInput(layer.InputWithInputShape(tf.MakeShape(-1, 1)), layer.InputWithDtype(layer.Float32))
 	dense3 := layer.NewDense(
 		10,
-		layer.Float32,
-		layer.DenseConfig{Name: "dense_3", Activation: "swish"},
+		layer.DenseWithDtype(layer.Float32),
+		layer.DenseWithName("dense_3"),
+		layer.DenseWithActivation("swish"),
 	)(input3)
 
-	input4 := layer.NewInput(tf.MakeShape(-1, 1), layer.Float32)
+	input4 := layer.NewInput(layer.InputWithInputShape(tf.MakeShape(-1, 1)), layer.InputWithDtype(layer.Float32))
 	dense4 := layer.NewDense(
 		10,
-		layer.Float32,
-		layer.DenseConfig{Name: "dense_4", Activation: "swish"},
+		layer.DenseWithDtype(layer.Float32),
+		layer.DenseWithName("dense_4"),
+		layer.DenseWithActivation("swish"),
 	)(input4)
 
 	// Concatenate all the dense layers into a single layer
-	concat := layer.NewConcatenate(-1)(dense1, dense2, dense3, dense4)
+	concat := layer.NewConcatenate()(dense1, dense2, dense3, dense4)
 
 	// Pass the concatenated into a simple dense network
 	denseMerged := layer.NewDense(
 		100,
-		layer.Float32,
-		layer.DenseConfig{Name: "dense_merged", Activation: "swish"},
+		layer.DenseWithDtype(layer.Float32),
+		layer.DenseWithName("dense_merged"),
+		layer.DenseWithActivation("swish"),
 	)(concat)
 	denseMerged2 := layer.NewDense(
 		100,
-		layer.Float32,
-		layer.DenseConfig{Name: "dense_merged_2", Activation: "swish"},
+		layer.DenseWithDtype(layer.Float32),
+		layer.DenseWithName("dense_merged_2"),
+		layer.DenseWithActivation("swish"),
 	)(denseMerged)
 
 	// Define the output as having three units, as there are three classes to predict
 	output := layer.NewDense(
 		3,
-		layer.Float32,
-		layer.DenseConfig{Name: "output", Activation: "softmax"},
+		layer.DenseWithDtype(layer.Float32),
+		layer.DenseWithName("output"),
+		layer.DenseWithActivation("softmax"),
 	)(denseMerged2)
 
 	// Define a simple keras style Functional model
@@ -108,7 +117,7 @@ func main() {
 	}
 
 	// Where the cached tokenizers and divisors will go, if you change your data you'll need to clear this
-	cacheDir := "examples/multiple_inputs/training-cache"
+	cacheDir := "training-cache"
 
 	// Create a dataset for training and evaluation. iris.data is in the format: float32, float32, float32, float32, className
 	// This means our categoryOffset is 4. The dataset will automatically pass this value in as the label Tensor when training and evaluating
@@ -125,7 +134,7 @@ func main() {
 		logger,
 		errorHandler,
 		data.SingleFileDatasetConfig{
-			FilePath:          "examples/iris/data/iris.data",
+			FilePath:          "data/iris.data",
 			CacheDir:          cacheDir,
 			CategoryOffset:    4,
 			TrainPercent:      0.8,

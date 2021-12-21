@@ -6,14 +6,6 @@ import (
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 )
 
-type TfBool string
-
-var (
-	TfTrue    TfBool = "True"
-	TfFalse   TfBool = "False"
-	TfDefault TfBool = "None"
-)
-
 type DataType string
 
 // Types of scalar values in the TensorFlow type system.
@@ -53,15 +45,6 @@ type Layer interface {
 	GetKerasLayerConfig() interface{}
 }
 
-func (d TfBool) ToBool(defaultValue bool) bool {
-	if d == TfTrue {
-		return true
-	} else if d == TfFalse {
-		return false
-	}
-	return defaultValue
-}
-
 var uniqueNameCounts = make(map[string]int)
 
 func uniqueName(name string) string {
@@ -70,4 +53,8 @@ func uniqueName(name string) string {
 	uniqueNameCounts[name] = count
 
 	return fmt.Sprintf("%s_%d", name, count)
+}
+
+func (d *DataType) String() string {
+	return string(*d)
 }

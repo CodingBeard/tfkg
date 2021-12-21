@@ -52,6 +52,14 @@ test-python:
 	docker-compose up -d tf-jupyter-golang
 	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg && python test.py"
 
+dev-generate-keras-objects-python:
+	docker-compose up -d tf-jupyter-golang
+	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg && python generate/python/generate_keras_objects.py"
+
+dev-generate-keras-objects-golang:
+	docker-compose up -d tf-jupyter-golang
+	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg/generate/python/ && go run generate.go"
+
 web: frontend-build
 	docker-compose up -d web
 	echo Started web service on port 8082 reading model subdirs in dir: ./logs

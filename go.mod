@@ -25,11 +25,14 @@ require (
 	github.com/daaku/go.zipexe v1.0.0 // indirect
 	github.com/didip/tollbooth v1.0.0 // indirect
 	github.com/didip/tollbooth_fasthttp v0.0.0-20170910065828-cfa276ddefe2 // indirect
+	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/klauspost/compress v1.13.4 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/savsgio/gotils v0.0.0-20210921075833-21a6215cb0e4 // indirect
+	github.com/twpayne/go-jsonstruct v0.0.0-20200905114252-a1027bf3a425 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

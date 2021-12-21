@@ -99,10 +99,10 @@ func main() {
 	m := model.NewSequentialModel(
 		logger,
 		errorHandler,
-		layer.NewInput(tf.MakeShape(-1, 4), layer.Float32),
-		layer.NewDense(100, layer.Float32, layer.DenseConfig{Activation: "swish"}),
-		layer.NewDense(100, layer.Float32, layer.DenseConfig{Activation: "swish"}),
-		layer.NewDense(3, layer.Float32, layer.DenseConfig{Activation: "softmax"}),
+		layer.NewInput(layer.InputWithInputShape(tf.MakeShape(-1, 4)), layer.InputWithDtype(layer.Float32)),
+		layer.NewDense(100, layer.DenseWithDtype(layer.Float32), layer.DenseWithActivation("swish")),
+		layer.NewDense(100, layer.DenseWithDtype(layer.Float32), layer.DenseWithActivation("swish")),
+		layer.NewDense(float64(dataset.NumCategoricalClasses()), layer.DenseWithDtype(layer.Float32), layer.DenseWithActivation("softmax")),
 	)
 
 	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and execute it to save the model in a format we can load and train
