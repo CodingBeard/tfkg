@@ -12,8 +12,13 @@
     <div class="row">
         <div class="col s12">
             <div class="card surface-01dp">
-                <pre>{{.ModelLogs}}</pre>
+                <pre>{{.ModelLogs}}{{.ModelProgressLog}}</pre>
             </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col s12 l10 offset-l1 center-align">
+            <a class="btn-small" href="#" onclick="window.location.reload()">Refresh</a>
         </div>
     </div>
 
@@ -107,7 +112,7 @@
                         '</select></div>'
                 },
                 "pageLength":-1,
-                "order": [[ 0, "desc" ],[ 1, "desc" ],[ 4, "desc" ]],
+                "order": [[ 0, "desc" ],[ 4, "asc" ]],
                 buttons: [
                     {
                         extend:   'csv',
@@ -134,28 +139,6 @@
                             dataTableEditCallback["{{.GetDataTable.GetTableId}}"](data);
                         }
                     });
-                    {{if .GetDataTable.GroupByColumn}}
-                    let api = this.api();
-                    let rows = api.rows( {page:'current'} ).nodes();
-                    let last = null;
-
-                    api.column({{.GetDataTable.GroupColumnOffset}}, {page:'current'} ).data().each( function ( group, i ) {
-                        if ( last !== group ) {
-                            $(rows).eq( i ).before(
-                                '<tr class="group"><td><a target="_blank" href="/metrics/model?modelName='+group+'">'+group+'</a></td>' +
-                                '<td>' +
-                                '<form method="POST">' +
-                                '<input type="hidden" name="model-name" value="'+group+'">' +
-                                '<input type="submit" name="hide-model" value="Hide Model" class="btn-flat btn-small">' +
-                                '</form>' +
-                                '</td>' +
-                                '</tr>'
-                            );
-
-                            last = group;
-                        }
-                    } );
-                    {{end}}
                 }
             }
         );

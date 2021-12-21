@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/codingbeard/cberrors"
 	"github.com/codingbeard/cblog"
+	"github.com/codingbeard/cbutil"
 	"github.com/codingbeard/tfkg/preprocessor"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"github.com/remeh/sizedwaitgroup"
@@ -20,6 +21,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -28,41 +31,49 @@ type SingleFileDataset struct {
 	ClassWeights map[int]float32
 	Count        int
 
-	filePath          string
-	file              *os.File
-	reader            *csv.Reader
-	ignoreParseErrors bool
-	skipHeaders       bool
-	shuffled          bool
-	generatorOffset   int
-	cacheDir          string
-	categoryOffset    int
-	columnProcessors  []*preprocessor.Processor
-	lineOffsets       []int64
-	trainPercent      float32
-	valPercent        float32
-	testPercent       float32
-	trainCount        int
-	valCount          int
-	testCount         int
-	mode              GeneratorMode
-	offset            int
-	limit             int
-	categoryTokenizer *preprocessor.Tokenizer
+	classCountsLock     *sync.Mutex
+	filePath            string
+	filePool            *sync.Pool
+	concurrentFileLimit int32
+	openFileCount       *int32
+	ignoreParseErrors   bool
+	skipHeaders         bool
+	shuffled            bool
+	generatorOffset     *int32
+	generatorOffsetLock *sync.Mutex
+	cacheDir            string
+	categoryOffset      int
+	columnProcessors    []*preprocessor.Processor
+	lineOffsets         []int64
+	trainPercent        float32
+	valPercent          float32
+	testPercent         float32
+	trainCount          int32
+	valCount            int32
+	testCount           int32
+	mode                GeneratorMode
+	offset              int32
+	limit               int32
+	filter              func(line []string) bool
+	categoryTokenizer   *preprocessor.Tokenizer
+	maxRowsForFit       int
 
 	logger       *cblog.Logger
 	errorHandler *cberrors.ErrorsContainer
 }
 
 type SingleFileDatasetConfig struct {
-	FilePath          string
-	CacheDir          string
-	CategoryOffset    int
-	TrainPercent      float32
-	ValPercent        float32
-	TestPercent       float32
-	IgnoreParseErrors bool
-	SkipHeaders       bool
+	FilePath               string
+	CacheDir               string
+	CategoryOffset         int
+	TrainPercent           float32
+	ValPercent             float32
+	TestPercent            float32
+	IgnoreParseErrors      bool
+	SkipHeaders            bool
+	RowFilter              func(line []string) bool
+	ConcurrentFileLimit    int32
+	MaxRowsForProcessorFit int
 }
 
 func NewSingleFileDataset(
@@ -74,28 +85,58 @@ func NewSingleFileDataset(
 
 	logger.InfoF("data", "Initialising single file dataset at: %s", config.FilePath)
 
-	file, e := os.Open(config.FilePath)
+	_, e := os.Stat(config.FilePath)
 	if e != nil {
 		errorHandler.Error(e)
 		return nil, e
 	}
+	if config.ConcurrentFileLimit == 0 {
+		config.ConcurrentFileLimit = 1
+	}
+	if config.MaxRowsForProcessorFit == 0 {
+		config.MaxRowsForProcessorFit = 1000000
+	}
+
+	var openFileCount int32
+	var generatorOffset int32
 
 	d := &SingleFileDataset{
-		logger:            logger,
-		errorHandler:      errorHandler,
-		filePath:          config.FilePath,
-		file:              file,
-		reader:            csv.NewReader(file),
-		skipHeaders:       config.SkipHeaders,
-		ignoreParseErrors: config.IgnoreParseErrors,
-		cacheDir:          config.CacheDir,
-		categoryOffset:    config.CategoryOffset,
-		columnProcessors:  columnProcessors,
-		trainPercent:      config.TrainPercent,
-		valPercent:        config.ValPercent,
-		testPercent:       config.TestPercent,
-		ClassCounts:       make(map[int]int),
-		ClassWeights:      make(map[int]float32),
+		logger:              logger,
+		errorHandler:        errorHandler,
+		classCountsLock:     &sync.Mutex{},
+		filePath:            config.FilePath,
+		skipHeaders:         config.SkipHeaders,
+		ignoreParseErrors:   config.IgnoreParseErrors,
+		cacheDir:            config.CacheDir,
+		categoryOffset:      config.CategoryOffset,
+		columnProcessors:    columnProcessors,
+		trainPercent:        config.TrainPercent,
+		valPercent:          config.ValPercent,
+		testPercent:         config.TestPercent,
+		ClassCounts:         make(map[int]int),
+		ClassWeights:        make(map[int]float32),
+		filter:              config.RowFilter,
+		concurrentFileLimit: config.ConcurrentFileLimit,
+		openFileCount:       &openFileCount,
+		generatorOffset:     &generatorOffset,
+		generatorOffsetLock: &sync.Mutex{},
+		maxRowsForFit:       config.MaxRowsForProcessorFit,
+	}
+
+	d.filePool = &sync.Pool{
+		New: func() interface{} {
+			currentFileCount := atomic.LoadInt32(d.openFileCount)
+			if currentFileCount >= d.concurrentFileLimit {
+				return nil
+			}
+
+			file, e := os.Open(d.filePath)
+			if e != nil {
+				d.errorHandler.Error(e)
+			}
+
+			return file
+		},
 	}
 
 	e = os.MkdirAll(config.CacheDir, os.ModePerm)
@@ -123,9 +164,9 @@ func NewSingleFileDataset(
 		return nil, e
 	}
 
-	d.trainCount = int(math.Ceil(float64(len(d.lineOffsets)) * float64(d.trainPercent)))
-	d.valCount = int(math.Ceil(float64(len(d.lineOffsets)) * float64(d.valPercent)))
-	d.testCount = int(math.Ceil(float64(len(d.lineOffsets)) * float64(d.testPercent)))
+	d.trainCount = int32(math.Ceil(float64(len(d.lineOffsets)) * float64(d.trainPercent)))
+	d.valCount = int32(math.Ceil(float64(len(d.lineOffsets)) * float64(d.valPercent)))
+	d.testCount = int32(math.Ceil(float64(len(d.lineOffsets)) * float64(d.testPercent)))
 
 	e = d.fitPreProcessors()
 	if e != nil {
@@ -169,70 +210,92 @@ func (d *SingleFileDataset) readLineOffsets() error {
 
 	d.logger.InfoF("data", "Reading line offsets and counting stats")
 
-	reader := bufio.NewReader(d.file)
+	file := d.filePool.Get().(*os.File)
+
+	reader := bufio.NewReader(file)
 
 	offset := int64(0)
 
 	lastPrint := time.Now().Unix()
 	progress, lastProgress := 0, 0
 	skippedHeaders := false
+	swg := sizedwaitgroup.New(128)
+	var errs []error
 	for true {
 		readBytes, e := reader.ReadBytes('\n')
 
 		if errors.Is(e, io.EOF) {
 			break
 		}
+		offset += int64(len(readBytes))
 		if !skippedHeaders && d.skipHeaders {
 			skippedHeaders = true
-			offset += int64(len(readBytes))
 			continue
 		}
 
-		csvReader := csv.NewReader(bytes.NewBuffer(readBytes))
-		line, e := csvReader.Read()
-		if e != nil && !errors.Is(e, io.EOF) {
-			if d.ignoreParseErrors {
-				continue
+		if len(errs) > 0 {
+			for _, e := range errs {
+				return e
 			}
-			d.errorHandler.Error(e)
-			return e
 		}
-		if len(line) == 0 {
-			continue
-		}
-		if len(line) < d.categoryOffset {
-			if d.ignoreParseErrors {
-				continue
+
+		swg.Add()
+		go func(readBytes []byte, offset int64) {
+			defer swg.Done()
+			csvReader := csv.NewReader(bytes.NewBuffer(readBytes))
+			line, e := csvReader.Read()
+			if e != nil && !errors.Is(e, io.EOF) {
+				if d.ignoreParseErrors {
+					return
+				}
+				d.errorHandler.Error(e)
+				errs = append(errs, e)
+				return
 			}
-			e = fmt.Errorf("len(line) (%d) < d.categoryOffset (%d)", len(line), d.categoryOffset)
-			d.errorHandler.Error(e)
-			return e
-		}
-
-		category := line[d.categoryOffset]
-
-		categoryInt, e := strconv.Atoi(category)
-		// TODO: this magical behaviour could be nicer
-		if e != nil {
-			if d.categoryTokenizer == nil {
-				d.categoryTokenizer = preprocessor.NewTokenizer(
-					d.errorHandler,
-					1,
-					-1,
-					preprocessor.TokenizerConfig{IsCategoryTokenizer: true, DisableFiltering: true},
-				)
+			if len(line) == 0 {
+				return
 			}
-			d.categoryTokenizer.Fit(category)
-			categoryInt = int(d.categoryTokenizer.Tokenize(category)[0])
-		}
+			if d.filter != nil {
+				if !d.filter(line) {
+					return
+				}
+			}
+			if len(line) < d.categoryOffset {
+				if d.ignoreParseErrors {
+					return
+				}
+				e = fmt.Errorf("len(line) (%d) < d.categoryOffset (%d)", len(line), d.categoryOffset)
+				d.errorHandler.Error(e)
+				errs = append(errs, e)
+				return
+			}
 
-		offset += int64(len(readBytes))
-		d.lineOffsets = append(d.lineOffsets, offset)
-		d.Count++
+			d.lineOffsets = append(d.lineOffsets, offset)
+			d.Count++
 
-		count := d.ClassCounts[categoryInt]
-		count++
-		d.ClassCounts[categoryInt] = count
+			category := line[d.categoryOffset]
+
+			categoryInt, e := strconv.Atoi(category)
+			// TODO: this magical behaviour could be nicer
+			if e != nil {
+				if d.categoryTokenizer == nil {
+					d.categoryTokenizer = preprocessor.NewTokenizer(
+						d.errorHandler,
+						1,
+						-1,
+						preprocessor.TokenizerConfig{IsCategoryTokenizer: true, DisableFiltering: true},
+					)
+				}
+				d.categoryTokenizer.Fit(category)
+				categoryInt = int(d.categoryTokenizer.Tokenize(category)[0])
+			}
+
+			d.classCountsLock.Lock()
+			count := d.ClassCounts[categoryInt]
+			count++
+			d.ClassCounts[categoryInt] = count
+			d.classCountsLock.Unlock()
+		}(readBytes, offset)
 
 		now := time.Now().Unix()
 		if now > lastPrint {
@@ -242,6 +305,7 @@ func (d *SingleFileDataset) readLineOffsets() error {
 		}
 		progress++
 	}
+	swg.Wait()
 	fmt.Println()
 
 	majorClassCount := 0
@@ -289,7 +353,7 @@ func (d *SingleFileDataset) NumCategoricalClasses() int {
 }
 
 func (d *SingleFileDataset) Len() int {
-	return d.limit
+	return int(d.limit)
 }
 
 func (d *SingleFileDataset) fitPreProcessors() error {
@@ -313,104 +377,133 @@ func (d *SingleFileDataset) fitPreProcessors() error {
 	d.logger.InfoF("data", "Fitting Pre-Processors")
 
 	d.Shuffle(time.Now().UnixNano())
-	d.limit = d.Count
+	d.limit = int32(d.Count)
 	lastPrint := time.Now().Unix()
 	progress, lastProgress := 0, 0
 
 	var loopError error
 
 	swg := sizedwaitgroup.New(64)
+	concurrentFileSwg := sizedwaitgroup.New(int(d.concurrentFileLimit))
+	endChan := make(chan bool, 100)
+	var errs []error
+	var rowsFit int32
 
-	for i := 0; i < 1000000; i++ {
-		row, e := d.getRow()
-		if errors.Is(e, ErrGeneratorEnd) {
-			break
-		}
-		for _, processor := range d.columnProcessors {
-			if processor.RequiresFit {
-				swg.Add()
+	for true {
 
-				go func(processor *preprocessor.Processor) {
-					defer swg.Done()
-					if processor.DataLength > 1 {
-						if len(row) <= processor.LineOffset+processor.DataLength {
-							if d.ignoreParseErrors {
-								return
-							}
-							e = fmt.Errorf("row did not contain enough columns for processor %s at offset %d", processor.Name, processor.LineOffset)
-							return
-						}
-						// TODO: find a nicer way to capture multiple columns in a row
-						e = processor.FitString([]string{strings.Join(row[processor.LineOffset:processor.LineOffset+processor.DataLength], ",")})
-						if e != nil {
-							if d.ignoreParseErrors {
-								return
-							}
-							d.errorHandler.Error(e)
-							loopError = e
-						}
-					} else {
-						if len(row) <= processor.LineOffset {
-							if d.ignoreParseErrors {
-								return
-							}
-							e = fmt.Errorf("row did not contain enough columns for processor %s at offset %d", processor.Name, processor.LineOffset)
-							return
-						}
-						e = processor.FitString([]string{row[processor.LineOffset]})
-						if e != nil {
-							if d.ignoreParseErrors {
-								return
-							}
-							d.errorHandler.Error(e)
-							loopError = e
-						}
+		select {
+		case <-endChan:
+			concurrentFileSwg.Wait()
+			swg.Wait()
+			for _, processor := range d.columnProcessors {
+				if processor.RequiresFit {
+					e := processor.FinishFit()
+					if e != nil {
+						return e
 					}
-
-				}(processor)
-
-				if loopError != nil {
-					return e
 				}
 			}
-		}
 
-		now := time.Now().Unix()
-		if now > lastPrint {
-			lastPrint = now
-			fmt.Print(fmt.Sprintf("\rFitting preprocessors: %d %d/s", progress, progress-lastProgress))
-			lastProgress = progress
-		}
-		progress++
-	}
-	swg.Wait()
-	for _, processor := range d.columnProcessors {
-		if processor.RequiresFit {
-			e := processor.FinishFit()
+			e := d.Reset()
 			if e != nil {
 				return e
 			}
+
+			e = d.Unshuffle()
+			if e != nil {
+				return e
+			}
+
+			e = d.Reset()
+			if e != nil {
+				return e
+			}
+
+			fmt.Println()
+
+			d.logger.InfoF("data", "Fit tokenizers")
+			return nil
+		default:
+			if len(errs) > 0 {
+				for _, e := range errs {
+					return e
+				}
+			}
+			concurrentFileSwg.Add()
+			go func() {
+				defer concurrentFileSwg.Done()
+				row, e := d.getRow()
+				if errors.Is(e, ErrGeneratorEnd) {
+					endChan <- true
+					return
+				}
+				for _, processor := range d.columnProcessors {
+					if processor.RequiresFit {
+						swg.Add()
+
+						go func(processor *preprocessor.Processor, row []string) {
+							defer swg.Done()
+							if processor.DataLength > 1 {
+								if len(row) <= processor.LineOffset+processor.DataLength {
+									if d.ignoreParseErrors {
+										return
+									}
+									e = fmt.Errorf("row did not contain enough columns for processor %s at offset %d", processor.Name, processor.LineOffset)
+									return
+								}
+								// TODO: find a nicer way to capture multiple columns in a row
+								e = processor.FitString([]string{strings.Join(row[processor.LineOffset:processor.LineOffset+processor.DataLength], ",")})
+								if e != nil {
+									if d.ignoreParseErrors {
+										return
+									}
+									d.errorHandler.Error(e)
+									loopError = e
+								}
+							} else {
+								if len(row) <= processor.LineOffset {
+									if d.ignoreParseErrors {
+										return
+									}
+									e = fmt.Errorf("row did not contain enough columns for processor %s at offset %d", processor.Name, processor.LineOffset)
+									return
+								}
+								e = processor.FitString([]string{row[processor.LineOffset]})
+								if e != nil {
+									if d.ignoreParseErrors {
+										return
+									}
+									d.errorHandler.Error(e)
+									loopError = e
+								}
+							}
+
+						}(processor, row)
+
+						if loopError != nil {
+							errs = append(errs, e)
+						}
+					}
+				}
+
+				atomic.AddInt32(&rowsFit, 1)
+				fitCount := atomic.LoadInt32(&rowsFit)
+				if fitCount > int32(d.maxRowsForFit) {
+					endChan <- true
+				}
+
+			}()
+
+			now := time.Now().Unix()
+			if now > lastPrint {
+				lastPrint = now
+				fmt.Print(fmt.Sprintf("\rFitting preprocessors: %d %d/s", progress, progress-lastProgress))
+				lastProgress = progress
+			}
+			progress++
 		}
 	}
 
-	e := d.Reset()
-	if e != nil {
-		return e
-	}
-
-	e = d.Unshuffle()
-	if e != nil {
-		return e
-	}
-
-	e = d.Reset()
-	if e != nil {
-		return e
-	}
-
-	fmt.Println()
-
-	d.logger.InfoF("data", "Fit tokenizers")
 	return nil
 }
 
@@ -427,7 +520,8 @@ func (d *SingleFileDataset) SetMode(mode GeneratorMode) Dataset {
 		d.offset = d.trainCount + d.valCount
 		d.limit = d.testCount
 	}
-	d.generatorOffset = d.offset
+	offset := d.offset
+	d.generatorOffset = &offset
 
 	return d
 }
@@ -435,31 +529,38 @@ func (d *SingleFileDataset) SetMode(mode GeneratorMode) Dataset {
 func (d *SingleFileDataset) getRow() ([]string, error) {
 
 	if d.shuffled {
-		if len(d.lineOffsets) <= d.generatorOffset {
+		d.generatorOffsetLock.Lock()
+		generatorOffset := atomic.LoadInt32(d.generatorOffset)
+		atomic.AddInt32(d.generatorOffset, 1)
+		d.generatorOffsetLock.Unlock()
+		if len(d.lineOffsets) <= int(generatorOffset) {
 			return nil, ErrGeneratorEnd
 		}
-		offset := d.lineOffsets[d.generatorOffset]
-		_, e := d.file.Seek(offset, io.SeekStart)
+		offset := d.lineOffsets[int(generatorOffset)]
+		var file *os.File
+		for true {
+			file = d.filePool.Get().(*os.File)
+			if file == nil {
+				cbutil.Sleep(time.Millisecond)
+			} else {
+				break
+			}
+		}
+		_, e := file.Seek(offset, io.SeekStart)
 		if e != nil {
 			d.errorHandler.Error(e)
 			return nil, e
 		}
 
-		d.reader = csv.NewReader(d.file)
-		line, e := d.reader.Read()
-
-		d.generatorOffset++
-
-		if d.generatorOffset >= d.offset+d.limit {
-			return line, ErrGeneratorEnd
-		}
+		reader := csv.NewReader(file)
+		line, e := reader.Read()
+		d.filePool.Put(file)
 
 		if errors.Is(e, io.EOF) || e == nil {
 			return line, nil
 		} else {
 			return nil, e
 		}
-
 	} else {
 		panic("Non shuffled mode not implemented")
 	}
@@ -495,25 +596,30 @@ func (d *SingleFileDataset) GeneratorChan(batchSize int, preFetch int) chan Batc
 	generatorChan := make(chan Batch, preFetch)
 
 	go func() {
-		for true {
-			x, y, classWeights, e := d.Generate(batchSize)
+		swg := sizedwaitgroup.New(int(d.concurrentFileLimit))
+		for i := 0; i < int(d.limit)/batchSize; i++ {
+			swg.Add()
+			go func() {
+				defer swg.Done()
+				x, y, classWeights, e := d.Generate(batchSize)
 
-			if errors.Is(e, ErrGeneratorEnd) {
-				close(generatorChan)
-				break
-			}
-			if e != nil && !errors.Is(e, ErrGeneratorEnd) {
-				d.errorHandler.Error(e)
-				close(generatorChan)
-				break
-			}
+				if errors.Is(e, ErrGeneratorEnd) {
+					return
+				}
+				if e != nil && !errors.Is(e, ErrGeneratorEnd) {
+					d.errorHandler.Error(e)
+					return
+				}
 
-			generatorChan <- Batch{
-				X:            x,
-				Y:            y,
-				ClassWeights: classWeights,
-			}
+				generatorChan <- Batch{
+					X:            x,
+					Y:            y,
+					ClassWeights: classWeights,
+				}
+			}()
 		}
+		swg.Wait()
+		close(generatorChan)
 	}()
 
 	return generatorChan
@@ -631,15 +737,8 @@ func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, *
 
 func (d *SingleFileDataset) Reset() error {
 	if d.shuffled {
-		d.generatorOffset = d.offset
-	} else {
-		_, e := d.file.Seek(0, io.SeekStart)
-		if e != nil {
-			d.errorHandler.Error(e)
-			return e
-		}
-
-		d.reader = csv.NewReader(d.file)
+		offset := d.offset
+		d.generatorOffset = &offset
 	}
 
 	return nil

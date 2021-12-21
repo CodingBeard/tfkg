@@ -3,7 +3,7 @@ package metrics
 import (
 	"encoding/csv"
 	"errors"
-	"fmt"
+	"github.com/codingbeard/cbutil"
 	"github.com/codingbeard/cbweb"
 	"github.com/codingbeard/cbweb/module/cbwebcommon"
 	"github.com/karrick/godirwalk"
@@ -50,6 +50,7 @@ func (m *Module) Model(ctx *fasthttp.RequestCtx) {
 	if e != nil {
 		logFileBytes = []byte("No logs found at: " + filepath.Join("/go/src/tfkg/logs/", modelName, "training.log"))
 	}
+	progressFileBytes, _ := ioutil.ReadFile(filepath.Join("/go/src/tfkg/logs/", modelName, "progress.log"))
 
 	var recordsError error
 	var records []Record
@@ -66,6 +67,7 @@ func (m *Module) Model(ctx *fasthttp.RequestCtx) {
 		Ctx:              ctx,
 		ModelName:        modelName,
 		ModelLogs:        string(logFileBytes),
+		ModelProgressLog: string(progressFileBytes),
 		MetricsViewModel: metricsViewModel,
 		MetricsError:     recordsError,
 	}
@@ -89,12 +91,18 @@ func (m *Module) getMetrics(modelName string) ([]Record, error) {
 		"epoch",
 		"batch",
 	}
-	e := godirwalk.Walk(filepath.Join("/go/src/tfkg/logs", modelName), &godirwalk.Options{
+	stat, e := os.Stat(filepath.Join("/go/src/tfkg/logs", modelName, "training.log"))
+	if e == nil {
+		records = append(records, Record{
+			ModelName: modelName,
+			DateTime:  stat.ModTime().Format(cbutil.DateTimeFormat),
+		})
+	}
+	e = godirwalk.Walk(filepath.Join("/go/src/tfkg/logs", modelName), &godirwalk.Options{
 		Callback: func(osPathname string, directoryEntry *godirwalk.Dirent) error {
 			if !strings.HasSuffix(osPathname, ".csv") {
 				return nil
 			}
-			fmt.Println(osPathname)
 			pathParts := strings.Split(osPathname, "/")
 			if len(pathParts) < 2 {
 				return nil
@@ -215,6 +223,7 @@ type RecordRow struct {
 
 type Record struct {
 	ModelName string
+	DateTime  string
 	Rows      []RecordRow
 }
 
@@ -223,126 +232,32 @@ func (m *Module) Models(ctx *fasthttp.RequestCtx) {
 	var records []Record
 	flash := &cbweb.Flash{}
 
-	requiredHeaders := []string{
-		"datetime",
-		"event",
-		"mode",
-		"epoch",
-		"batch",
+	modelDirs, e := filepath.Glob("/go/src/tfkg/logs/*")
+	if e != nil {
+		m.ErrorHandler.Error(e)
+		m.Common.GetFiveHundredError()(ctx)
+		return
 	}
 
-	godirwalk.Walk("/go/src/tfkg/logs", &godirwalk.Options{
-		Callback: func(osPathname string, directoryEntry *godirwalk.Dirent) error {
-			if !strings.HasSuffix(osPathname, ".csv") {
-				return nil
-			}
-			pathParts := strings.Split(osPathname, "/")
-			if len(pathParts) < 2 {
-				return nil
-			}
-
-			modelRecord := Record{
-				ModelName: pathParts[len(pathParts)-2],
-				Rows:      nil,
-			}
-			for _, ignoredModel := range m.IgnoredModels {
-				if modelRecord.ModelName == ignoredModel {
-					return nil
-				}
-			}
-			file, e := os.Open(osPathname)
-			if e != nil {
-				m.ErrorHandler.Error(e)
-				return e
-			}
-			reader := csv.NewReader(file)
-			headers, e := reader.Read()
-			if e != nil && !errors.Is(e, io.EOF) {
-				m.ErrorHandler.Error(e)
-				return e
-			}
-
-			foundRequiredHeaders := 0
-			for _, requiredHeader := range requiredHeaders {
-				for _, header := range headers {
-					if strings.ToLower(requiredHeader) == strings.ToLower(header) {
-						foundRequiredHeaders++
-					}
-				}
-			}
-			if foundRequiredHeaders != len(requiredHeaders) {
-				return nil
-			}
-
-			headersNameMap := make(map[string]int)
-			for offset, header := range headers {
-				headersNameMap[header] = offset
-			}
-
-			headersOffsetMap := make(map[int]string)
-			for offset, header := range headers {
-				headersOffsetMap[offset] = header
-			}
-
-			for true {
-				line, e := reader.Read()
-				if errors.Is(e, io.EOF) {
-					break
-				} else if e != nil {
-					m.ErrorHandler.Error(e)
-					return e
-				}
-
-				epoch, e := strconv.Atoi(line[headersNameMap["epoch"]])
-				if e != nil {
-					m.ErrorHandler.Error(e)
-					return e
-				}
-
-				batch, e := strconv.Atoi(line[headersNameMap["batch"]])
-				if e != nil {
-					m.ErrorHandler.Error(e)
-					return e
-				}
-
-				var logNames []string
-				var logs []float32
-
-				for i, metric := range line {
-					if headersOffsetMap[i] == "datetime" ||
-						headersOffsetMap[i] == "event" ||
-						headersOffsetMap[i] == "mode" ||
-						headersOffsetMap[i] == "epoch" ||
-						headersOffsetMap[i] == "batch" {
-						continue
-					}
-					value, e := strconv.ParseFloat(metric, 32)
-					if e != nil {
-						continue
-					}
-					if math.IsNaN(value) {
-						continue
-					}
-					logNames = append(logNames, headersOffsetMap[i])
-					logs = append(logs, float32(value))
-				}
-
-				modelRecord.Rows = append(modelRecord.Rows, RecordRow{
-					Datetime: line[headersNameMap["datetime"]],
-					Event:    line[headersNameMap["event"]],
-					Mode:     line[headersNameMap["mode"]],
-					Epoch:    epoch,
-					Batch:    batch,
-					LogNames: logNames,
-					Logs:     logs,
-				})
-			}
-
-			records = append(records, modelRecord)
-
-			return nil
-		},
-	})
+	for _, dir := range modelDirs {
+		stat, e := os.Stat(dir)
+		if e != nil {
+			continue
+		}
+		if !stat.IsDir() {
+			continue
+		}
+		_, finalDir := filepath.Split(dir)
+		if m.isIgnoredModel(finalDir) {
+			continue
+		}
+		modelRecords, e := m.getMetrics(finalDir)
+		if e != nil {
+			m.ErrorHandler.Error(e)
+			continue
+		}
+		records = append(records, modelRecords...)
+	}
 
 	viewModel := &ModelsViewModel{
 		NavItems: m.NavItems(ctx),
@@ -352,7 +267,7 @@ func (m *Module) Models(ctx *fasthttp.RequestCtx) {
 		AllRows:  false,
 	}
 
-	e := m.Common.ExecuteViewModel(ctx, viewModel)
+	e = m.Common.ExecuteViewModel(ctx, viewModel)
 
 	if e != nil {
 		m.GetErrorHandler().Error(e)
@@ -371,6 +286,15 @@ func (m *Module) ModelsPostAction(ctx *fasthttp.RequestCtx) {
 		m.saveIgnoredModels()
 	}
 	ctx.Redirect(ctx.URI().String(), 302)
+}
+
+func (m *Module) isIgnoredModel(modelName string) bool {
+	for _, ignoredModel := range m.IgnoredModels {
+		if strings.ToLower(ignoredModel) == strings.ToLower(modelName) {
+			return true
+		}
+	}
+	return false
 }
 
 func (m *Module) saveIgnoredModels() {

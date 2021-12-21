@@ -4,6 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/codingbeard/cblog"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,6 +21,8 @@ var (
 
 type Logger struct {
 	FileLogger     *cblog.Logger
+	Progress       bool
+	ProgressLogDir string
 	modeStarts     map[Mode]int64
 	modeStartsLock *sync.Mutex
 	lastPrint      int64
@@ -26,6 +31,9 @@ type Logger struct {
 func (l *Logger) Init() error {
 	if l.FileLogger == nil {
 		return errors.New("no FileLogger set on logger callback")
+	}
+	if l.Progress && l.ProgressLogDir == "" {
+		return errors.New("progress is enabled but no ProgressLogDir set on logger callback")
 	}
 	l.modeStartsLock = &sync.Mutex{}
 	l.modeStarts = make(map[Mode]int64)
@@ -116,7 +124,7 @@ func (l *Logger) Call(event Event, mode Mode, epoch int, batch int, logs []Log) 
 		now := time.Now().Unix()
 		if now > l.lastPrint {
 			l.lastPrint = now
-			fmt.Print(fmt.Sprintf(
+			log := fmt.Sprintf(
 				"\r%s : logger.go : %s %d %d/%d (%ds/%ds) %s | Prefetched %d",
 				time.Now().Format("2006-01-02 15:04:05.000"),
 				logType,
@@ -130,7 +138,14 @@ func (l *Logger) Call(event Event, mode Mode, epoch int, batch int, logs []Log) 
 					metricValues...,
 				),
 				prefetched,
-			))
+			)
+			fmt.Print(log)
+			if l.Progress {
+				e := ioutil.WriteFile(filepath.Join(l.ProgressLogDir, "progress.log"), []byte(log[1:]), os.ModePerm)
+				if e != nil {
+					l.FileLogger.ErrorF("error", e.Error())
+				}
+			}
 		}
 	}
 

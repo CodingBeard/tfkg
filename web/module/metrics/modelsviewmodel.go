@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"fmt"
 	"github.com/codingbeard/cbweb"
 	"github.com/codingbeard/cbweb/module/cbwebcommon"
 	"github.com/valyala/fasthttp"
@@ -129,6 +130,17 @@ func (t *ModelsViewModel) GetDataTable() *cbwebcommon.DataTable {
 	var data [][]interface{}
 	for _, metric := range t.Metrics {
 
+		if len(metric.Rows) == 0 {
+			rowData := make([]interface{}, len(allLogNames))
+			rowData[0] = fmt.Sprintf(`<a target="_blank" href="/metrics/model?modelName=%s">%s</a>`, metric.ModelName, metric.ModelName)
+			rowData[1] = fmt.Sprintf(`<form method="POST">
+<input type="hidden" name="model-name" value="%s">
+<input type="submit" name="hide-model" value="Hide Model" class="btn-flat btn-small">
+</form>`, metric.ModelName)
+			rowData[4] = 0
+			data = append(data, rowData)
+		}
+
 		lastRows := make(map[string][]interface{})
 		for _, row := range metric.Rows {
 			rowData := make([]interface{}, len(allLogNames))
@@ -169,11 +181,9 @@ func (t *ModelsViewModel) GetDataTable() *cbwebcommon.DataTable {
 	}
 
 	return &cbwebcommon.DataTable{
-		TableId:           "modelmetrics",
-		Columns:           dtColumns,
-		Data:              data,
-		GroupByColumn:     true,
-		GroupColumnOffset: 0,
+		TableId: "modelmetrics",
+		Columns: dtColumns,
+		Data:    data,
 	}
 }
 

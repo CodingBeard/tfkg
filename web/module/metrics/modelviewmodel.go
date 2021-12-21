@@ -13,6 +13,7 @@ type ModelViewModel struct {
 	Flash            *cbweb.Flash
 	ModelName        string
 	ModelLogs        string
+	ModelProgressLog string
 	MetricsViewModel *ModelsViewModel
 	MetricsError     error
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/codingbeard/cberrors"
 	"github.com/codingbeard/cberrors/iowriterprovider"
 	"github.com/codingbeard/cblog"
@@ -13,15 +14,23 @@ import (
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"math/rand"
 	"os"
+	"path/filepath"
+	"time"
 )
 
 func main() {
+	logsDir := filepath.Join("../../logs", fmt.Sprintf("class-weights-%d", time.Now().Unix()))
+	e := os.MkdirAll(logsDir, os.ModePerm)
+
+	if e != nil {
+		panic(e)
+	}
 	// Create a logger pointed at the save dir
 	logger, e := cblog.NewLogger(cblog.LoggerConfig{
 		LogLevel:           cblog.DebugLevel,
 		Format:             "%{time:2006-01-02 15:04:05.000} : %{file}:%{line} : %{message}",
 		LogToFile:          true,
-		FilePath:           "training.log",
+		FilePath:           filepath.Join(logsDir, "training.log"),
 		FilePerm:           os.ModePerm,
 		LogToStdOut:        true,
 		SetAsDefaultLogger: true,
@@ -133,7 +142,9 @@ func main() {
 			},
 			Callbacks: []callback.Callback{
 				&callback.Logger{
-					FileLogger: logger,
+					FileLogger:     logger,
+					Progress:       true,
+					ProgressLogDir: logsDir,
 				},
 			},
 		},

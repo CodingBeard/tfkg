@@ -25,7 +25,7 @@ See `ideas-todo.md` for what's in store
 
 Versions starting with v0 are liable to change radically.
 
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.12`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.13`
 
 ## Requirements
 
