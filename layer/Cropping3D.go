@@ -3,23 +3,23 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type Cropping3D struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
-	trainable bool
-	cropping []interface {}
+	name       string
+	dtype      DataType
+	inputs     []Layer
+	shape      tf.Shape
+	trainable  bool
+	cropping   []interface{}
 	dataFormat interface{}
 }
 
 func NewCropping3D(options ...Cropping3DOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		c := &Cropping3D{
-			cropping: []interface {}{[]interface {}{1, 1}, []interface {}{1, 1}, []interface {}{1, 1}},
+			cropping:   []interface{}{[]interface{}{1, 1}, []interface{}{1, 1}, []interface{}{1, 1}},
 			dataFormat: nil,
-			trainable: true,
-			inputs: inputs,
-			name: uniqueName("cropping3d"),		
+			trainable:  true,
+			inputs:     inputs,
+			name:       UniqueName("cropping3d"),
 		}
 		for _, option := range options {
 			option(c)
@@ -28,38 +28,37 @@ func NewCropping3D(options ...Cropping3DOption) func(inputs ...Layer) Layer {
 	}
 }
 
-type Cropping3DOption func (*Cropping3D)
+type Cropping3DOption func(*Cropping3D)
 
 func Cropping3DWithName(name string) func(c *Cropping3D) {
-	 return func(c *Cropping3D) {
+	return func(c *Cropping3D) {
 		c.name = name
 	}
 }
 
 func Cropping3DWithDtype(dtype DataType) func(c *Cropping3D) {
-	 return func(c *Cropping3D) {
+	return func(c *Cropping3D) {
 		c.dtype = dtype
 	}
 }
 
 func Cropping3DWithTrainable(trainable bool) func(c *Cropping3D) {
-	 return func(c *Cropping3D) {
+	return func(c *Cropping3D) {
 		c.trainable = trainable
 	}
 }
 
-func Cropping3DWithCropping(cropping []interface {}) func(c *Cropping3D) {
-	 return func(c *Cropping3D) {
+func Cropping3DWithCropping(cropping []interface{}) func(c *Cropping3D) {
+	return func(c *Cropping3D) {
 		c.cropping = cropping
 	}
 }
 
 func Cropping3DWithDataFormat(dataFormat interface{}) func(c *Cropping3D) {
-	 return func(c *Cropping3D) {
+	return func(c *Cropping3D) {
 		c.dataFormat = dataFormat
 	}
 }
-
 
 func (c *Cropping3D) GetShape() tf.Shape {
 	return c.shape
@@ -82,13 +81,13 @@ func (c *Cropping3D) GetName() string {
 	return c.name
 }
 
-
 type jsonConfigCropping3D struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (c *Cropping3D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -103,14 +102,18 @@ func (c *Cropping3D) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigCropping3D{
 		ClassName: "Cropping3D",
-		Name: c.name,
+		Name:      c.name,
 		Config: map[string]interface{}{
-			"name": c.name,
-			"trainable": c.trainable,
-			"dtype": c.dtype.String(),
-			"cropping": c.cropping,
+			"cropping":    c.cropping,
 			"data_format": c.dataFormat,
+			"dtype":       c.dtype.String(),
+			"name":        c.name,
+			"trainable":   c.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (c *Cropping3D) GetCustomLayerDefinition() string {
+	return ``
 }

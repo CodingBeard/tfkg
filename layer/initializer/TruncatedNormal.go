@@ -45,9 +45,9 @@ func (t *TruncatedNormal) GetKerasLayerConfig() interface{} {
 	return jsonConfigTruncatedNormal{
 		ClassName: "TruncatedNormal",
 		Config: map[string]interface{}{
-			"stddev": t.stddev,
-			"seed":   t.seed,
 			"mean":   t.mean,
+			"seed":   t.seed,
+			"stddev": t.stddev,
 		},
 	}
 }

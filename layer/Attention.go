@@ -3,25 +3,25 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type Attention struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
+	name      string
+	dtype     DataType
+	inputs    []Layer
+	shape     tf.Shape
 	trainable bool
-	useScale bool
-	causal bool
-	dropout float64
+	useScale  bool
+	causal    bool
+	dropout   float64
 }
 
 func NewAttention(options ...AttentionOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		a := &Attention{
-			useScale: false,
-			causal: false,
-			dropout: 0,
+			useScale:  false,
+			causal:    false,
+			dropout:   0,
 			trainable: true,
-			inputs: inputs,
-			name: uniqueName("attention"),		
+			inputs:    inputs,
+			name:      UniqueName("attention"),
 		}
 		for _, option := range options {
 			option(a)
@@ -30,32 +30,31 @@ func NewAttention(options ...AttentionOption) func(inputs ...Layer) Layer {
 	}
 }
 
-type AttentionOption func (*Attention)
+type AttentionOption func(*Attention)
 
 func AttentionWithName(name string) func(a *Attention) {
-	 return func(a *Attention) {
+	return func(a *Attention) {
 		a.name = name
 	}
 }
 
 func AttentionWithDtype(dtype DataType) func(a *Attention) {
-	 return func(a *Attention) {
+	return func(a *Attention) {
 		a.dtype = dtype
 	}
 }
 
 func AttentionWithTrainable(trainable bool) func(a *Attention) {
-	 return func(a *Attention) {
+	return func(a *Attention) {
 		a.trainable = trainable
 	}
 }
 
 func AttentionWithUseScale(useScale bool) func(a *Attention) {
-	 return func(a *Attention) {
+	return func(a *Attention) {
 		a.useScale = useScale
 	}
 }
-
 
 func (a *Attention) GetShape() tf.Shape {
 	return a.shape
@@ -78,13 +77,13 @@ func (a *Attention) GetName() string {
 	return a.name
 }
 
-
 type jsonConfigAttention struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (a *Attention) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -99,15 +98,19 @@ func (a *Attention) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigAttention{
 		ClassName: "Attention",
-		Name: a.name,
+		Name:      a.name,
 		Config: map[string]interface{}{
-			"dropout": a.dropout,
-			"use_scale": a.useScale,
-			"name": a.name,
+			"causal":    a.causal,
+			"dropout":   a.dropout,
+			"dtype":     a.dtype.String(),
+			"name":      a.name,
 			"trainable": a.trainable,
-			"dtype": a.dtype.String(),
-			"causal": a.causal,
+			"use_scale": a.useScale,
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (a *Attention) GetCustomLayerDefinition() string {
+	return ``
 }

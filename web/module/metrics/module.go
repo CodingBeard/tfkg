@@ -52,6 +52,9 @@ func (m *Module) Model(ctx *fasthttp.RequestCtx) {
 	}
 	progressFileBytes, _ := ioutil.ReadFile(filepath.Join("/go/src/tfkg/logs/", modelName, "progress.log"))
 
+	modelJsonBytes, _ := ioutil.ReadFile(filepath.Join("/go/src/tfkg/logs/", modelName, "model.json"))
+	modelSummaryBytes, _ := ioutil.ReadFile(filepath.Join("/go/src/tfkg/logs/", modelName, "model-summary.txt"))
+
 	var recordsError error
 	var records []Record
 	records, recordsError = m.getMetrics(modelName)
@@ -68,6 +71,8 @@ func (m *Module) Model(ctx *fasthttp.RequestCtx) {
 		ModelName:        modelName,
 		ModelLogs:        string(logFileBytes),
 		ModelProgressLog: string(progressFileBytes),
+		ModelJson:        string(modelJsonBytes),
+		ModelSummary:     string(modelSummaryBytes),
 		MetricsViewModel: metricsViewModel,
 		MetricsError:     recordsError,
 	}

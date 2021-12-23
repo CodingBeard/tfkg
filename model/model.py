@@ -10,11 +10,20 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 logging.disable(logging.WARNING)
 
+custom_objects = {}
+
+# tfkg-custom-definitions
+
 config = json.load(sys.stdin)
 
-model = tf.keras.models.model_from_json(config["model_config"], custom_objects={
-    "ConcatenateLayer": tf.keras.layers.Concatenate,
-})
+model = tf.keras.models.model_from_json(config["model_config"], custom_objects=custom_objects)
+
+if config["model_definition_save_dir"] != "":
+    summary = []
+    model.summary(print_fn=lambda x: summary.append(x))
+    with open(config["model_definition_save_dir"] + "/model-summary.txt", "w") as f:
+        f.write("\n".join(summary))
+
 learn_input_signature = [
     tf.TensorSpec(shape=(None, 1), dtype=tf.int32),
     tf.TensorSpec(shape=None, dtype=tf.float32),
@@ -23,21 +32,23 @@ predict_input_signature = []
 
 zero_inputs = []
 
-for model_layer in model.layers:
-    if type(model_layer) == tf.keras.layers.InputLayer:
+model_config = json.loads(config["model_config"])
+
+for model_layer in model_config["config"]["layers"]:
+    if model_layer["class_name"] == "InputLayer":
         input_shape = [config["batch_size"]]
-        for dim in model_layer.input_shape[0][1:]:
+        for dim in model_layer["config"]["batch_input_shape"][1:]:
             input_shape.append(dim)
         zero_inputs.append(
-            tf.zeros(shape=input_shape, dtype=model_layer.dtype)
+            tf.zeros(shape=input_shape, dtype=model_layer["config"]["dtype"])
         )
         learn_input_signature.append(tf.TensorSpec(
-            shape=model_layer.input_shape[0],
-            dtype=model_layer.dtype,
+            shape=model_layer["config"]["batch_input_shape"],
+            dtype=model_layer["config"]["dtype"],
         ))
         predict_input_signature.append(tf.TensorSpec(
-            shape=model_layer.input_shape[0],
-            dtype=model_layer.dtype,
+            shape=model_layer["config"]["batch_input_shape"],
+            dtype=model_layer["config"]["dtype"],
         ))
 
 evaluate_input_signature = learn_input_signature

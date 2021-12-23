@@ -3,25 +3,25 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type SpatialDropout1D struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
-	trainable bool
-	rate float64
+	name       string
+	dtype      DataType
+	inputs     []Layer
+	shape      tf.Shape
+	trainable  bool
+	rate       float64
 	noiseShape interface{}
-	seed interface{}
+	seed       interface{}
 }
 
 func NewSpatialDropout1D(rate float64, options ...SpatialDropout1DOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		s := &SpatialDropout1D{
-			rate: rate,
+			rate:       rate,
 			noiseShape: nil,
-			seed: nil,
-			trainable: true,
-			inputs: inputs,
-			name: uniqueName("spatialdropout1d"),		
+			seed:       nil,
+			trainable:  true,
+			inputs:     inputs,
+			name:       UniqueName("spatialdropout1d"),
 		}
 		for _, option := range options {
 			option(s)
@@ -30,26 +30,25 @@ func NewSpatialDropout1D(rate float64, options ...SpatialDropout1DOption) func(i
 	}
 }
 
-type SpatialDropout1DOption func (*SpatialDropout1D)
+type SpatialDropout1DOption func(*SpatialDropout1D)
 
 func SpatialDropout1DWithName(name string) func(s *SpatialDropout1D) {
-	 return func(s *SpatialDropout1D) {
+	return func(s *SpatialDropout1D) {
 		s.name = name
 	}
 }
 
 func SpatialDropout1DWithDtype(dtype DataType) func(s *SpatialDropout1D) {
-	 return func(s *SpatialDropout1D) {
+	return func(s *SpatialDropout1D) {
 		s.dtype = dtype
 	}
 }
 
 func SpatialDropout1DWithTrainable(trainable bool) func(s *SpatialDropout1D) {
-	 return func(s *SpatialDropout1D) {
+	return func(s *SpatialDropout1D) {
 		s.trainable = trainable
 	}
 }
-
 
 func (s *SpatialDropout1D) GetShape() tf.Shape {
 	return s.shape
@@ -72,13 +71,13 @@ func (s *SpatialDropout1D) GetName() string {
 	return s.name
 }
 
-
 type jsonConfigSpatialDropout1D struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (s *SpatialDropout1D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -93,15 +92,19 @@ func (s *SpatialDropout1D) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigSpatialDropout1D{
 		ClassName: "SpatialDropout1D",
-		Name: s.name,
+		Name:      s.name,
 		Config: map[string]interface{}{
-			"name": s.name,
-			"trainable": s.trainable,
-			"dtype": s.dtype.String(),
-			"rate": s.rate,
+			"dtype":       s.dtype.String(),
+			"name":        s.name,
 			"noise_shape": s.noiseShape,
-			"seed": s.seed,
+			"rate":        s.rate,
+			"seed":        s.seed,
+			"trainable":   s.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (s *SpatialDropout1D) GetCustomLayerDefinition() string {
+	return ``
 }

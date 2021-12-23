@@ -53,10 +53,10 @@ func (v *VarianceScaling) GetKerasLayerConfig() interface{} {
 	return jsonConfigVarianceScaling{
 		ClassName: "VarianceScaling",
 		Config: map[string]interface{}{
-			"mode":         v.mode,
 			"distribution": v.distribution,
-			"seed":         v.seed,
+			"mode":         v.mode,
 			"scale":        v.scale,
+			"seed":         v.seed,
 		},
 	}
 }

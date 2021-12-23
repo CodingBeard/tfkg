@@ -46,8 +46,8 @@ func (r *RandomUniform) GetKerasLayerConfig() interface{} {
 		ClassName: "RandomUniform",
 		Config: map[string]interface{}{
 			"maxval": r.maxval,
-			"seed":   r.seed,
 			"minval": r.minval,
+			"seed":   r.seed,
 		},
 	}
 }

@@ -21,7 +21,7 @@ func NewInput(options ...InputOption) *Input {
 		inputTensor: nil,
 		sparse:      false,
 		ragged:      false,
-		name:        uniqueName("input"),
+		name:        UniqueName("input"),
 	}
 	for _, option := range options {
 		option(i)
@@ -131,4 +131,8 @@ func (i *Input) GetKerasLayerConfig() interface{} {
 		},
 		InboundNodes: []interface{}{},
 	}
+}
+
+func (i *Input) GetCustomLayerDefinition() string {
+	return ``
 }

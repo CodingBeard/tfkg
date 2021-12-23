@@ -3,6 +3,7 @@ package model
 //go:generate go run ../generate/generate.go
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/codingbeard/cberrors"
@@ -16,6 +17,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -76,7 +78,16 @@ func getPreviousLayers(l layer.Layer, layers []layer.Layer) []layer.Layer {
 		}
 	}
 
-	layers = append(layers, l)
+	found := false
+	for _, existingLayer := range layers {
+		if existingLayer.GetName() == l.GetName() {
+			found = true
+			break
+		}
+	}
+	if !found {
+		layers = append(layers, l)
+	}
 
 	return layers
 }
@@ -696,12 +707,13 @@ func (m *TfkgModel) Save(dir string) error {
 }
 
 type pythonConfig struct {
-	BatchSize   int    `json:"batch_size"`
-	ModelConfig string `json:"model_config"`
-	SaveDir     string `json:"save_dir"`
+	BatchSize              int    `json:"batch_size"`
+	ModelConfig            string `json:"model_config"`
+	SaveDir                string `json:"save_dir"`
+	ModelDefinitionSaveDir string `json:"model_definition_save_dir"`
 }
 
-func (m *TfkgModel) CompileAndLoad(batchSize int) error {
+func (m *TfkgModel) CompileAndLoad(batchSize int, modelDefinitionSaveDir string) error {
 	m.logger.InfoF("model", "Compiling and loading model. If anything goes wrong python error messages will be printed out.")
 	modelConfig, e := m.generateKerasDefinitionJson()
 	if e != nil {
@@ -716,10 +728,25 @@ func (m *TfkgModel) CompileAndLoad(batchSize int) error {
 		return e
 	}
 
+	if modelDefinitionSaveDir != "" {
+		indentedJson := bytes.NewBuffer([]byte{})
+		e = json.Indent(indentedJson, []byte(modelConfig), "", "  ")
+		if e != nil {
+			m.errorHandler.Error(e)
+			return e
+		}
+		e = ioutil.WriteFile(filepath.Join(modelDefinitionSaveDir, "model.json"), indentedJson.Bytes(), os.ModePerm)
+		if e != nil {
+			m.errorHandler.Error(e)
+			return e
+		}
+	}
+
 	config := pythonConfig{
-		BatchSize:   batchSize,
-		ModelConfig: modelConfig,
-		SaveDir:     filepath.Join(tempDir, tempModelDir),
+		BatchSize:              batchSize,
+		ModelConfig:            modelConfig,
+		SaveDir:                filepath.Join(tempDir, tempModelDir),
+		ModelDefinitionSaveDir: modelDefinitionSaveDir,
 	}
 
 	configBytes, e := json.Marshal(config)
@@ -728,7 +755,32 @@ func (m *TfkgModel) CompileAndLoad(batchSize int) error {
 		return e
 	}
 
-	cmd := exec.Command("python", "-c", GetPythonCode())
+	ignoreRegex := regexp.MustCompile("# tfkg-ignore.*# tfkg-ignore-end")
+
+	layerTypesDefined := make(map[string]bool)
+	var customDefinitions []string
+	for _, l := range m.layers {
+		if len(l.GetCustomLayerDefinition()) == 0 {
+			continue
+		}
+		definition := l.GetCustomLayerDefinition()
+		definition = ignoreRegex.ReplaceAllString(definition, "")
+		if _, ok := layerTypesDefined[definition]; !ok {
+			customDefinitions = append(customDefinitions, definition)
+			layerTypesDefined[definition] = true
+		}
+	}
+
+	tempPythonPath := filepath.Join(tempDir, "tfkg_create_model.py")
+
+	e = ioutil.WriteFile(tempPythonPath, []byte(GetPythonCode(customDefinitions)), os.ModePerm)
+	if e != nil {
+		m.errorHandler.Error(e)
+		return e
+	}
+	defer os.Remove(tempPythonPath)
+
+	cmd := exec.Command("python", tempPythonPath)
 	stdinPipe, e := cmd.StdinPipe()
 	if e != nil {
 		m.errorHandler.Error(e)

@@ -6,61 +6,61 @@ import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
 
 type SimpleRNN struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
-	trainable bool
-	units float64
-	activation string
-	useBias bool
-	kernelInitializer initializer.Initializer
+	name                 string
+	dtype                DataType
+	inputs               []Layer
+	shape                tf.Shape
+	trainable            bool
+	units                float64
+	activation           string
+	useBias              bool
+	kernelInitializer    initializer.Initializer
 	recurrentInitializer initializer.Initializer
-	biasInitializer initializer.Initializer
-	kernelRegularizer regularizer.Regularizer
+	biasInitializer      initializer.Initializer
+	kernelRegularizer    regularizer.Regularizer
 	recurrentRegularizer regularizer.Regularizer
-	biasRegularizer regularizer.Regularizer
-	activityRegularizer regularizer.Regularizer
-	kernelConstraint constraint.Constraint
-	recurrentConstraint constraint.Constraint
-	biasConstraint constraint.Constraint
-	dropout float64
-	recurrentDropout float64
-	returnSequences bool
-	returnState bool
-	goBackwards bool
-	stateful bool
-	unroll bool
-	timeMajor bool
+	biasRegularizer      regularizer.Regularizer
+	activityRegularizer  regularizer.Regularizer
+	kernelConstraint     constraint.Constraint
+	recurrentConstraint  constraint.Constraint
+	biasConstraint       constraint.Constraint
+	dropout              float64
+	recurrentDropout     float64
+	returnSequences      bool
+	returnState          bool
+	goBackwards          bool
+	stateful             bool
+	unroll               bool
+	timeMajor            bool
 }
 
 func NewSimpleRNN(units float64, options ...SimpleRNNOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		s := &SimpleRNN{
-			units: units,
-			activation: "tanh",
-			useBias: true,
-			kernelInitializer: &initializer.GlorotUniform{},
+			units:                units,
+			activation:           "tanh",
+			useBias:              true,
+			kernelInitializer:    &initializer.GlorotUniform{},
 			recurrentInitializer: &initializer.Orthogonal{},
-			biasInitializer: &initializer.Zeros{},
-			kernelRegularizer: &regularizer.NilRegularizer{},
+			biasInitializer:      &initializer.Zeros{},
+			kernelRegularizer:    &regularizer.NilRegularizer{},
 			recurrentRegularizer: &regularizer.NilRegularizer{},
-			biasRegularizer: &regularizer.NilRegularizer{},
-			activityRegularizer: &regularizer.NilRegularizer{},
-			kernelConstraint: &constraint.NilConstraint{},
-			recurrentConstraint: &constraint.NilConstraint{},
-			biasConstraint: &constraint.NilConstraint{},
-			dropout: 0,
-			recurrentDropout: 0,
-			returnSequences: false,
-			returnState: false,
-			goBackwards: false,
-			stateful: false,
-			unroll: false,
-			timeMajor: false,
-			trainable: true,
-			inputs: inputs,
-			name: uniqueName("simplernn"),		
+			biasRegularizer:      &regularizer.NilRegularizer{},
+			activityRegularizer:  &regularizer.NilRegularizer{},
+			kernelConstraint:     &constraint.NilConstraint{},
+			recurrentConstraint:  &constraint.NilConstraint{},
+			biasConstraint:       &constraint.NilConstraint{},
+			dropout:              0,
+			recurrentDropout:     0,
+			returnSequences:      false,
+			returnState:          false,
+			goBackwards:          false,
+			stateful:             false,
+			unroll:               false,
+			timeMajor:            false,
+			trainable:            true,
+			inputs:               inputs,
+			name:                 UniqueName("simplernn"),
 		}
 		for _, option := range options {
 			option(s)
@@ -69,140 +69,139 @@ func NewSimpleRNN(units float64, options ...SimpleRNNOption) func(inputs ...Laye
 	}
 }
 
-type SimpleRNNOption func (*SimpleRNN)
+type SimpleRNNOption func(*SimpleRNN)
 
 func SimpleRNNWithName(name string) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.name = name
 	}
 }
 
 func SimpleRNNWithDtype(dtype DataType) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.dtype = dtype
 	}
 }
 
 func SimpleRNNWithTrainable(trainable bool) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.trainable = trainable
 	}
 }
 
 func SimpleRNNWithActivation(activation string) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.activation = activation
 	}
 }
 
 func SimpleRNNWithUseBias(useBias bool) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.useBias = useBias
 	}
 }
 
 func SimpleRNNWithKernelInitializer(kernelInitializer initializer.Initializer) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.kernelInitializer = kernelInitializer
 	}
 }
 
 func SimpleRNNWithRecurrentInitializer(recurrentInitializer initializer.Initializer) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.recurrentInitializer = recurrentInitializer
 	}
 }
 
 func SimpleRNNWithBiasInitializer(biasInitializer initializer.Initializer) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.biasInitializer = biasInitializer
 	}
 }
 
 func SimpleRNNWithKernelRegularizer(kernelRegularizer regularizer.Regularizer) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.kernelRegularizer = kernelRegularizer
 	}
 }
 
 func SimpleRNNWithRecurrentRegularizer(recurrentRegularizer regularizer.Regularizer) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.recurrentRegularizer = recurrentRegularizer
 	}
 }
 
 func SimpleRNNWithBiasRegularizer(biasRegularizer regularizer.Regularizer) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.biasRegularizer = biasRegularizer
 	}
 }
 
 func SimpleRNNWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.activityRegularizer = activityRegularizer
 	}
 }
 
 func SimpleRNNWithKernelConstraint(kernelConstraint constraint.Constraint) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.kernelConstraint = kernelConstraint
 	}
 }
 
 func SimpleRNNWithRecurrentConstraint(recurrentConstraint constraint.Constraint) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.recurrentConstraint = recurrentConstraint
 	}
 }
 
 func SimpleRNNWithBiasConstraint(biasConstraint constraint.Constraint) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.biasConstraint = biasConstraint
 	}
 }
 
 func SimpleRNNWithDropout(dropout float64) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.dropout = dropout
 	}
 }
 
 func SimpleRNNWithRecurrentDropout(recurrentDropout float64) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.recurrentDropout = recurrentDropout
 	}
 }
 
 func SimpleRNNWithReturnSequences(returnSequences bool) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.returnSequences = returnSequences
 	}
 }
 
 func SimpleRNNWithReturnState(returnState bool) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.returnState = returnState
 	}
 }
 
 func SimpleRNNWithGoBackwards(goBackwards bool) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.goBackwards = goBackwards
 	}
 }
 
 func SimpleRNNWithStateful(stateful bool) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.stateful = stateful
 	}
 }
 
 func SimpleRNNWithUnroll(unroll bool) func(s *SimpleRNN) {
-	 return func(s *SimpleRNN) {
+	return func(s *SimpleRNN) {
 		s.unroll = unroll
 	}
 }
-
 
 func (s *SimpleRNN) GetShape() tf.Shape {
 	return s.shape
@@ -225,13 +224,13 @@ func (s *SimpleRNN) GetName() string {
 	return s.name
 }
 
-
 type jsonConfigSimpleRNN struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (s *SimpleRNN) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -246,33 +245,37 @@ func (s *SimpleRNN) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigSimpleRNN{
 		ClassName: "SimpleRNN",
-		Name: s.name,
+		Name:      s.name,
 		Config: map[string]interface{}{
-			"trainable": s.trainable,
-			"unroll": s.unroll,
-			"time_major": s.timeMajor,
-			"bias_initializer": s.biasInitializer.GetKerasLayerConfig(),
-			"activity_regularizer": s.activityRegularizer.GetKerasLayerConfig(),
-			"kernel_constraint": s.kernelConstraint.GetKerasLayerConfig(),
-			"bias_constraint": s.biasConstraint.GetKerasLayerConfig(),
-			"name": s.name,
-			"go_backwards": s.goBackwards,
-			"units": s.units,
-			"activation": s.activation,
-			"use_bias": s.useBias,
-			"kernel_initializer": s.kernelInitializer.GetKerasLayerConfig(),
+			"activation":            s.activation,
+			"activity_regularizer":  s.activityRegularizer.GetKerasLayerConfig(),
+			"bias_constraint":       s.biasConstraint.GetKerasLayerConfig(),
+			"bias_initializer":      s.biasInitializer.GetKerasLayerConfig(),
+			"bias_regularizer":      s.biasRegularizer.GetKerasLayerConfig(),
+			"dropout":               s.dropout,
+			"dtype":                 s.dtype.String(),
+			"go_backwards":          s.goBackwards,
+			"kernel_constraint":     s.kernelConstraint.GetKerasLayerConfig(),
+			"kernel_initializer":    s.kernelInitializer.GetKerasLayerConfig(),
+			"kernel_regularizer":    s.kernelRegularizer.GetKerasLayerConfig(),
+			"name":                  s.name,
+			"recurrent_constraint":  s.recurrentConstraint.GetKerasLayerConfig(),
+			"recurrent_dropout":     s.recurrentDropout,
 			"recurrent_initializer": s.recurrentInitializer.GetKerasLayerConfig(),
-			"kernel_regularizer": s.kernelRegularizer.GetKerasLayerConfig(),
-			"return_state": s.returnState,
-			"dropout": s.dropout,
-			"recurrent_dropout": s.recurrentDropout,
-			"stateful": s.stateful,
-			"return_sequences": s.returnSequences,
 			"recurrent_regularizer": s.recurrentRegularizer.GetKerasLayerConfig(),
-			"bias_regularizer": s.biasRegularizer.GetKerasLayerConfig(),
-			"recurrent_constraint": s.recurrentConstraint.GetKerasLayerConfig(),
-			"dtype": s.dtype.String(),
+			"return_sequences":      s.returnSequences,
+			"return_state":          s.returnState,
+			"stateful":              s.stateful,
+			"time_major":            s.timeMajor,
+			"trainable":             s.trainable,
+			"units":                 s.units,
+			"unroll":                s.unroll,
+			"use_bias":              s.useBias,
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (s *SimpleRNN) GetCustomLayerDefinition() string {
+	return ``
 }

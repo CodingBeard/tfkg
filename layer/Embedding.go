@@ -6,37 +6,37 @@ import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
 
 type Embedding struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
-	trainable bool
-	inputDim float64
-	outputDim float64
+	name                  string
+	dtype                 DataType
+	inputs                []Layer
+	shape                 tf.Shape
+	trainable             bool
+	inputDim              float64
+	outputDim             float64
 	embeddingsInitializer initializer.Initializer
 	embeddingsRegularizer regularizer.Regularizer
-	activityRegularizer regularizer.Regularizer
-	embeddingsConstraint constraint.Constraint
-	maskZero bool
-	inputLength interface{}
-	batchInputShape []interface {}
+	activityRegularizer   regularizer.Regularizer
+	embeddingsConstraint  constraint.Constraint
+	maskZero              bool
+	inputLength           interface{}
+	batchInputShape       []interface{}
 }
 
 func NewEmbedding(inputDim float64, outputDim float64, options ...EmbeddingOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		e := &Embedding{
-			inputDim: inputDim,
-			outputDim: outputDim,
+			inputDim:              inputDim,
+			outputDim:             outputDim,
 			embeddingsInitializer: &initializer.RandomUniform{},
 			embeddingsRegularizer: &regularizer.NilRegularizer{},
-			activityRegularizer: &regularizer.NilRegularizer{},
-			embeddingsConstraint: &constraint.NilConstraint{},
-			maskZero: false,
-			inputLength: nil,
-			batchInputShape: []interface {}{interface {}(nil), interface {}(nil)},
-			trainable: true,
-			inputs: inputs,
-			name: uniqueName("embedding"),		
+			activityRegularizer:   &regularizer.NilRegularizer{},
+			embeddingsConstraint:  &constraint.NilConstraint{},
+			maskZero:              false,
+			inputLength:           nil,
+			batchInputShape:       []interface{}{interface{}(nil), interface{}(nil)},
+			trainable:             true,
+			inputs:                inputs,
+			name:                  UniqueName("embedding"),
 		}
 		for _, option := range options {
 			option(e)
@@ -45,62 +45,61 @@ func NewEmbedding(inputDim float64, outputDim float64, options ...EmbeddingOptio
 	}
 }
 
-type EmbeddingOption func (*Embedding)
+type EmbeddingOption func(*Embedding)
 
 func EmbeddingWithName(name string) func(e *Embedding) {
-	 return func(e *Embedding) {
+	return func(e *Embedding) {
 		e.name = name
 	}
 }
 
 func EmbeddingWithDtype(dtype DataType) func(e *Embedding) {
-	 return func(e *Embedding) {
+	return func(e *Embedding) {
 		e.dtype = dtype
 	}
 }
 
 func EmbeddingWithTrainable(trainable bool) func(e *Embedding) {
-	 return func(e *Embedding) {
+	return func(e *Embedding) {
 		e.trainable = trainable
 	}
 }
 
 func EmbeddingWithEmbeddingsInitializer(embeddingsInitializer initializer.Initializer) func(e *Embedding) {
-	 return func(e *Embedding) {
+	return func(e *Embedding) {
 		e.embeddingsInitializer = embeddingsInitializer
 	}
 }
 
 func EmbeddingWithEmbeddingsRegularizer(embeddingsRegularizer regularizer.Regularizer) func(e *Embedding) {
-	 return func(e *Embedding) {
+	return func(e *Embedding) {
 		e.embeddingsRegularizer = embeddingsRegularizer
 	}
 }
 
 func EmbeddingWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(e *Embedding) {
-	 return func(e *Embedding) {
+	return func(e *Embedding) {
 		e.activityRegularizer = activityRegularizer
 	}
 }
 
 func EmbeddingWithEmbeddingsConstraint(embeddingsConstraint constraint.Constraint) func(e *Embedding) {
-	 return func(e *Embedding) {
+	return func(e *Embedding) {
 		e.embeddingsConstraint = embeddingsConstraint
 	}
 }
 
 func EmbeddingWithMaskZero(maskZero bool) func(e *Embedding) {
-	 return func(e *Embedding) {
+	return func(e *Embedding) {
 		e.maskZero = maskZero
 	}
 }
 
 func EmbeddingWithInputLength(inputLength interface{}) func(e *Embedding) {
-	 return func(e *Embedding) {
+	return func(e *Embedding) {
 		e.inputLength = inputLength
 	}
 }
-
 
 func (e *Embedding) GetShape() tf.Shape {
 	return e.shape
@@ -123,13 +122,13 @@ func (e *Embedding) GetName() string {
 	return e.name
 }
 
-
 type jsonConfigEmbedding struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (e *Embedding) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -144,21 +143,25 @@ func (e *Embedding) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigEmbedding{
 		ClassName: "Embedding",
-		Name: e.name,
+		Name:      e.name,
 		Config: map[string]interface{}{
-			"embeddings_regularizer": e.embeddingsRegularizer.GetKerasLayerConfig(),
-			"activity_regularizer": e.activityRegularizer.GetKerasLayerConfig(),
-			"mask_zero": e.maskZero,
-			"name": e.name,
+			"activity_regularizer":   e.activityRegularizer.GetKerasLayerConfig(),
+			"batch_input_shape":      e.batchInputShape,
+			"dtype":                  e.dtype.String(),
+			"embeddings_constraint":  e.embeddingsConstraint.GetKerasLayerConfig(),
 			"embeddings_initializer": e.embeddingsInitializer.GetKerasLayerConfig(),
-			"dtype": e.dtype.String(),
-			"input_dim": e.inputDim,
-			"output_dim": e.outputDim,
-			"embeddings_constraint": e.embeddingsConstraint.GetKerasLayerConfig(),
-			"input_length": e.inputLength,
-			"trainable": e.trainable,
-			"batch_input_shape": e.batchInputShape,
+			"embeddings_regularizer": e.embeddingsRegularizer.GetKerasLayerConfig(),
+			"input_dim":              e.inputDim,
+			"input_length":           e.inputLength,
+			"mask_zero":              e.maskZero,
+			"name":                   e.name,
+			"output_dim":             e.outputDim,
+			"trainable":              e.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (e *Embedding) GetCustomLayerDefinition() string {
+	return ``
 }

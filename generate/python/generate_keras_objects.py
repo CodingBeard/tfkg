@@ -2,6 +2,7 @@ import inspect
 import json
 
 import tensorflow.keras as k
+import numpy as np
 
 objects = [
     {"type": "initializer", "class": k.initializers.RandomNormal, "args": []},
@@ -88,6 +89,29 @@ objects = [
     {"type": "layer", "class": k.layers.Subtract, "args": []},
     {"type": "layer", "class": k.layers.Multiply, "args": []},
     {"type": "layer", "class": k.layers.Dot, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.CategoryCrossing, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.CategoryEncoding, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.CenterCrop, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.Discretization, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.Hashing, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.IntegerLookup, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.Normalization, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.PreprocessingLayer, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.RandomContrast, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.RandomCrop, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.RandomFlip, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.RandomHeight, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.RandomRotation, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.RandomTranslation, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.RandomWidth, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.RandomZoom, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.Rescaling, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.Resizing, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.StringLookup, "args": []},
+    {"type": "layer", "class": k.layers.experimental.preprocessing.TextVectorization, "args": []},
+    {"type": "layer", "class": k.layers.experimental.EinsumDense, "args": []},
+    {"type": "layer", "class": k.layers.experimental.RandomFourierFeatures, "args": []},
+    {"type": "layer", "class": k.layers.experimental.SyncBatchNormalization, "args": []},
 ]
 defaults = {
     "activation": "linear",
@@ -119,7 +143,10 @@ for obj in objects:
                 a.append(1)
             required_params.append(required_param)
         else:
+            if param_name == "num_tokens":
+                a.append(1)
             optional_params.append([param_name, param.default])
+    print(c.__name__)
     sub_config = c(*a).get_config()
     object_config = {
         "class_name": c.__name__,
@@ -138,6 +165,18 @@ for obj in objects:
         "config": object_config,
     })
 
+
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NpEncoder, self).default(obj)
+
+
 with open("generate/python/objects.json", "w") as f:
-    json.dump(configs, f, indent=2)
+    json.dump(configs, f, indent=2, cls=NpEncoder)
 

@@ -14,6 +14,8 @@ type ModelViewModel struct {
 	ModelName        string
 	ModelLogs        string
 	ModelProgressLog string
+	ModelJson        string
+	ModelSummary     string
 	MetricsViewModel *ModelsViewModel
 	MetricsError     error
 }

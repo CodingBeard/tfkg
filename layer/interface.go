@@ -43,11 +43,12 @@ type Layer interface {
 	GetInputs() []Layer
 	GetName() string
 	GetKerasLayerConfig() interface{}
+	GetCustomLayerDefinition() string
 }
 
 var uniqueNameCounts = make(map[string]int)
 
-func uniqueName(name string) string {
+func UniqueName(name string) string {
 	count := uniqueNameCounts[name]
 	count++
 	uniqueNameCounts[name] = count

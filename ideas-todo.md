@@ -30,8 +30,6 @@ Allow custom python layers by offering a method to load the requisite python fil
 
 # Todos
 
-- Implement common layers
-  - Implement full config spec of each layer
 - Implement common losses
 - Documentation
 - Testing

@@ -3,27 +3,27 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type AveragePooling2D struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
-	trainable bool
-	poolSize []interface {}
-	strides interface{}
-	padding string
+	name       string
+	dtype      DataType
+	inputs     []Layer
+	shape      tf.Shape
+	trainable  bool
+	poolSize   []interface{}
+	strides    interface{}
+	padding    string
 	dataFormat interface{}
 }
 
 func NewAveragePooling2D(options ...AveragePooling2DOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		a := &AveragePooling2D{
-			poolSize: []interface {}{2, 2},
-			strides: nil,
-			padding: "valid",
+			poolSize:   []interface{}{2, 2},
+			strides:    nil,
+			padding:    "valid",
 			dataFormat: nil,
-			trainable: true,
-			inputs: inputs,
-			name: uniqueName("averagepooling2d"),		
+			trainable:  true,
+			inputs:     inputs,
+			name:       UniqueName("averagepooling2d"),
 		}
 		for _, option := range options {
 			option(a)
@@ -32,50 +32,49 @@ func NewAveragePooling2D(options ...AveragePooling2DOption) func(inputs ...Layer
 	}
 }
 
-type AveragePooling2DOption func (*AveragePooling2D)
+type AveragePooling2DOption func(*AveragePooling2D)
 
 func AveragePooling2DWithName(name string) func(a *AveragePooling2D) {
-	 return func(a *AveragePooling2D) {
+	return func(a *AveragePooling2D) {
 		a.name = name
 	}
 }
 
 func AveragePooling2DWithDtype(dtype DataType) func(a *AveragePooling2D) {
-	 return func(a *AveragePooling2D) {
+	return func(a *AveragePooling2D) {
 		a.dtype = dtype
 	}
 }
 
 func AveragePooling2DWithTrainable(trainable bool) func(a *AveragePooling2D) {
-	 return func(a *AveragePooling2D) {
+	return func(a *AveragePooling2D) {
 		a.trainable = trainable
 	}
 }
 
-func AveragePooling2DWithPoolSize(poolSize []interface {}) func(a *AveragePooling2D) {
-	 return func(a *AveragePooling2D) {
+func AveragePooling2DWithPoolSize(poolSize []interface{}) func(a *AveragePooling2D) {
+	return func(a *AveragePooling2D) {
 		a.poolSize = poolSize
 	}
 }
 
 func AveragePooling2DWithStrides(strides interface{}) func(a *AveragePooling2D) {
-	 return func(a *AveragePooling2D) {
+	return func(a *AveragePooling2D) {
 		a.strides = strides
 	}
 }
 
 func AveragePooling2DWithPadding(padding string) func(a *AveragePooling2D) {
-	 return func(a *AveragePooling2D) {
+	return func(a *AveragePooling2D) {
 		a.padding = padding
 	}
 }
 
 func AveragePooling2DWithDataFormat(dataFormat interface{}) func(a *AveragePooling2D) {
-	 return func(a *AveragePooling2D) {
+	return func(a *AveragePooling2D) {
 		a.dataFormat = dataFormat
 	}
 }
-
 
 func (a *AveragePooling2D) GetShape() tf.Shape {
 	return a.shape
@@ -98,13 +97,13 @@ func (a *AveragePooling2D) GetName() string {
 	return a.name
 }
 
-
 type jsonConfigAveragePooling2D struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (a *AveragePooling2D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -119,16 +118,20 @@ func (a *AveragePooling2D) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigAveragePooling2D{
 		ClassName: "AveragePooling2D",
-		Name: a.name,
+		Name:      a.name,
 		Config: map[string]interface{}{
-			"dtype": a.dtype.String(),
-			"pool_size": a.poolSize,
-			"padding": a.padding,
-			"strides": a.strides,
 			"data_format": a.dataFormat,
-			"name": a.name,
-			"trainable": a.trainable,
+			"dtype":       a.dtype.String(),
+			"name":        a.name,
+			"padding":     a.padding,
+			"pool_size":   a.poolSize,
+			"strides":     a.strides,
+			"trainable":   a.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (a *AveragePooling2D) GetCustomLayerDefinition() string {
+	return ``
 }

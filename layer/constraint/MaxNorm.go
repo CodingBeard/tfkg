@@ -37,8 +37,8 @@ func (m *MaxNorm) GetKerasLayerConfig() interface{} {
 	return jsonConfigMaxNorm{
 		ClassName: "MaxNorm",
 		Config: map[string]interface{}{
-			"max_value": m.maxValue,
 			"axis":      m.axis,
+			"max_value": m.maxValue,
 		},
 	}
 }

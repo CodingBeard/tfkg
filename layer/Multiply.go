@@ -3,20 +3,19 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type Multiply struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
+	name      string
+	dtype     DataType
+	inputs    []Layer
+	shape     tf.Shape
 	trainable bool
-	
 }
 
 func NewMultiply(options ...MultiplyOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		m := &Multiply{
 			trainable: true,
-			inputs: inputs,
-			name: uniqueName("multiply"),		
+			inputs:    inputs,
+			name:      UniqueName("multiply"),
 		}
 		for _, option := range options {
 			option(m)
@@ -25,26 +24,25 @@ func NewMultiply(options ...MultiplyOption) func(inputs ...Layer) Layer {
 	}
 }
 
-type MultiplyOption func (*Multiply)
+type MultiplyOption func(*Multiply)
 
 func MultiplyWithName(name string) func(m *Multiply) {
-	 return func(m *Multiply) {
+	return func(m *Multiply) {
 		m.name = name
 	}
 }
 
 func MultiplyWithDtype(dtype DataType) func(m *Multiply) {
-	 return func(m *Multiply) {
+	return func(m *Multiply) {
 		m.dtype = dtype
 	}
 }
 
 func MultiplyWithTrainable(trainable bool) func(m *Multiply) {
-	 return func(m *Multiply) {
+	return func(m *Multiply) {
 		m.trainable = trainable
 	}
 }
-
 
 func (m *Multiply) GetShape() tf.Shape {
 	return m.shape
@@ -67,13 +65,13 @@ func (m *Multiply) GetName() string {
 	return m.name
 }
 
-
 type jsonConfigMultiply struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (m *Multiply) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -88,12 +86,16 @@ func (m *Multiply) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigMultiply{
 		ClassName: "Multiply",
-		Name: m.name,
+		Name:      m.name,
 		Config: map[string]interface{}{
-			"name": m.name,
+			"dtype":     m.dtype.String(),
+			"name":      m.name,
 			"trainable": m.trainable,
-			"dtype": m.dtype.String(),
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (m *Multiply) GetCustomLayerDefinition() string {
+	return ``
 }

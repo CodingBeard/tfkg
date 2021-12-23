@@ -291,7 +291,7 @@ func main() {
 	// A python binary must be available to use for this to work
 	// The batchSize MUST match the batch size in the call to Fit or Evaluate
 	batchSize := 200
-	e = m.CompileAndLoad(batchSize)
+	e = m.CompileAndLoad(batchSize, saveDir)
 	if e != nil {
 		return
 	}

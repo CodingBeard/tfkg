@@ -3,21 +3,21 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type RepeatVector struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
+	name      string
+	dtype     DataType
+	inputs    []Layer
+	shape     tf.Shape
 	trainable bool
-	n float64
+	n         float64
 }
 
 func NewRepeatVector(n float64, options ...RepeatVectorOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		r := &RepeatVector{
-			n: n,
+			n:         n,
 			trainable: true,
-			inputs: inputs,
-			name: uniqueName("repeatvector"),		
+			inputs:    inputs,
+			name:      UniqueName("repeatvector"),
 		}
 		for _, option := range options {
 			option(r)
@@ -26,26 +26,25 @@ func NewRepeatVector(n float64, options ...RepeatVectorOption) func(inputs ...La
 	}
 }
 
-type RepeatVectorOption func (*RepeatVector)
+type RepeatVectorOption func(*RepeatVector)
 
 func RepeatVectorWithName(name string) func(r *RepeatVector) {
-	 return func(r *RepeatVector) {
+	return func(r *RepeatVector) {
 		r.name = name
 	}
 }
 
 func RepeatVectorWithDtype(dtype DataType) func(r *RepeatVector) {
-	 return func(r *RepeatVector) {
+	return func(r *RepeatVector) {
 		r.dtype = dtype
 	}
 }
 
 func RepeatVectorWithTrainable(trainable bool) func(r *RepeatVector) {
-	 return func(r *RepeatVector) {
+	return func(r *RepeatVector) {
 		r.trainable = trainable
 	}
 }
-
 
 func (r *RepeatVector) GetShape() tf.Shape {
 	return r.shape
@@ -68,13 +67,13 @@ func (r *RepeatVector) GetName() string {
 	return r.name
 }
 
-
 type jsonConfigRepeatVector struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (r *RepeatVector) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -89,13 +88,17 @@ func (r *RepeatVector) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigRepeatVector{
 		ClassName: "RepeatVector",
-		Name: r.name,
+		Name:      r.name,
 		Config: map[string]interface{}{
+			"dtype":     r.dtype.String(),
+			"n":         r.n,
+			"name":      r.name,
 			"trainable": r.trainable,
-			"dtype": r.dtype.String(),
-			"n": r.n,
-			"name": r.name,
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (r *RepeatVector) GetCustomLayerDefinition() string {
+	return ``
 }

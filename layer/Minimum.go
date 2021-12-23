@@ -3,20 +3,19 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type Minimum struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
+	name      string
+	dtype     DataType
+	inputs    []Layer
+	shape     tf.Shape
 	trainable bool
-	
 }
 
 func NewMinimum(options ...MinimumOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		m := &Minimum{
 			trainable: true,
-			inputs: inputs,
-			name: uniqueName("minimum"),		
+			inputs:    inputs,
+			name:      UniqueName("minimum"),
 		}
 		for _, option := range options {
 			option(m)
@@ -25,26 +24,25 @@ func NewMinimum(options ...MinimumOption) func(inputs ...Layer) Layer {
 	}
 }
 
-type MinimumOption func (*Minimum)
+type MinimumOption func(*Minimum)
 
 func MinimumWithName(name string) func(m *Minimum) {
-	 return func(m *Minimum) {
+	return func(m *Minimum) {
 		m.name = name
 	}
 }
 
 func MinimumWithDtype(dtype DataType) func(m *Minimum) {
-	 return func(m *Minimum) {
+	return func(m *Minimum) {
 		m.dtype = dtype
 	}
 }
 
 func MinimumWithTrainable(trainable bool) func(m *Minimum) {
-	 return func(m *Minimum) {
+	return func(m *Minimum) {
 		m.trainable = trainable
 	}
 }
-
 
 func (m *Minimum) GetShape() tf.Shape {
 	return m.shape
@@ -67,13 +65,13 @@ func (m *Minimum) GetName() string {
 	return m.name
 }
 
-
 type jsonConfigMinimum struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (m *Minimum) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -88,12 +86,16 @@ func (m *Minimum) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigMinimum{
 		ClassName: "Minimum",
-		Name: m.name,
+		Name:      m.name,
 		Config: map[string]interface{}{
-			"name": m.name,
+			"dtype":     m.dtype.String(),
+			"name":      m.name,
 			"trainable": m.trainable,
-			"dtype": m.dtype.String(),
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (m *Minimum) GetCustomLayerDefinition() string {
+	return ``
 }

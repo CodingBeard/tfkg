@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -43,6 +45,11 @@ func main() {
 		} else if object.Type == "layer" {
 			createLayer(object)
 		}
+	}
+
+	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/layer").Output()
+	if e != nil {
+		panic(e)
 	}
 }
 
@@ -301,20 +308,23 @@ func createLayer(object objectJson) {
 			continue
 		}
 		if name != "dtype" && name != "name" && name != "trainable" {
-			objectProperties = append(objectProperties, fmt.Sprintf("%s %s", snakeCaseToCamelCase(name), getGolangTypeFromValue(originalName, value)))
+			objectProperties = append(objectProperties, fmt.Sprintf("%s %s", snakeCaseToCamelCase(name), getGolangTypeFromValue(object.Name, originalName, value)))
 		}
 	}
 
 	var requiredParamSetters []string
 	objectParamSetterNames := make(map[string]bool)
 	for _, paramName := range getRequiredParamNames(object) {
+		if paramName == "trainable" {
+			continue
+		}
 		requiredParamSetters = append(requiredParamSetters, fmt.Sprintf("%s: %s,", paramName, paramName))
 		objectParamSetterNames[paramName] = true
 	}
 
 	var defaultParamSetters []string
 	for _, param := range getOptionalParamDefaults(object) {
-		if param[0] == "name" {
+		if param[0] == "name" || param[0] == "trainable" {
 			continue
 		}
 		defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("%s: %s,", param[0], param[1]))
@@ -326,12 +336,12 @@ func createLayer(object objectJson) {
 			continue
 		}
 		if name != "dtype" && name != "name" && name != "trainable" {
-			defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("%s: %s,", snakeCaseToCamelCase(name), getGolangStringFromValue(originalName, value)))
+			defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("%s: %s,", snakeCaseToCamelCase(name), getGolangStringFromValue(object.Name, originalName, value)))
 		}
 	}
 	defaultParamSetters = append(defaultParamSetters, "trainable: true,")
 	defaultParamSetters = append(defaultParamSetters, "inputs: inputs,")
-	defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("name: uniqueName(\"%s\"),", strings.ToLower(object.Name)))
+	defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("name: UniqueName(\"%s\"),", strings.ToLower(object.Name)))
 
 	requiredParamSettersString := strings.Join(requiredParamSetters, "\n\t\t\t")
 	if len(requiredParamSetters) > 0 {
@@ -443,6 +453,11 @@ func (%s *%s) GetName() string {
 		"\t\tInboundNodes: inboundNodes,",
 		"\t}",
 		"}",
+		"",
+		fmt.Sprintf("func (%s *%s) GetCustomLayerDefinition() string {", reciever, object.Name),
+		"\treturn ``",
+		"}",
+		"",
 	}
 
 	importedLines := []string{
@@ -496,12 +511,17 @@ func getConfigValue(object objectJson) string {
 	reciever := strings.ToLower(string(object.Name[0]))
 
 	subConfig := object.Config["config"].(map[string]interface{})
+	var sortedConfigKeys []string
 	for name := range subConfig {
+		sortedConfigKeys = append(sortedConfigKeys, name)
+	}
+	sort.Strings(sortedConfigKeys)
+	for _, name := range sortedConfigKeys {
 		getter := snakeCaseToCamelCase(name)
 		if name == "dtype" {
 			getter = "dtype.String()"
 		}
-		if strings.HasSuffix(name, "constraint") || strings.HasSuffix(name, "initializer") || strings.HasSuffix(name, "regularizer") {
+		if strings.HasSuffix(name, "constraint") || (strings.HasSuffix(name, "initializer") && object.Name != "RandomFourierFeatures") || strings.HasSuffix(name, "regularizer") {
 			getter += ".GetKerasLayerConfig()"
 		}
 		lines = append(lines, fmt.Sprintf(
@@ -549,7 +569,7 @@ func getRequiredParamsString(object objectJson) string {
 			params = append(params, fmt.Sprintf(
 				"%s %s",
 				snakeCaseToCamelCase(paramSliceInterface[0].(string)),
-				getGolangTypeFromValue(paramSliceInterface[0].(string), paramSliceInterface[1]),
+				getGolangTypeFromValue(object.Name, paramSliceInterface[0].(string), paramSliceInterface[1]),
 			))
 		}
 	}
@@ -569,7 +589,7 @@ func getRequiredParams(object objectJson) [][]string {
 		if ok {
 			params = append(params, []string{
 				snakeCaseToCamelCase(paramSliceInterface[0].(string)),
-				getGolangTypeFromValue(paramSliceInterface[0].(string), paramSliceInterface[1]),
+				getGolangTypeFromValue(object.Name, paramSliceInterface[0].(string), paramSliceInterface[1]),
 			})
 		} else {
 			fmt.Println(fmt.Sprintf("%T", paramInterface))
@@ -588,7 +608,7 @@ func getOptionalParams(object objectJson) [][]string {
 		if ok {
 			params = append(params, []string{
 				snakeCaseToCamelCase(paramSliceInterface[0].(string)),
-				getGolangTypeFromValue(paramSliceInterface[0].(string), paramSliceInterface[1]),
+				getGolangTypeFromValue(object.Name, paramSliceInterface[0].(string), paramSliceInterface[1]),
 			})
 		} else {
 			fmt.Println(fmt.Sprintf("%T", paramInterface))
@@ -607,7 +627,7 @@ func getOptionalParamDefaults(object objectJson) [][]string {
 		if ok {
 			params = append(params, []string{
 				snakeCaseToCamelCase(paramSliceInterface[0].(string)),
-				getGolangStringFromValue(paramSliceInterface[0].(string), paramSliceInterface[1]),
+				getGolangStringFromValue(object.Name, paramSliceInterface[0].(string), paramSliceInterface[1]),
 			})
 		} else {
 			fmt.Println(fmt.Sprintf("%T", paramInterface))
@@ -638,11 +658,11 @@ func snakeCaseToCamelCase(str string) string {
 	return strings.ToLower(string(str[0])) + str[1:]
 }
 
-func getGolangTypeFromValue(paramName string, value interface{}) string {
+func getGolangTypeFromValue(objectName string, paramName string, value interface{}) string {
 	stringValue := ""
 	if strings.HasSuffix(paramName, "constraint") {
 		stringValue = "constraint.Constraint"
-	} else if strings.HasSuffix(paramName, "initializer") {
+	} else if strings.HasSuffix(paramName, "initializer") && objectName != "RandomFourierFeatures" {
 		stringValue = "initializer.Initializer"
 	} else if strings.HasSuffix(paramName, "regularizer") {
 		stringValue = "regularizer.Regularizer"
@@ -663,7 +683,7 @@ func getGolangTypeFromValue(paramName string, value interface{}) string {
 	return stringValue
 }
 
-func getGolangStringFromValue(paramName string, value interface{}) string {
+func getGolangStringFromValue(objectName string, paramName string, value interface{}) string {
 	stringValue := fmt.Sprintf("%#v", value)
 	if stringValue == "<nil>" {
 		stringValue = "nil"
@@ -682,7 +702,7 @@ func getGolangStringFromValue(paramName string, value interface{}) string {
 		} else {
 			stringValue = "&constraint.NilConstraint{}"
 		}
-	} else if strings.HasSuffix(paramName, "initializer") {
+	} else if strings.HasSuffix(paramName, "initializer") && objectName != "RandomFourierFeatures" {
 		if stringValue != "nil" {
 			if config, ok := value.(map[string]interface{}); ok {
 				stringValue = fmt.Sprintf("&initializer.%s{}", config["class_name"])

@@ -53,10 +53,10 @@ func (m *MinMaxNorm) GetKerasLayerConfig() interface{} {
 	return jsonConfigMinMaxNorm{
 		ClassName: "MinMaxNorm",
 		Config: map[string]interface{}{
-			"min_value": m.minValue,
-			"max_value": m.maxValue,
-			"rate":      m.rate,
 			"axis":      m.axis,
+			"max_value": m.maxValue,
+			"min_value": m.minValue,
+			"rate":      m.rate,
 		},
 	}
 }

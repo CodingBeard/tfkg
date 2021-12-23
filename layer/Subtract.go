@@ -3,20 +3,19 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type Subtract struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
+	name      string
+	dtype     DataType
+	inputs    []Layer
+	shape     tf.Shape
 	trainable bool
-	
 }
 
 func NewSubtract(options ...SubtractOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		s := &Subtract{
 			trainable: true,
-			inputs: inputs,
-			name: uniqueName("subtract"),		
+			inputs:    inputs,
+			name:      UniqueName("subtract"),
 		}
 		for _, option := range options {
 			option(s)
@@ -25,26 +24,25 @@ func NewSubtract(options ...SubtractOption) func(inputs ...Layer) Layer {
 	}
 }
 
-type SubtractOption func (*Subtract)
+type SubtractOption func(*Subtract)
 
 func SubtractWithName(name string) func(s *Subtract) {
-	 return func(s *Subtract) {
+	return func(s *Subtract) {
 		s.name = name
 	}
 }
 
 func SubtractWithDtype(dtype DataType) func(s *Subtract) {
-	 return func(s *Subtract) {
+	return func(s *Subtract) {
 		s.dtype = dtype
 	}
 }
 
 func SubtractWithTrainable(trainable bool) func(s *Subtract) {
-	 return func(s *Subtract) {
+	return func(s *Subtract) {
 		s.trainable = trainable
 	}
 }
-
 
 func (s *Subtract) GetShape() tf.Shape {
 	return s.shape
@@ -67,13 +65,13 @@ func (s *Subtract) GetName() string {
 	return s.name
 }
 
-
 type jsonConfigSubtract struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (s *Subtract) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -88,12 +86,16 @@ func (s *Subtract) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigSubtract{
 		ClassName: "Subtract",
-		Name: s.name,
+		Name:      s.name,
 		Config: map[string]interface{}{
-			"dtype": s.dtype.String(),
-			"name": s.name,
+			"dtype":     s.dtype.String(),
+			"name":      s.name,
 			"trainable": s.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (s *Subtract) GetCustomLayerDefinition() string {
+	return ``
 }

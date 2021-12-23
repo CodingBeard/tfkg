@@ -3,27 +3,27 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type MaxPooling2D struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
-	trainable bool
-	poolSize []interface {}
-	strides interface{}
-	padding string
+	name       string
+	dtype      DataType
+	inputs     []Layer
+	shape      tf.Shape
+	trainable  bool
+	poolSize   []interface{}
+	strides    interface{}
+	padding    string
 	dataFormat interface{}
 }
 
 func NewMaxPooling2D(options ...MaxPooling2DOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		m := &MaxPooling2D{
-			poolSize: []interface {}{2, 2},
-			strides: nil,
-			padding: "valid",
+			poolSize:   []interface{}{2, 2},
+			strides:    nil,
+			padding:    "valid",
 			dataFormat: nil,
-			trainable: true,
-			inputs: inputs,
-			name: uniqueName("maxpooling2d"),		
+			trainable:  true,
+			inputs:     inputs,
+			name:       UniqueName("maxpooling2d"),
 		}
 		for _, option := range options {
 			option(m)
@@ -32,50 +32,49 @@ func NewMaxPooling2D(options ...MaxPooling2DOption) func(inputs ...Layer) Layer 
 	}
 }
 
-type MaxPooling2DOption func (*MaxPooling2D)
+type MaxPooling2DOption func(*MaxPooling2D)
 
 func MaxPooling2DWithName(name string) func(m *MaxPooling2D) {
-	 return func(m *MaxPooling2D) {
+	return func(m *MaxPooling2D) {
 		m.name = name
 	}
 }
 
 func MaxPooling2DWithDtype(dtype DataType) func(m *MaxPooling2D) {
-	 return func(m *MaxPooling2D) {
+	return func(m *MaxPooling2D) {
 		m.dtype = dtype
 	}
 }
 
 func MaxPooling2DWithTrainable(trainable bool) func(m *MaxPooling2D) {
-	 return func(m *MaxPooling2D) {
+	return func(m *MaxPooling2D) {
 		m.trainable = trainable
 	}
 }
 
-func MaxPooling2DWithPoolSize(poolSize []interface {}) func(m *MaxPooling2D) {
-	 return func(m *MaxPooling2D) {
+func MaxPooling2DWithPoolSize(poolSize []interface{}) func(m *MaxPooling2D) {
+	return func(m *MaxPooling2D) {
 		m.poolSize = poolSize
 	}
 }
 
 func MaxPooling2DWithStrides(strides interface{}) func(m *MaxPooling2D) {
-	 return func(m *MaxPooling2D) {
+	return func(m *MaxPooling2D) {
 		m.strides = strides
 	}
 }
 
 func MaxPooling2DWithPadding(padding string) func(m *MaxPooling2D) {
-	 return func(m *MaxPooling2D) {
+	return func(m *MaxPooling2D) {
 		m.padding = padding
 	}
 }
 
 func MaxPooling2DWithDataFormat(dataFormat interface{}) func(m *MaxPooling2D) {
-	 return func(m *MaxPooling2D) {
+	return func(m *MaxPooling2D) {
 		m.dataFormat = dataFormat
 	}
 }
-
 
 func (m *MaxPooling2D) GetShape() tf.Shape {
 	return m.shape
@@ -98,13 +97,13 @@ func (m *MaxPooling2D) GetName() string {
 	return m.name
 }
 
-
 type jsonConfigMaxPooling2D struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (m *MaxPooling2D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -119,16 +118,20 @@ func (m *MaxPooling2D) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigMaxPooling2D{
 		ClassName: "MaxPooling2D",
-		Name: m.name,
+		Name:      m.name,
 		Config: map[string]interface{}{
-			"name": m.name,
-			"trainable": m.trainable,
-			"dtype": m.dtype.String(),
-			"pool_size": m.poolSize,
-			"padding": m.padding,
-			"strides": m.strides,
 			"data_format": m.dataFormat,
+			"dtype":       m.dtype.String(),
+			"name":        m.name,
+			"padding":     m.padding,
+			"pool_size":   m.poolSize,
+			"strides":     m.strides,
+			"trainable":   m.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (m *MaxPooling2D) GetCustomLayerDefinition() string {
+	return ``
 }

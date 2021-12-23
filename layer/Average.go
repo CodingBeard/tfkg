@@ -3,20 +3,19 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type Average struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
+	name      string
+	dtype     DataType
+	inputs    []Layer
+	shape     tf.Shape
 	trainable bool
-	
 }
 
 func NewAverage(options ...AverageOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		a := &Average{
 			trainable: true,
-			inputs: inputs,
-			name: uniqueName("average"),		
+			inputs:    inputs,
+			name:      UniqueName("average"),
 		}
 		for _, option := range options {
 			option(a)
@@ -25,26 +24,25 @@ func NewAverage(options ...AverageOption) func(inputs ...Layer) Layer {
 	}
 }
 
-type AverageOption func (*Average)
+type AverageOption func(*Average)
 
 func AverageWithName(name string) func(a *Average) {
-	 return func(a *Average) {
+	return func(a *Average) {
 		a.name = name
 	}
 }
 
 func AverageWithDtype(dtype DataType) func(a *Average) {
-	 return func(a *Average) {
+	return func(a *Average) {
 		a.dtype = dtype
 	}
 }
 
 func AverageWithTrainable(trainable bool) func(a *Average) {
-	 return func(a *Average) {
+	return func(a *Average) {
 		a.trainable = trainable
 	}
 }
-
 
 func (a *Average) GetShape() tf.Shape {
 	return a.shape
@@ -67,13 +65,13 @@ func (a *Average) GetName() string {
 	return a.name
 }
 
-
 type jsonConfigAverage struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (a *Average) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -88,12 +86,16 @@ func (a *Average) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigAverage{
 		ClassName: "Average",
-		Name: a.name,
+		Name:      a.name,
 		Config: map[string]interface{}{
-			"name": a.name,
+			"dtype":     a.dtype.String(),
+			"name":      a.name,
 			"trainable": a.trainable,
-			"dtype": a.dtype.String(),
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (a *Average) GetCustomLayerDefinition() string {
+	return ``
 }

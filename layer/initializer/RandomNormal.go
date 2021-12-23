@@ -46,8 +46,8 @@ func (r *RandomNormal) GetKerasLayerConfig() interface{} {
 		ClassName: "RandomNormal",
 		Config: map[string]interface{}{
 			"mean":   r.mean,
-			"stddev": r.stddev,
 			"seed":   r.seed,
+			"stddev": r.stddev,
 		},
 	}
 }

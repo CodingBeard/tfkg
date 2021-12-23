@@ -3,23 +3,23 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type GlobalMaxPooling2D struct {
-	name string
-	dtype DataType
-	inputs []Layer
-	shape tf.Shape
-	trainable bool
+	name       string
+	dtype      DataType
+	inputs     []Layer
+	shape      tf.Shape
+	trainable  bool
 	dataFormat interface{}
-	keepdims bool
+	keepdims   bool
 }
 
 func NewGlobalMaxPooling2D(options ...GlobalMaxPooling2DOption) func(inputs ...Layer) Layer {
 	return func(inputs ...Layer) Layer {
 		g := &GlobalMaxPooling2D{
 			dataFormat: nil,
-			keepdims: false,
-			trainable: true,
-			inputs: inputs,
-			name: uniqueName("globalmaxpooling2d"),		
+			keepdims:   false,
+			trainable:  true,
+			inputs:     inputs,
+			name:       UniqueName("globalmaxpooling2d"),
 		}
 		for _, option := range options {
 			option(g)
@@ -28,38 +28,37 @@ func NewGlobalMaxPooling2D(options ...GlobalMaxPooling2DOption) func(inputs ...L
 	}
 }
 
-type GlobalMaxPooling2DOption func (*GlobalMaxPooling2D)
+type GlobalMaxPooling2DOption func(*GlobalMaxPooling2D)
 
 func GlobalMaxPooling2DWithName(name string) func(g *GlobalMaxPooling2D) {
-	 return func(g *GlobalMaxPooling2D) {
+	return func(g *GlobalMaxPooling2D) {
 		g.name = name
 	}
 }
 
 func GlobalMaxPooling2DWithDtype(dtype DataType) func(g *GlobalMaxPooling2D) {
-	 return func(g *GlobalMaxPooling2D) {
+	return func(g *GlobalMaxPooling2D) {
 		g.dtype = dtype
 	}
 }
 
 func GlobalMaxPooling2DWithTrainable(trainable bool) func(g *GlobalMaxPooling2D) {
-	 return func(g *GlobalMaxPooling2D) {
+	return func(g *GlobalMaxPooling2D) {
 		g.trainable = trainable
 	}
 }
 
 func GlobalMaxPooling2DWithDataFormat(dataFormat interface{}) func(g *GlobalMaxPooling2D) {
-	 return func(g *GlobalMaxPooling2D) {
+	return func(g *GlobalMaxPooling2D) {
 		g.dataFormat = dataFormat
 	}
 }
 
 func GlobalMaxPooling2DWithKeepdims(keepdims bool) func(g *GlobalMaxPooling2D) {
-	 return func(g *GlobalMaxPooling2D) {
+	return func(g *GlobalMaxPooling2D) {
 		g.keepdims = keepdims
 	}
 }
-
 
 func (g *GlobalMaxPooling2D) GetShape() tf.Shape {
 	return g.shape
@@ -82,13 +81,13 @@ func (g *GlobalMaxPooling2D) GetName() string {
 	return g.name
 }
 
-
 type jsonConfigGlobalMaxPooling2D struct {
-	ClassName string `json:"class_name"`
-	Name string `json:"name"`
-	Config map[string]interface{} `json:"config"`
-	InboundNodes [][][]interface{} `json:"inbound_nodes"`
+	ClassName    string                 `json:"class_name"`
+	Name         string                 `json:"name"`
+	Config       map[string]interface{} `json:"config"`
+	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
+
 func (g *GlobalMaxPooling2D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
@@ -103,14 +102,18 @@ func (g *GlobalMaxPooling2D) GetKerasLayerConfig() interface{} {
 	}
 	return jsonConfigGlobalMaxPooling2D{
 		ClassName: "GlobalMaxPooling2D",
-		Name: g.name,
+		Name:      g.name,
 		Config: map[string]interface{}{
-			"dtype": g.dtype.String(),
 			"data_format": g.dataFormat,
-			"keepdims": g.keepdims,
-			"name": g.name,
-			"trainable": g.trainable,
+			"dtype":       g.dtype.String(),
+			"keepdims":    g.keepdims,
+			"name":        g.name,
+			"trainable":   g.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
+}
+
+func (g *GlobalMaxPooling2D) GetCustomLayerDefinition() string {
+	return ``
 }
