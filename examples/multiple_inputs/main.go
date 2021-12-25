@@ -10,6 +10,7 @@ import (
 	"github.com/codingbeard/tfkg/layer"
 	"github.com/codingbeard/tfkg/metric"
 	"github.com/codingbeard/tfkg/model"
+	"github.com/codingbeard/tfkg/optimizer"
 	"github.com/codingbeard/tfkg/preprocessor"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"os"
@@ -111,7 +112,7 @@ func main() {
 	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and execute it to save the model in a format we can load and train
 	// A python binary must be available to use for this to work
 	// The batchSize MUST match the batch size in the call to Fit or Evaluate
-	e = m.CompileAndLoad(3, saveDir)
+	e = m.CompileAndLoad(model.LossSparseCategoricalCrossentropy, optimizer.NewAdam(), saveDir)
 	if e != nil {
 		return
 	}

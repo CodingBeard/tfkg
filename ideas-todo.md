@@ -16,9 +16,6 @@ In `tensorflow/c/c_api_experimental.h` there is a method `TF_LoadPluggableDevice
 ### Losses
 Use a python object with differing functions for the loss types, pass the loss type key into the python generator and select an appropriate loss
 
-### Custom layers
-Allow custom python layers by offering a method to load the requisite python files
-
 ### Web server
 - Queueing jobs with below training orchestration
 - Hyperparameter tuning
@@ -37,13 +34,11 @@ Allow custom python layers by offering a method to load the requisite python fil
 - Make logger and errorhandler interfaces so users can provide their own
 - Add logic to catch possible errors before python compilation of model
 - Callback to save train/saved/test stats to database
-- Optimise single file dataset with multiple concurrent readers to improve performance
 - Save the keras model json on model creation, and load config to add correct layers into a TFKG model
 - Automatically tailor metrics to different model losses
 - When using model.Load, verify that the loaded model is in fact a compatible tfkg model
 - Add image dataset
 - Add more preprocessors: Images, Audio
-- Allow custom python models to be used with a provided model generation python script
 - Intelligent hyperparameter optimisation
 - Optionally filter out tensorflow c logs if possible
 - Log levels

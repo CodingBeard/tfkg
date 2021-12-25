@@ -112,6 +112,14 @@ objects = [
     {"type": "layer", "class": k.layers.experimental.EinsumDense, "args": []},
     {"type": "layer", "class": k.layers.experimental.RandomFourierFeatures, "args": []},
     {"type": "layer", "class": k.layers.experimental.SyncBatchNormalization, "args": []},
+    {"type": "optimizer", "class": k.optimizers.Adagrad, "args": []},
+    {"type": "optimizer", "class": k.optimizers.Adadelta, "args": []},
+    {"type": "optimizer", "class": k.optimizers.Adam, "args": []},
+    {"type": "optimizer", "class": k.optimizers.Adamax, "args": []},
+    {"type": "optimizer", "class": k.optimizers.Ftrl, "args": []},
+    {"type": "optimizer", "class": k.optimizers.Nadam, "args": []},
+    {"type": "optimizer", "class": k.optimizers.RMSprop, "args": []},
+    {"type": "optimizer", "class": k.optimizers.SGD, "args": []},
 ]
 defaults = {
     "activation": "linear",

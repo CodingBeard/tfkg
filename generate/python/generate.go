@@ -36,7 +36,9 @@ func main() {
 	}
 	for _, object := range objects {
 		fmt.Println(object.Type, object.Name)
-		if object.Type == "initializer" {
+		if object.Type == "optimizer" {
+			createOptimizer(object)
+		} else if object.Type == "initializer" {
 			createInitializer(object)
 		} else if object.Type == "regularizer" {
 			createRegularizer(object)
@@ -51,6 +53,112 @@ func main() {
 	if e != nil {
 		panic(e)
 	}
+
+	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/layer/constraint").Output()
+	if e != nil {
+		panic(e)
+	}
+
+	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/layer/initializer").Output()
+	if e != nil {
+		panic(e)
+	}
+
+	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/layer/regularizer").Output()
+	if e != nil {
+		panic(e)
+	}
+
+	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/optimizer").Output()
+	if e != nil {
+		panic(e)
+	}
+}
+
+func createOptimizer(object objectJson) {
+	e := os.MkdirAll("../../optimizer", os.ModePerm)
+	if e != nil {
+		panic(e)
+	}
+
+	var setters []string
+	var objectProperties []string
+	objectPropertyNames := make(map[string]bool)
+	for _, param := range getRequiredParams(object) {
+		objectPropertyNames[param[0]] = true
+		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
+	}
+	for _, param := range getOptionalParams(object) {
+		objectPropertyNames[param[0]] = true
+		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
+		setters = append(setters, getOptionString(object.Name, param[0], param[1]))
+	}
+
+	subConfig := object.Config["config"].(map[string]interface{})
+	for originalName, value := range subConfig {
+		name := snakeCaseToCamelCase(originalName)
+		if _, ok := objectPropertyNames[name]; ok {
+			continue
+		}
+		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", snakeCaseToCamelCase(name), getGolangTypeFromValue(object.Name, originalName, value)))
+	}
+
+	var requiredParamSetters []string
+	for _, paramName := range getRequiredParamNames(object) {
+		requiredParamSetters = append(requiredParamSetters, fmt.Sprintf("%s: %s", paramName, paramName))
+	}
+
+	var defaultParamSetters []string
+	for _, param := range getOptionalParamDefaults(object) {
+		defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("%s: %s,", param[0], param[1]))
+	}
+
+	lines := []string{
+		"package optimizer",
+		"",
+		fmt.Sprintf("type %s struct {", object.Name),
+		"\t" + strings.Join(objectProperties, "\n\t"),
+		"}",
+		"",
+		fmt.Sprintf("func New%s(%s) *%s {", object.Name, getRequiredParamsString(object), object.Name),
+		fmt.Sprintf(
+			"\treturn &%s{\n\t\t%s%s\t\n\t}",
+			object.Name,
+			strings.Join(requiredParamSetters, "\n\t\t"),
+			strings.Join(defaultParamSetters, "\n\t\t"),
+		),
+		"}",
+		"",
+		strings.Join(setters, "\n\n"),
+		"",
+		fmt.Sprintf("type jsonConfig%s struct {", object.Name),
+		"\tClassName string `json:\"class_name\"`",
+		"\tName string `json:\"name\"`",
+		"\tConfig map[string]interface{} `json:\"config\"`",
+		"}",
+		fmt.Sprintf(
+			"func (%s *%s) GetKerasLayerConfig() interface{} {",
+			strings.ToLower(string(object.Name[0])),
+			object.Name,
+		),
+		fmt.Sprintf("\tif %s == nil {", strings.ToLower(string(object.Name[0]))),
+		"\t\treturn nil",
+		"\t}",
+		fmt.Sprintf("\treturn jsonConfig%s{", object.Name),
+		fmt.Sprintf("\t\tClassName: \"%s\",", object.Config["class_name"]),
+		fmt.Sprintf("\t\tConfig: %s,", getConfigValue(object)),
+		"\t}",
+		"}",
+	}
+
+	e = ioutil.WriteFile(
+		filepath.Join("../../optimizer", fmt.Sprintf("%s.go", object.Name)),
+		[]byte(strings.Join(lines, "\n")),
+		os.ModePerm,
+	)
+	if e != nil {
+		panic(e)
+	}
 }
 
 func createInitializer(object objectJson) {
@@ -61,12 +169,24 @@ func createInitializer(object objectJson) {
 
 	var setters []string
 	var objectProperties []string
+	objectPropertyNames := make(map[string]bool)
 	for _, param := range getRequiredParams(object) {
+		objectPropertyNames[param[0]] = true
 		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
 	}
 	for _, param := range getOptionalParams(object) {
+		objectPropertyNames[param[0]] = true
 		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
 		setters = append(setters, getOptionString(object.Name, param[0], param[1]))
+	}
+
+	subConfig := object.Config["config"].(map[string]interface{})
+	for originalName, value := range subConfig {
+		name := snakeCaseToCamelCase(originalName)
+		if _, ok := objectPropertyNames[name]; ok {
+			continue
+		}
+		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", snakeCaseToCamelCase(name), getGolangTypeFromValue(object.Name, originalName, value)))
 	}
 
 	var requiredParamSetters []string
@@ -135,12 +255,24 @@ func createRegularizer(object objectJson) {
 
 	var setters []string
 	var objectProperties []string
+	objectPropertyNames := make(map[string]bool)
 	for _, param := range getRequiredParams(object) {
+		objectPropertyNames[param[0]] = true
 		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
 	}
 	for _, param := range getOptionalParams(object) {
+		objectPropertyNames[param[0]] = true
 		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
 		setters = append(setters, getOptionString(object.Name, param[0], param[1]))
+	}
+
+	subConfig := object.Config["config"].(map[string]interface{})
+	for originalName, value := range subConfig {
+		name := snakeCaseToCamelCase(originalName)
+		if _, ok := objectPropertyNames[name]; ok {
+			continue
+		}
+		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", snakeCaseToCamelCase(name), getGolangTypeFromValue(object.Name, originalName, value)))
 	}
 
 	var requiredParamSetters []string
@@ -209,12 +341,24 @@ func createConstraint(object objectJson) {
 
 	var setters []string
 	var objectProperties []string
+	objectPropertyNames := make(map[string]bool)
 	for _, param := range getRequiredParams(object) {
+		objectPropertyNames[param[0]] = true
 		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
 	}
 	for _, param := range getOptionalParams(object) {
+		objectPropertyNames[param[0]] = true
 		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
 		setters = append(setters, getOptionString(object.Name, param[0], param[1]))
+	}
+
+	subConfig := object.Config["config"].(map[string]interface{})
+	for originalName, value := range subConfig {
+		name := snakeCaseToCamelCase(originalName)
+		if _, ok := objectPropertyNames[name]; ok {
+			continue
+		}
+		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", snakeCaseToCamelCase(name), getGolangTypeFromValue(object.Name, originalName, value)))
 	}
 
 	var requiredParamSetters []string

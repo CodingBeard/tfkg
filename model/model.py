@@ -36,7 +36,7 @@ model_config = json.loads(config["model_config"])
 
 for model_layer in model_config["config"]["layers"]:
     if model_layer["class_name"] == "InputLayer":
-        input_shape = [config["batch_size"]]
+        input_shape = [1]
         for dim in model_layer["config"]["batch_input_shape"][1:]:
             input_shape.append(dim)
         zero_inputs.append(
@@ -58,14 +58,16 @@ class GolangModel(tf.Module):
     def __init__(self):
         super().__init__()
 
-        self.batch_size = config["batch_size"]
         self._model = model
 
         self._global_step = tf.Variable(0, dtype=tf.int32, trainable=False)
-        self._optimizer = tf.keras.optimizers.Adam()
-        loss_func = tf.keras.losses.SparseCategoricalCrossentropy(
-            reduction="none"
-        )
+        opt = tf.keras.optimizers.get(config["optimizer"]["class_name"])
+        self._optimizer = opt.from_config(config["optimizer"]["config"])
+        loss_func = None
+        if config["loss"] == "binary_crossentropy":
+            loss_func = tf.keras.losses.BinaryCrossentropy(reduction="none")
+        elif config["loss"] == "sparse_categorical_crossentropy":
+            loss_func = tf.keras.losses.SparseCategoricalCrossentropy(reduction="none")
 
         def loss(y_true, y_pred, class_weights):
             weighted_loss = tf.multiply(
@@ -109,7 +111,7 @@ class GolangModel(tf.Module):
     ):
         self._global_step.assign_add(1)
         with tf.GradientTape() as tape:
-            logits = self._model(list(inputs), training=True)
+            logits = self._model(list(inputs), training=False)
             loss = self._loss(y, logits, class_weights)
 
         return [
@@ -129,8 +131,8 @@ print("Initialising model")
 
 gm = GolangModel()
 
-y_zeros = tf.zeros(shape=[config["batch_size"], 1], dtype=tf.int32)
-class_weights_ones = tf.ones(shape=config["batch_size"], dtype=tf.float32)
+y_zeros = tf.zeros(shape=[1, 1], dtype=tf.int32)
+class_weights_ones = tf.ones(shape=1, dtype=tf.float32)
 
 print("Tracing learn")
 

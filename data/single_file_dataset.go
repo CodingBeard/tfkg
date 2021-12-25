@@ -74,6 +74,7 @@ type SingleFileDatasetConfig struct {
 	RowFilter              func(line []string) bool
 	ConcurrentFileLimit    int32
 	MaxRowsForProcessorFit int
+	ClassWeights           map[int]float32
 }
 
 func NewSingleFileDataset(
@@ -97,6 +98,10 @@ func NewSingleFileDataset(
 		config.MaxRowsForProcessorFit = 1000000
 	}
 
+	if config.ClassWeights == nil {
+		config.ClassWeights = make(map[int]float32)
+	}
+
 	var openFileCount int32
 	var generatorOffset int32
 
@@ -114,7 +119,7 @@ func NewSingleFileDataset(
 		valPercent:          config.ValPercent,
 		testPercent:         config.TestPercent,
 		ClassCounts:         make(map[int]int),
-		ClassWeights:        make(map[int]float32),
+		ClassWeights:        config.ClassWeights,
 		filter:              config.RowFilter,
 		concurrentFileLimit: config.ConcurrentFileLimit,
 		openFileCount:       &openFileCount,
@@ -201,7 +206,9 @@ func (d *SingleFileDataset) readLineOffsets() error {
 		d.lineOffsets = cache.LineOffsets
 		d.Count = cache.Count
 		d.ClassCounts = cache.ClassCounts
-		d.ClassWeights = cache.ClassWeights
+		if len(d.ClassWeights) == 0 {
+			d.ClassWeights = cache.ClassWeights
+		}
 
 		d.logger.InfoF("data", "Found %d rows. Got class counts: %#v Got class weights: %#v", d.Count, d.ClassCounts, d.ClassWeights)
 
@@ -308,14 +315,16 @@ func (d *SingleFileDataset) readLineOffsets() error {
 	swg.Wait()
 	fmt.Println()
 
-	majorClassCount := 0
-	for _, count := range d.ClassCounts {
-		if count > majorClassCount {
-			majorClassCount = count
+	if len(d.ClassWeights) == 0 {
+		majorClassCount := 0
+		for _, count := range d.ClassCounts {
+			if count > majorClassCount {
+				majorClassCount = count
+			}
 		}
-	}
-	for class, count := range d.ClassCounts {
-		d.ClassWeights[class] = float32(majorClassCount) / float32(count)
+		for class, count := range d.ClassCounts {
+			d.ClassWeights[class] = float32(majorClassCount) / float32(count)
+		}
 	}
 
 	cacheBytes, e := json.Marshal(fileStatsCache{

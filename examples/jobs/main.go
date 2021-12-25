@@ -10,6 +10,7 @@ import (
 	"github.com/codingbeard/tfkg/layer"
 	"github.com/codingbeard/tfkg/metric"
 	"github.com/codingbeard/tfkg/model"
+	"github.com/codingbeard/tfkg/optimizer"
 	"github.com/codingbeard/tfkg/preprocessor"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"os"
@@ -271,12 +272,11 @@ func main() {
 		layer.DenseWithActivation("swish"),
 	)(mergedDense1)
 
-	// Get the number of classes from the dataset if we don't want to count them manually, but in this case it is only 2
 	output := layer.NewDense(
-		float64(dataset.NumCategoricalClasses()),
+		1,
 		layer.DenseWithDtype(layer.Float32),
 		layer.DenseWithName("output"),
-		layer.DenseWithActivation("softmax"),
+		layer.DenseWithActivation("sigmoid"),
 	)(mergedDense2)
 
 	// Define a keras style Functional model
@@ -289,9 +289,7 @@ func main() {
 
 	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and execute it to save the model in a format we can load and train
 	// A python binary must be available to use for this to work
-	// The batchSize MUST match the batch size in the call to Fit or Evaluate
-	batchSize := 200
-	e = m.CompileAndLoad(batchSize, saveDir)
+	e = m.CompileAndLoad(model.LossBinaryCrossentropy, optimizer.NewAdam(), saveDir)
 	if e != nil {
 		return
 	}
@@ -313,7 +311,7 @@ func main() {
 		model.FitConfig{
 			Epochs:     10,
 			Validation: true,
-			BatchSize:  batchSize,
+			BatchSize:  200,
 			PreFetch:   10,
 			Verbose:    1,
 			Metrics: []metric.Metric{

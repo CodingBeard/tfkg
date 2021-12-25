@@ -12,6 +12,7 @@ import (
 	"github.com/codingbeard/tfkg/data"
 	"github.com/codingbeard/tfkg/layer"
 	"github.com/codingbeard/tfkg/metric"
+	"github.com/codingbeard/tfkg/optimizer"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"io/ioutil"
 	"os"
@@ -21,8 +22,12 @@ import (
 	"strings"
 )
 
+type Loss string
+
 var (
-	tempModelDir = "tfkg_temp_model"
+	tempModelDir                           = "tfkg_temp_model"
+	LossBinaryCrossentropy            Loss = "binary_crossentropy"
+	LossSparseCategoricalCrossentropy Loss = "sparse_categorical_crossentropy"
 )
 
 type TfkgModel struct {
@@ -707,13 +712,14 @@ func (m *TfkgModel) Save(dir string) error {
 }
 
 type pythonConfig struct {
-	BatchSize              int    `json:"batch_size"`
-	ModelConfig            string `json:"model_config"`
-	SaveDir                string `json:"save_dir"`
-	ModelDefinitionSaveDir string `json:"model_definition_save_dir"`
+	ModelConfig            string      `json:"model_config"`
+	SaveDir                string      `json:"save_dir"`
+	ModelDefinitionSaveDir string      `json:"model_definition_save_dir"`
+	Loss                   string      `json:"loss"`
+	Optimizer              interface{} `json:"optimizer"`
 }
 
-func (m *TfkgModel) CompileAndLoad(batchSize int, modelDefinitionSaveDir string) error {
+func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, modelDefinitionSaveDir string) error {
 	m.logger.InfoF("model", "Compiling and loading model. If anything goes wrong python error messages will be printed out.")
 	modelConfig, e := m.generateKerasDefinitionJson()
 	if e != nil {
@@ -743,10 +749,11 @@ func (m *TfkgModel) CompileAndLoad(batchSize int, modelDefinitionSaveDir string)
 	}
 
 	config := pythonConfig{
-		BatchSize:              batchSize,
 		ModelConfig:            modelConfig,
 		SaveDir:                filepath.Join(tempDir, tempModelDir),
 		ModelDefinitionSaveDir: modelDefinitionSaveDir,
+		Loss:                   string(loss),
+		Optimizer:              optimizer.GetKerasLayerConfig(),
 	}
 
 	configBytes, e := json.Marshal(config)

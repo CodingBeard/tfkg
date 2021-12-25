@@ -10,6 +10,7 @@ import (
 	"github.com/codingbeard/tfkg/layer"
 	"github.com/codingbeard/tfkg/metric"
 	"github.com/codingbeard/tfkg/model"
+	"github.com/codingbeard/tfkg/optimizer"
 	"github.com/codingbeard/tfkg/preprocessor"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"math/rand"
@@ -107,9 +108,7 @@ func main() {
 
 	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and execute it to save the model in a format we can load and train
 	// A python binary must be available to use for this to work
-	// The batchSize MUST match the batchSize in the call to Fit or Evaluate
-	batchSize := 1000
-	e = m.CompileAndLoad(batchSize, logsDir)
+	e = m.CompileAndLoad(model.LossSparseCategoricalCrossentropy, optimizer.NewAdam(), logsDir)
 	if e != nil {
 		return
 	}
@@ -130,7 +129,7 @@ func main() {
 		model.FitConfig{
 			Epochs:     10,
 			Validation: true,
-			BatchSize:  batchSize,
+			BatchSize:  1000,
 			PreFetch:   10,
 			Verbose:    1,
 			Metrics: []metric.Metric{
