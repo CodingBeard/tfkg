@@ -109,10 +109,8 @@ class GolangModel(tf.Module):
             class_weights,
             *inputs
     ):
-        self._global_step.assign_add(1)
-        with tf.GradientTape() as tape:
-            logits = self._model(list(inputs), training=False)
-            loss = self._loss(y, logits, class_weights)
+        logits = self._model(list(inputs), training=False)
+        loss = self._loss(y, logits, class_weights)
 
         return [
             loss,
@@ -124,7 +122,7 @@ class GolangModel(tf.Module):
             self,
             *inputs,
     ):
-        return [self._model(list(inputs))]
+        return [self._model(list(inputs), training=False)]
 
 
 print("Initialising model")

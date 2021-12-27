@@ -1,82 +1,85 @@
 package optimizer
 
-type RMSprop struct {
-	learningRate float64
-	rho          float64
-	momentum     float64
-	epsilon      float64
+type ORMSprop struct {
 	centered     bool
-	name         string
 	decay        float64
+	epsilon      float64
+	learningRate float64
+	momentum     float64
+	name         string
+	rho          float64
 }
 
-func NewRMSprop() *RMSprop {
-	return &RMSprop{
-		learningRate: 0.001,
-		rho:          0.9,
-		momentum:     0,
-		epsilon:      1e-07,
+func RMSprop() *ORMSprop {
+	return &ORMSprop{
 		centered:     false,
-		name:         "RMSprop",
+		decay:        0,
+		epsilon:      1e-07,
+		learningRate: 0.001,
+		momentum:     0,
+		name:         UniqueName("RMSprop"),
+		rho:          0.9,
 	}
 }
 
-func RMSpropWithLearningRate(learningRate float64) func(r *RMSprop) {
-	return func(r *RMSprop) {
-		r.learningRate = learningRate
-	}
+func (o *ORMSprop) SetCentered(centered bool) *ORMSprop {
+	o.centered = centered
+	return o
 }
 
-func RMSpropWithRho(rho float64) func(r *RMSprop) {
-	return func(r *RMSprop) {
-		r.rho = rho
-	}
+func (o *ORMSprop) SetDecay(decay float64) *ORMSprop {
+	o.decay = decay
+	return o
 }
 
-func RMSpropWithMomentum(momentum float64) func(r *RMSprop) {
-	return func(r *RMSprop) {
-		r.momentum = momentum
-	}
+func (o *ORMSprop) SetEpsilon(epsilon float64) *ORMSprop {
+	o.epsilon = epsilon
+	return o
 }
 
-func RMSpropWithEpsilon(epsilon float64) func(r *RMSprop) {
-	return func(r *RMSprop) {
-		r.epsilon = epsilon
-	}
+func (o *ORMSprop) SetLearningRate(learningRate float64) *ORMSprop {
+	o.learningRate = learningRate
+	return o
 }
 
-func RMSpropWithCentered(centered bool) func(r *RMSprop) {
-	return func(r *RMSprop) {
-		r.centered = centered
-	}
+func (o *ORMSprop) SetMomentum(momentum float64) *ORMSprop {
+	o.momentum = momentum
+	return o
 }
 
-func RMSpropWithName(name string) func(r *RMSprop) {
-	return func(r *RMSprop) {
-		r.name = name
-	}
+func (o *ORMSprop) SetName(name string) *ORMSprop {
+	o.name = name
+	return o
 }
 
-type jsonConfigRMSprop struct {
+func (o *ORMSprop) SetRho(rho float64) *ORMSprop {
+	o.rho = rho
+	return o
+}
+
+type jsonConfigORMSprop struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (r *RMSprop) GetKerasLayerConfig() interface{} {
-	if r == nil {
-		return nil
-	}
-	return jsonConfigRMSprop{
+func (o *ORMSprop) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigORMSprop{
 		ClassName: "RMSprop",
+		Name:      o.name,
 		Config: map[string]interface{}{
-			"centered":      r.centered,
-			"decay":         r.decay,
-			"epsilon":       r.epsilon,
-			"learning_rate": r.learningRate,
-			"momentum":      r.momentum,
-			"name":          r.name,
-			"rho":           r.rho,
+			"centered":      o.centered,
+			"decay":         o.decay,
+			"epsilon":       o.epsilon,
+			"learning_rate": o.learningRate,
+			"momentum":      o.momentum,
+			"name":          o.name,
+			"rho":           o.rho,
 		},
 	}
+}
+
+func (o *ORMSprop) GetCustomLayerDefinition() string {
+	return ``
 }

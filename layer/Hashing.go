@@ -2,99 +2,91 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Hashing struct {
-	name      string
+type LHashing struct {
 	dtype     DataType
 	inputs    []Layer
+	maskValue interface{}
+	name      string
+	numBins   float64
+	salt      interface{}
 	shape     tf.Shape
 	trainable bool
-	numBins   float64
-	maskValue interface{}
-	salt      interface{}
 }
 
-func NewHashing(numBins float64, options ...HashingOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		h := &Hashing{
-			numBins:   numBins,
-			maskValue: nil,
-			salt:      nil,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("hashing"),
-		}
-		for _, option := range options {
-			option(h)
-		}
-		return h
+func Hashing(numBins float64) *LHashing {
+	return &LHashing{
+		dtype:     Float32,
+		maskValue: nil,
+		name:      UniqueName("hashing"),
+		numBins:   numBins,
+		salt:      nil,
+		trainable: true,
 	}
 }
 
-type HashingOption func(*Hashing)
-
-func HashingWithName(name string) func(h *Hashing) {
-	return func(h *Hashing) {
-		h.name = name
-	}
+func (l *LHashing) SetDtype(dtype DataType) *LHashing {
+	l.dtype = dtype
+	return l
 }
 
-func HashingWithDtype(dtype DataType) func(h *Hashing) {
-	return func(h *Hashing) {
-		h.dtype = dtype
-	}
+func (l *LHashing) SetMaskValue(maskValue interface{}) *LHashing {
+	l.maskValue = maskValue
+	return l
 }
 
-func HashingWithTrainable(trainable bool) func(h *Hashing) {
-	return func(h *Hashing) {
-		h.trainable = trainable
-	}
+func (l *LHashing) SetName(name string) *LHashing {
+	l.name = name
+	return l
 }
 
-func HashingWithMaskValue(maskValue interface{}) func(h *Hashing) {
-	return func(h *Hashing) {
-		h.maskValue = maskValue
-	}
+func (l *LHashing) SetSalt(salt interface{}) *LHashing {
+	l.salt = salt
+	return l
 }
 
-func HashingWithSalt(salt interface{}) func(h *Hashing) {
-	return func(h *Hashing) {
-		h.salt = salt
-	}
+func (l *LHashing) SetShape(shape tf.Shape) *LHashing {
+	l.shape = shape
+	return l
 }
 
-func (h *Hashing) GetShape() tf.Shape {
-	return h.shape
+func (l *LHashing) SetTrainable(trainable bool) *LHashing {
+	l.trainable = trainable
+	return l
 }
 
-func (h *Hashing) GetDtype() DataType {
-	return h.dtype
+func (l *LHashing) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (h *Hashing) SetInput(inputs []Layer) {
-	h.inputs = inputs
-	h.dtype = inputs[0].GetDtype()
+func (l *LHashing) GetDtype() DataType {
+	return l.dtype
 }
 
-func (h *Hashing) GetInputs() []Layer {
-	return h.inputs
+func (l *LHashing) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (h *Hashing) GetName() string {
-	return h.name
+func (l *LHashing) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigHashing struct {
+func (l *LHashing) GetName() string {
+	return l.name
+}
+
+type jsonConfigLHashing struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (h *Hashing) GetKerasLayerConfig() interface{} {
+func (l *LHashing) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range h.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -102,21 +94,21 @@ func (h *Hashing) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigHashing{
+	return jsonConfigLHashing{
 		ClassName: "Hashing",
-		Name:      h.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":      h.dtype.String(),
-			"mask_value": h.maskValue,
-			"name":       h.name,
-			"num_bins":   h.numBins,
-			"salt":       h.salt,
-			"trainable":  h.trainable,
+			"dtype":      l.dtype.String(),
+			"mask_value": l.maskValue,
+			"name":       l.name,
+			"num_bins":   l.numBins,
+			"salt":       l.salt,
+			"trainable":  l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (h *Hashing) GetCustomLayerDefinition() string {
+func (l *LHashing) GetCustomLayerDefinition() string {
 	return ``
 }

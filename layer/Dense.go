@@ -1,159 +1,144 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Dense struct {
-	name                string
+type LDense struct {
+	activation          string
+	activityRegularizer regularizer.Regularizer
+	biasConstraint      constraint.Constraint
+	biasInitializer     initializer.Initializer
+	biasRegularizer     regularizer.Regularizer
 	dtype               DataType
 	inputs              []Layer
+	kernelConstraint    constraint.Constraint
+	kernelInitializer   initializer.Initializer
+	kernelRegularizer   regularizer.Regularizer
+	name                string
 	shape               tf.Shape
 	trainable           bool
 	units               float64
-	activation          string
 	useBias             bool
-	kernelInitializer   initializer.Initializer
-	biasInitializer     initializer.Initializer
-	kernelRegularizer   regularizer.Regularizer
-	biasRegularizer     regularizer.Regularizer
-	activityRegularizer regularizer.Regularizer
-	kernelConstraint    constraint.Constraint
-	biasConstraint      constraint.Constraint
 }
 
-func NewDense(units float64, options ...DenseOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		d := &Dense{
-			units:               units,
-			activation:          "linear",
-			useBias:             true,
-			kernelInitializer:   &initializer.GlorotUniform{},
-			biasInitializer:     &initializer.Zeros{},
-			kernelRegularizer:   &regularizer.NilRegularizer{},
-			biasRegularizer:     &regularizer.NilRegularizer{},
-			activityRegularizer: &regularizer.NilRegularizer{},
-			kernelConstraint:    &constraint.NilConstraint{},
-			biasConstraint:      &constraint.NilConstraint{},
-			trainable:           true,
-			inputs:              inputs,
-			name:                UniqueName("dense"),
-		}
-		for _, option := range options {
-			option(d)
-		}
-		return d
+func Dense(units float64) *LDense {
+	return &LDense{
+		activation:          "linear",
+		activityRegularizer: &regularizer.NilRegularizer{},
+		biasConstraint:      &constraint.NilConstraint{},
+		biasInitializer:     initializer.Zeros(),
+		biasRegularizer:     &regularizer.NilRegularizer{},
+		dtype:               Float32,
+		kernelConstraint:    &constraint.NilConstraint{},
+		kernelInitializer:   initializer.GlorotUniform(),
+		kernelRegularizer:   &regularizer.NilRegularizer{},
+		name:                UniqueName("dense"),
+		trainable:           true,
+		units:               units,
+		useBias:             true,
 	}
 }
 
-type DenseOption func(*Dense)
-
-func DenseWithName(name string) func(d *Dense) {
-	return func(d *Dense) {
-		d.name = name
-	}
+func (l *LDense) SetActivation(activation string) *LDense {
+	l.activation = activation
+	return l
 }
 
-func DenseWithDtype(dtype DataType) func(d *Dense) {
-	return func(d *Dense) {
-		d.dtype = dtype
-	}
+func (l *LDense) SetActivityRegularizer(activityRegularizer regularizer.Regularizer) *LDense {
+	l.activityRegularizer = activityRegularizer
+	return l
 }
 
-func DenseWithTrainable(trainable bool) func(d *Dense) {
-	return func(d *Dense) {
-		d.trainable = trainable
-	}
+func (l *LDense) SetBiasConstraint(biasConstraint constraint.Constraint) *LDense {
+	l.biasConstraint = biasConstraint
+	return l
 }
 
-func DenseWithActivation(activation string) func(d *Dense) {
-	return func(d *Dense) {
-		d.activation = activation
-	}
+func (l *LDense) SetBiasInitializer(biasInitializer initializer.Initializer) *LDense {
+	l.biasInitializer = biasInitializer
+	return l
 }
 
-func DenseWithUseBias(useBias bool) func(d *Dense) {
-	return func(d *Dense) {
-		d.useBias = useBias
-	}
+func (l *LDense) SetBiasRegularizer(biasRegularizer regularizer.Regularizer) *LDense {
+	l.biasRegularizer = biasRegularizer
+	return l
 }
 
-func DenseWithKernelInitializer(kernelInitializer initializer.Initializer) func(d *Dense) {
-	return func(d *Dense) {
-		d.kernelInitializer = kernelInitializer
-	}
+func (l *LDense) SetDtype(dtype DataType) *LDense {
+	l.dtype = dtype
+	return l
 }
 
-func DenseWithBiasInitializer(biasInitializer initializer.Initializer) func(d *Dense) {
-	return func(d *Dense) {
-		d.biasInitializer = biasInitializer
-	}
+func (l *LDense) SetKernelConstraint(kernelConstraint constraint.Constraint) *LDense {
+	l.kernelConstraint = kernelConstraint
+	return l
 }
 
-func DenseWithKernelRegularizer(kernelRegularizer regularizer.Regularizer) func(d *Dense) {
-	return func(d *Dense) {
-		d.kernelRegularizer = kernelRegularizer
-	}
+func (l *LDense) SetKernelInitializer(kernelInitializer initializer.Initializer) *LDense {
+	l.kernelInitializer = kernelInitializer
+	return l
 }
 
-func DenseWithBiasRegularizer(biasRegularizer regularizer.Regularizer) func(d *Dense) {
-	return func(d *Dense) {
-		d.biasRegularizer = biasRegularizer
-	}
+func (l *LDense) SetKernelRegularizer(kernelRegularizer regularizer.Regularizer) *LDense {
+	l.kernelRegularizer = kernelRegularizer
+	return l
 }
 
-func DenseWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(d *Dense) {
-	return func(d *Dense) {
-		d.activityRegularizer = activityRegularizer
-	}
+func (l *LDense) SetName(name string) *LDense {
+	l.name = name
+	return l
 }
 
-func DenseWithKernelConstraint(kernelConstraint constraint.Constraint) func(d *Dense) {
-	return func(d *Dense) {
-		d.kernelConstraint = kernelConstraint
-	}
+func (l *LDense) SetShape(shape tf.Shape) *LDense {
+	l.shape = shape
+	return l
 }
 
-func DenseWithBiasConstraint(biasConstraint constraint.Constraint) func(d *Dense) {
-	return func(d *Dense) {
-		d.biasConstraint = biasConstraint
-	}
+func (l *LDense) SetTrainable(trainable bool) *LDense {
+	l.trainable = trainable
+	return l
 }
 
-func (d *Dense) GetShape() tf.Shape {
-	return d.shape
+func (l *LDense) SetUseBias(useBias bool) *LDense {
+	l.useBias = useBias
+	return l
 }
 
-func (d *Dense) GetDtype() DataType {
-	return d.dtype
+func (l *LDense) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (d *Dense) SetInput(inputs []Layer) {
-	d.inputs = inputs
-	d.dtype = inputs[0].GetDtype()
+func (l *LDense) GetDtype() DataType {
+	return l.dtype
 }
 
-func (d *Dense) GetInputs() []Layer {
-	return d.inputs
+func (l *LDense) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (d *Dense) GetName() string {
-	return d.name
+func (l *LDense) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigDense struct {
+func (l *LDense) GetName() string {
+	return l.name
+}
+
+type jsonConfigLDense struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (d *Dense) GetKerasLayerConfig() interface{} {
+func (l *LDense) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range d.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -161,28 +146,28 @@ func (d *Dense) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigDense{
+	return jsonConfigLDense{
 		ClassName: "Dense",
-		Name:      d.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"activation":           d.activation,
-			"activity_regularizer": d.activityRegularizer.GetKerasLayerConfig(),
-			"bias_constraint":      d.biasConstraint.GetKerasLayerConfig(),
-			"bias_initializer":     d.biasInitializer.GetKerasLayerConfig(),
-			"bias_regularizer":     d.biasRegularizer.GetKerasLayerConfig(),
-			"dtype":                d.dtype.String(),
-			"kernel_constraint":    d.kernelConstraint.GetKerasLayerConfig(),
-			"kernel_initializer":   d.kernelInitializer.GetKerasLayerConfig(),
-			"kernel_regularizer":   d.kernelRegularizer.GetKerasLayerConfig(),
-			"name":                 d.name,
-			"trainable":            d.trainable,
-			"units":                d.units,
-			"use_bias":             d.useBias,
+			"activation":           l.activation,
+			"activity_regularizer": l.activityRegularizer.GetKerasLayerConfig(),
+			"bias_constraint":      l.biasConstraint.GetKerasLayerConfig(),
+			"bias_initializer":     l.biasInitializer.GetKerasLayerConfig(),
+			"bias_regularizer":     l.biasRegularizer.GetKerasLayerConfig(),
+			"dtype":                l.dtype.String(),
+			"kernel_constraint":    l.kernelConstraint.GetKerasLayerConfig(),
+			"kernel_initializer":   l.kernelInitializer.GetKerasLayerConfig(),
+			"kernel_regularizer":   l.kernelRegularizer.GetKerasLayerConfig(),
+			"name":                 l.name,
+			"trainable":            l.trainable,
+			"units":                l.units,
+			"use_bias":             l.useBias,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (d *Dense) GetCustomLayerDefinition() string {
+func (l *LDense) GetCustomLayerDefinition() string {
 	return ``
 }

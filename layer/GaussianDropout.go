@@ -2,83 +2,77 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type GaussianDropout struct {
-	name      string
+type LGaussianDropout struct {
 	dtype     DataType
 	inputs    []Layer
+	name      string
+	rate      float64
 	shape     tf.Shape
 	trainable bool
-	rate      float64
 }
 
-func NewGaussianDropout(rate float64, options ...GaussianDropoutOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		g := &GaussianDropout{
-			rate:      rate,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("gaussiandropout"),
-		}
-		for _, option := range options {
-			option(g)
-		}
-		return g
+func GaussianDropout(rate float64) *LGaussianDropout {
+	return &LGaussianDropout{
+		dtype:     Float32,
+		name:      UniqueName("gaussian_dropout"),
+		rate:      rate,
+		trainable: true,
 	}
 }
 
-type GaussianDropoutOption func(*GaussianDropout)
-
-func GaussianDropoutWithName(name string) func(g *GaussianDropout) {
-	return func(g *GaussianDropout) {
-		g.name = name
-	}
+func (l *LGaussianDropout) SetDtype(dtype DataType) *LGaussianDropout {
+	l.dtype = dtype
+	return l
 }
 
-func GaussianDropoutWithDtype(dtype DataType) func(g *GaussianDropout) {
-	return func(g *GaussianDropout) {
-		g.dtype = dtype
-	}
+func (l *LGaussianDropout) SetName(name string) *LGaussianDropout {
+	l.name = name
+	return l
 }
 
-func GaussianDropoutWithTrainable(trainable bool) func(g *GaussianDropout) {
-	return func(g *GaussianDropout) {
-		g.trainable = trainable
-	}
+func (l *LGaussianDropout) SetShape(shape tf.Shape) *LGaussianDropout {
+	l.shape = shape
+	return l
 }
 
-func (g *GaussianDropout) GetShape() tf.Shape {
-	return g.shape
+func (l *LGaussianDropout) SetTrainable(trainable bool) *LGaussianDropout {
+	l.trainable = trainable
+	return l
 }
 
-func (g *GaussianDropout) GetDtype() DataType {
-	return g.dtype
+func (l *LGaussianDropout) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (g *GaussianDropout) SetInput(inputs []Layer) {
-	g.inputs = inputs
-	g.dtype = inputs[0].GetDtype()
+func (l *LGaussianDropout) GetDtype() DataType {
+	return l.dtype
 }
 
-func (g *GaussianDropout) GetInputs() []Layer {
-	return g.inputs
+func (l *LGaussianDropout) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (g *GaussianDropout) GetName() string {
-	return g.name
+func (l *LGaussianDropout) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigGaussianDropout struct {
+func (l *LGaussianDropout) GetName() string {
+	return l.name
+}
+
+type jsonConfigLGaussianDropout struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (g *GaussianDropout) GetKerasLayerConfig() interface{} {
+func (l *LGaussianDropout) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range g.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -86,19 +80,19 @@ func (g *GaussianDropout) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigGaussianDropout{
+	return jsonConfigLGaussianDropout{
 		ClassName: "GaussianDropout",
-		Name:      g.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     g.dtype.String(),
-			"name":      g.name,
-			"rate":      g.rate,
-			"trainable": g.trainable,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"rate":      l.rate,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (g *GaussianDropout) GetCustomLayerDefinition() string {
+func (l *LGaussianDropout) GetCustomLayerDefinition() string {
 	return ``
 }

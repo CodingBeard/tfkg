@@ -1,53 +1,59 @@
 package initializer
 
-type RandomNormal struct {
+type IRandomNormal struct {
 	mean   float64
-	stddev float64
+	name   string
 	seed   interface{}
+	stddev float64
 }
 
-func NewRandomNormal() *RandomNormal {
-	return &RandomNormal{
+func RandomNormal() *IRandomNormal {
+	return &IRandomNormal{
 		mean:   0,
-		stddev: 0.05,
 		seed:   nil,
+		stddev: 0.05,
 	}
 }
 
-func RandomNormalWithMean(mean float64) func(r *RandomNormal) {
-	return func(r *RandomNormal) {
-		r.mean = mean
-	}
+func (i *IRandomNormal) SetMean(mean float64) *IRandomNormal {
+	i.mean = mean
+	return i
 }
 
-func RandomNormalWithStddev(stddev float64) func(r *RandomNormal) {
-	return func(r *RandomNormal) {
-		r.stddev = stddev
-	}
+func (i *IRandomNormal) SetName(name string) *IRandomNormal {
+	i.name = name
+	return i
 }
 
-func RandomNormalWithSeed(seed interface{}) func(r *RandomNormal) {
-	return func(r *RandomNormal) {
-		r.seed = seed
-	}
+func (i *IRandomNormal) SetSeed(seed interface{}) *IRandomNormal {
+	i.seed = seed
+	return i
 }
 
-type jsonConfigRandomNormal struct {
+func (i *IRandomNormal) SetStddev(stddev float64) *IRandomNormal {
+	i.stddev = stddev
+	return i
+}
+
+type jsonConfigIRandomNormal struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (r *RandomNormal) GetKerasLayerConfig() interface{} {
-	if r == nil {
-		return nil
-	}
-	return jsonConfigRandomNormal{
+func (i *IRandomNormal) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigIRandomNormal{
 		ClassName: "RandomNormal",
+		Name:      i.name,
 		Config: map[string]interface{}{
-			"mean":   r.mean,
-			"seed":   r.seed,
-			"stddev": r.stddev,
+			"mean":   i.mean,
+			"seed":   i.seed,
+			"stddev": i.stddev,
 		},
 	}
+}
+
+func (i *IRandomNormal) GetCustomLayerDefinition() string {
+	return ``
 }

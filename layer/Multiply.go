@@ -2,81 +2,75 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Multiply struct {
-	name      string
+type LMultiply struct {
 	dtype     DataType
 	inputs    []Layer
+	name      string
 	shape     tf.Shape
 	trainable bool
 }
 
-func NewMultiply(options ...MultiplyOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		m := &Multiply{
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("multiply"),
-		}
-		for _, option := range options {
-			option(m)
-		}
-		return m
+func Multiply() *LMultiply {
+	return &LMultiply{
+		dtype:     Float32,
+		name:      UniqueName("multiply"),
+		trainable: true,
 	}
 }
 
-type MultiplyOption func(*Multiply)
-
-func MultiplyWithName(name string) func(m *Multiply) {
-	return func(m *Multiply) {
-		m.name = name
-	}
+func (l *LMultiply) SetDtype(dtype DataType) *LMultiply {
+	l.dtype = dtype
+	return l
 }
 
-func MultiplyWithDtype(dtype DataType) func(m *Multiply) {
-	return func(m *Multiply) {
-		m.dtype = dtype
-	}
+func (l *LMultiply) SetName(name string) *LMultiply {
+	l.name = name
+	return l
 }
 
-func MultiplyWithTrainable(trainable bool) func(m *Multiply) {
-	return func(m *Multiply) {
-		m.trainable = trainable
-	}
+func (l *LMultiply) SetShape(shape tf.Shape) *LMultiply {
+	l.shape = shape
+	return l
 }
 
-func (m *Multiply) GetShape() tf.Shape {
-	return m.shape
+func (l *LMultiply) SetTrainable(trainable bool) *LMultiply {
+	l.trainable = trainable
+	return l
 }
 
-func (m *Multiply) GetDtype() DataType {
-	return m.dtype
+func (l *LMultiply) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (m *Multiply) SetInput(inputs []Layer) {
-	m.inputs = inputs
-	m.dtype = inputs[0].GetDtype()
+func (l *LMultiply) GetDtype() DataType {
+	return l.dtype
 }
 
-func (m *Multiply) GetInputs() []Layer {
-	return m.inputs
+func (l *LMultiply) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (m *Multiply) GetName() string {
-	return m.name
+func (l *LMultiply) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigMultiply struct {
+func (l *LMultiply) GetName() string {
+	return l.name
+}
+
+type jsonConfigLMultiply struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (m *Multiply) GetKerasLayerConfig() interface{} {
+func (l *LMultiply) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range m.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -84,18 +78,18 @@ func (m *Multiply) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigMultiply{
+	return jsonConfigLMultiply{
 		ClassName: "Multiply",
-		Name:      m.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     m.dtype.String(),
-			"name":      m.name,
-			"trainable": m.trainable,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (m *Multiply) GetCustomLayerDefinition() string {
+func (l *LMultiply) GetCustomLayerDefinition() string {
 	return ``
 }

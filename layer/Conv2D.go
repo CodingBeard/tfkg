@@ -1,201 +1,181 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Conv2D struct {
-	name                string
-	dtype               DataType
-	inputs              []Layer
-	shape               tf.Shape
-	trainable           bool
-	filters             float64
-	kernelSize          float64
-	strides             []interface{}
-	padding             string
+type LConv2D struct {
+	activation          string
+	activityRegularizer regularizer.Regularizer
+	biasConstraint      constraint.Constraint
+	biasInitializer     initializer.Initializer
+	biasRegularizer     regularizer.Regularizer
 	dataFormat          interface{}
 	dilationRate        []interface{}
+	dtype               DataType
+	filters             float64
 	groups              float64
-	activation          string
-	useBias             bool
-	kernelInitializer   initializer.Initializer
-	biasInitializer     initializer.Initializer
-	kernelRegularizer   regularizer.Regularizer
-	biasRegularizer     regularizer.Regularizer
-	activityRegularizer regularizer.Regularizer
+	inputs              []Layer
 	kernelConstraint    constraint.Constraint
-	biasConstraint      constraint.Constraint
+	kernelInitializer   initializer.Initializer
+	kernelRegularizer   regularizer.Regularizer
+	kernelSize          float64
+	name                string
+	padding             string
+	shape               tf.Shape
+	strides             []interface{}
+	trainable           bool
+	useBias             bool
 }
 
-func NewConv2D(filters float64, kernelSize float64, options ...Conv2DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		c := &Conv2D{
-			filters:             filters,
-			kernelSize:          kernelSize,
-			strides:             []interface{}{1, 1},
-			padding:             "valid",
-			dataFormat:          nil,
-			dilationRate:        []interface{}{1, 1},
-			groups:              1,
-			activation:          "linear",
-			useBias:             true,
-			kernelInitializer:   &initializer.GlorotUniform{},
-			biasInitializer:     &initializer.Zeros{},
-			kernelRegularizer:   &regularizer.NilRegularizer{},
-			biasRegularizer:     &regularizer.NilRegularizer{},
-			activityRegularizer: &regularizer.NilRegularizer{},
-			kernelConstraint:    &constraint.NilConstraint{},
-			biasConstraint:      &constraint.NilConstraint{},
-			trainable:           true,
-			inputs:              inputs,
-			name:                UniqueName("conv2d"),
-		}
-		for _, option := range options {
-			option(c)
-		}
-		return c
+func Conv2D(filters float64, kernelSize float64) *LConv2D {
+	return &LConv2D{
+		activation:          "linear",
+		activityRegularizer: &regularizer.NilRegularizer{},
+		biasConstraint:      &constraint.NilConstraint{},
+		biasInitializer:     initializer.Zeros(),
+		biasRegularizer:     &regularizer.NilRegularizer{},
+		dataFormat:          nil,
+		dilationRate:        []interface{}{1, 1},
+		dtype:               Float32,
+		filters:             filters,
+		groups:              1,
+		kernelConstraint:    &constraint.NilConstraint{},
+		kernelInitializer:   initializer.GlorotUniform(),
+		kernelRegularizer:   &regularizer.NilRegularizer{},
+		kernelSize:          kernelSize,
+		name:                UniqueName("conv2d"),
+		padding:             "valid",
+		strides:             []interface{}{1, 1},
+		trainable:           true,
+		useBias:             true,
 	}
 }
 
-type Conv2DOption func(*Conv2D)
-
-func Conv2DWithName(name string) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.name = name
-	}
+func (l *LConv2D) SetActivation(activation string) *LConv2D {
+	l.activation = activation
+	return l
 }
 
-func Conv2DWithDtype(dtype DataType) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.dtype = dtype
-	}
+func (l *LConv2D) SetActivityRegularizer(activityRegularizer regularizer.Regularizer) *LConv2D {
+	l.activityRegularizer = activityRegularizer
+	return l
 }
 
-func Conv2DWithTrainable(trainable bool) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.trainable = trainable
-	}
+func (l *LConv2D) SetBiasConstraint(biasConstraint constraint.Constraint) *LConv2D {
+	l.biasConstraint = biasConstraint
+	return l
 }
 
-func Conv2DWithStrides(strides []interface{}) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.strides = strides
-	}
+func (l *LConv2D) SetBiasInitializer(biasInitializer initializer.Initializer) *LConv2D {
+	l.biasInitializer = biasInitializer
+	return l
 }
 
-func Conv2DWithPadding(padding string) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.padding = padding
-	}
+func (l *LConv2D) SetBiasRegularizer(biasRegularizer regularizer.Regularizer) *LConv2D {
+	l.biasRegularizer = biasRegularizer
+	return l
 }
 
-func Conv2DWithDataFormat(dataFormat interface{}) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.dataFormat = dataFormat
-	}
+func (l *LConv2D) SetDataFormat(dataFormat interface{}) *LConv2D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func Conv2DWithDilationRate(dilationRate []interface{}) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.dilationRate = dilationRate
-	}
+func (l *LConv2D) SetDilationRate(dilationRate []interface{}) *LConv2D {
+	l.dilationRate = dilationRate
+	return l
 }
 
-func Conv2DWithGroups(groups float64) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.groups = groups
-	}
+func (l *LConv2D) SetDtype(dtype DataType) *LConv2D {
+	l.dtype = dtype
+	return l
 }
 
-func Conv2DWithActivation(activation string) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.activation = activation
-	}
+func (l *LConv2D) SetGroups(groups float64) *LConv2D {
+	l.groups = groups
+	return l
 }
 
-func Conv2DWithUseBias(useBias bool) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.useBias = useBias
-	}
+func (l *LConv2D) SetKernelConstraint(kernelConstraint constraint.Constraint) *LConv2D {
+	l.kernelConstraint = kernelConstraint
+	return l
 }
 
-func Conv2DWithKernelInitializer(kernelInitializer initializer.Initializer) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.kernelInitializer = kernelInitializer
-	}
+func (l *LConv2D) SetKernelInitializer(kernelInitializer initializer.Initializer) *LConv2D {
+	l.kernelInitializer = kernelInitializer
+	return l
 }
 
-func Conv2DWithBiasInitializer(biasInitializer initializer.Initializer) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.biasInitializer = biasInitializer
-	}
+func (l *LConv2D) SetKernelRegularizer(kernelRegularizer regularizer.Regularizer) *LConv2D {
+	l.kernelRegularizer = kernelRegularizer
+	return l
 }
 
-func Conv2DWithKernelRegularizer(kernelRegularizer regularizer.Regularizer) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.kernelRegularizer = kernelRegularizer
-	}
+func (l *LConv2D) SetName(name string) *LConv2D {
+	l.name = name
+	return l
 }
 
-func Conv2DWithBiasRegularizer(biasRegularizer regularizer.Regularizer) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.biasRegularizer = biasRegularizer
-	}
+func (l *LConv2D) SetPadding(padding string) *LConv2D {
+	l.padding = padding
+	return l
 }
 
-func Conv2DWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.activityRegularizer = activityRegularizer
-	}
+func (l *LConv2D) SetShape(shape tf.Shape) *LConv2D {
+	l.shape = shape
+	return l
 }
 
-func Conv2DWithKernelConstraint(kernelConstraint constraint.Constraint) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.kernelConstraint = kernelConstraint
-	}
+func (l *LConv2D) SetStrides(strides []interface{}) *LConv2D {
+	l.strides = strides
+	return l
 }
 
-func Conv2DWithBiasConstraint(biasConstraint constraint.Constraint) func(c *Conv2D) {
-	return func(c *Conv2D) {
-		c.biasConstraint = biasConstraint
-	}
+func (l *LConv2D) SetTrainable(trainable bool) *LConv2D {
+	l.trainable = trainable
+	return l
 }
 
-func (c *Conv2D) GetShape() tf.Shape {
-	return c.shape
+func (l *LConv2D) SetUseBias(useBias bool) *LConv2D {
+	l.useBias = useBias
+	return l
 }
 
-func (c *Conv2D) GetDtype() DataType {
-	return c.dtype
+func (l *LConv2D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (c *Conv2D) SetInput(inputs []Layer) {
-	c.inputs = inputs
-	c.dtype = inputs[0].GetDtype()
+func (l *LConv2D) GetDtype() DataType {
+	return l.dtype
 }
 
-func (c *Conv2D) GetInputs() []Layer {
-	return c.inputs
+func (l *LConv2D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (c *Conv2D) GetName() string {
-	return c.name
+func (l *LConv2D) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigConv2D struct {
+func (l *LConv2D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLConv2D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (c *Conv2D) GetKerasLayerConfig() interface{} {
+func (l *LConv2D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range c.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -203,34 +183,34 @@ func (c *Conv2D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigConv2D{
+	return jsonConfigLConv2D{
 		ClassName: "Conv2D",
-		Name:      c.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"activation":           c.activation,
-			"activity_regularizer": c.activityRegularizer.GetKerasLayerConfig(),
-			"bias_constraint":      c.biasConstraint.GetKerasLayerConfig(),
-			"bias_initializer":     c.biasInitializer.GetKerasLayerConfig(),
-			"bias_regularizer":     c.biasRegularizer.GetKerasLayerConfig(),
-			"data_format":          c.dataFormat,
-			"dilation_rate":        c.dilationRate,
-			"dtype":                c.dtype.String(),
-			"filters":              c.filters,
-			"groups":               c.groups,
-			"kernel_constraint":    c.kernelConstraint.GetKerasLayerConfig(),
-			"kernel_initializer":   c.kernelInitializer.GetKerasLayerConfig(),
-			"kernel_regularizer":   c.kernelRegularizer.GetKerasLayerConfig(),
-			"kernel_size":          c.kernelSize,
-			"name":                 c.name,
-			"padding":              c.padding,
-			"strides":              c.strides,
-			"trainable":            c.trainable,
-			"use_bias":             c.useBias,
+			"activation":           l.activation,
+			"activity_regularizer": l.activityRegularizer.GetKerasLayerConfig(),
+			"bias_constraint":      l.biasConstraint.GetKerasLayerConfig(),
+			"bias_initializer":     l.biasInitializer.GetKerasLayerConfig(),
+			"bias_regularizer":     l.biasRegularizer.GetKerasLayerConfig(),
+			"data_format":          l.dataFormat,
+			"dilation_rate":        l.dilationRate,
+			"dtype":                l.dtype.String(),
+			"filters":              l.filters,
+			"groups":               l.groups,
+			"kernel_constraint":    l.kernelConstraint.GetKerasLayerConfig(),
+			"kernel_initializer":   l.kernelInitializer.GetKerasLayerConfig(),
+			"kernel_regularizer":   l.kernelRegularizer.GetKerasLayerConfig(),
+			"kernel_size":          l.kernelSize,
+			"name":                 l.name,
+			"padding":              l.padding,
+			"strides":              l.strides,
+			"trainable":            l.trainable,
+			"use_bias":             l.useBias,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (c *Conv2D) GetCustomLayerDefinition() string {
+func (l *LConv2D) GetCustomLayerDefinition() string {
 	return ``
 }

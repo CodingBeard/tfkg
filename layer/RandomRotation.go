@@ -2,115 +2,105 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type RandomRotation struct {
-	name          string
+type LRandomRotation struct {
 	dtype         DataType
-	inputs        []Layer
-	shape         tf.Shape
-	trainable     bool
 	factor        float64
 	fillMode      string
-	interpolation string
-	seed          interface{}
 	fillValue     float64
+	inputs        []Layer
+	interpolation string
+	name          string
+	seed          interface{}
+	shape         tf.Shape
+	trainable     bool
 }
 
-func NewRandomRotation(factor float64, options ...RandomRotationOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &RandomRotation{
-			factor:        factor,
-			fillMode:      "reflect",
-			interpolation: "bilinear",
-			seed:          nil,
-			fillValue:     0,
-			trainable:     true,
-			inputs:        inputs,
-			name:          UniqueName("randomrotation"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func RandomRotation(factor float64) *LRandomRotation {
+	return &LRandomRotation{
+		dtype:         Float32,
+		factor:        factor,
+		fillMode:      "reflect",
+		fillValue:     0,
+		interpolation: "bilinear",
+		name:          UniqueName("random_rotation"),
+		seed:          nil,
+		trainable:     true,
 	}
 }
 
-type RandomRotationOption func(*RandomRotation)
-
-func RandomRotationWithName(name string) func(r *RandomRotation) {
-	return func(r *RandomRotation) {
-		r.name = name
-	}
+func (l *LRandomRotation) SetDtype(dtype DataType) *LRandomRotation {
+	l.dtype = dtype
+	return l
 }
 
-func RandomRotationWithDtype(dtype DataType) func(r *RandomRotation) {
-	return func(r *RandomRotation) {
-		r.dtype = dtype
-	}
+func (l *LRandomRotation) SetFillMode(fillMode string) *LRandomRotation {
+	l.fillMode = fillMode
+	return l
 }
 
-func RandomRotationWithTrainable(trainable bool) func(r *RandomRotation) {
-	return func(r *RandomRotation) {
-		r.trainable = trainable
-	}
+func (l *LRandomRotation) SetFillValue(fillValue float64) *LRandomRotation {
+	l.fillValue = fillValue
+	return l
 }
 
-func RandomRotationWithFillMode(fillMode string) func(r *RandomRotation) {
-	return func(r *RandomRotation) {
-		r.fillMode = fillMode
-	}
+func (l *LRandomRotation) SetInterpolation(interpolation string) *LRandomRotation {
+	l.interpolation = interpolation
+	return l
 }
 
-func RandomRotationWithInterpolation(interpolation string) func(r *RandomRotation) {
-	return func(r *RandomRotation) {
-		r.interpolation = interpolation
-	}
+func (l *LRandomRotation) SetName(name string) *LRandomRotation {
+	l.name = name
+	return l
 }
 
-func RandomRotationWithSeed(seed interface{}) func(r *RandomRotation) {
-	return func(r *RandomRotation) {
-		r.seed = seed
-	}
+func (l *LRandomRotation) SetSeed(seed interface{}) *LRandomRotation {
+	l.seed = seed
+	return l
 }
 
-func RandomRotationWithFillValue(fillValue float64) func(r *RandomRotation) {
-	return func(r *RandomRotation) {
-		r.fillValue = fillValue
-	}
+func (l *LRandomRotation) SetShape(shape tf.Shape) *LRandomRotation {
+	l.shape = shape
+	return l
 }
 
-func (r *RandomRotation) GetShape() tf.Shape {
-	return r.shape
+func (l *LRandomRotation) SetTrainable(trainable bool) *LRandomRotation {
+	l.trainable = trainable
+	return l
 }
 
-func (r *RandomRotation) GetDtype() DataType {
-	return r.dtype
+func (l *LRandomRotation) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *RandomRotation) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LRandomRotation) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *RandomRotation) GetInputs() []Layer {
-	return r.inputs
+func (l *LRandomRotation) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *RandomRotation) GetName() string {
-	return r.name
+func (l *LRandomRotation) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigRandomRotation struct {
+func (l *LRandomRotation) GetName() string {
+	return l.name
+}
+
+type jsonConfigLRandomRotation struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *RandomRotation) GetKerasLayerConfig() interface{} {
+func (l *LRandomRotation) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -118,23 +108,23 @@ func (r *RandomRotation) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigRandomRotation{
+	return jsonConfigLRandomRotation{
 		ClassName: "RandomRotation",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":         r.dtype.String(),
-			"factor":        r.factor,
-			"fill_mode":     r.fillMode,
-			"fill_value":    r.fillValue,
-			"interpolation": r.interpolation,
-			"name":          r.name,
-			"seed":          r.seed,
-			"trainable":     r.trainable,
+			"dtype":         l.dtype.String(),
+			"factor":        l.factor,
+			"fill_mode":     l.fillMode,
+			"fill_value":    l.fillValue,
+			"interpolation": l.interpolation,
+			"name":          l.name,
+			"seed":          l.seed,
+			"trainable":     l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *RandomRotation) GetCustomLayerDefinition() string {
+func (l *LRandomRotation) GetCustomLayerDefinition() string {
 	return ``
 }

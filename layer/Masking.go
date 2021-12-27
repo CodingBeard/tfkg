@@ -2,89 +2,82 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Masking struct {
-	name      string
+type LMasking struct {
 	dtype     DataType
 	inputs    []Layer
+	maskValue float64
+	name      string
 	shape     tf.Shape
 	trainable bool
-	maskValue float64
 }
 
-func NewMasking(options ...MaskingOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		m := &Masking{
-			maskValue: 0,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("masking"),
-		}
-		for _, option := range options {
-			option(m)
-		}
-		return m
+func Masking() *LMasking {
+	return &LMasking{
+		dtype:     Float32,
+		maskValue: 0,
+		name:      UniqueName("masking"),
+		trainable: true,
 	}
 }
 
-type MaskingOption func(*Masking)
-
-func MaskingWithName(name string) func(m *Masking) {
-	return func(m *Masking) {
-		m.name = name
-	}
+func (l *LMasking) SetDtype(dtype DataType) *LMasking {
+	l.dtype = dtype
+	return l
 }
 
-func MaskingWithDtype(dtype DataType) func(m *Masking) {
-	return func(m *Masking) {
-		m.dtype = dtype
-	}
+func (l *LMasking) SetMaskValue(maskValue float64) *LMasking {
+	l.maskValue = maskValue
+	return l
 }
 
-func MaskingWithTrainable(trainable bool) func(m *Masking) {
-	return func(m *Masking) {
-		m.trainable = trainable
-	}
+func (l *LMasking) SetName(name string) *LMasking {
+	l.name = name
+	return l
 }
 
-func MaskingWithMaskValue(maskValue float64) func(m *Masking) {
-	return func(m *Masking) {
-		m.maskValue = maskValue
-	}
+func (l *LMasking) SetShape(shape tf.Shape) *LMasking {
+	l.shape = shape
+	return l
 }
 
-func (m *Masking) GetShape() tf.Shape {
-	return m.shape
+func (l *LMasking) SetTrainable(trainable bool) *LMasking {
+	l.trainable = trainable
+	return l
 }
 
-func (m *Masking) GetDtype() DataType {
-	return m.dtype
+func (l *LMasking) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (m *Masking) SetInput(inputs []Layer) {
-	m.inputs = inputs
-	m.dtype = inputs[0].GetDtype()
+func (l *LMasking) GetDtype() DataType {
+	return l.dtype
 }
 
-func (m *Masking) GetInputs() []Layer {
-	return m.inputs
+func (l *LMasking) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (m *Masking) GetName() string {
-	return m.name
+func (l *LMasking) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigMasking struct {
+func (l *LMasking) GetName() string {
+	return l.name
+}
+
+type jsonConfigLMasking struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (m *Masking) GetKerasLayerConfig() interface{} {
+func (l *LMasking) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range m.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -92,19 +85,19 @@ func (m *Masking) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigMasking{
+	return jsonConfigLMasking{
 		ClassName: "Masking",
-		Name:      m.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":      m.dtype.String(),
-			"mask_value": m.maskValue,
-			"name":       m.name,
-			"trainable":  m.trainable,
+			"dtype":      l.dtype.String(),
+			"mask_value": l.maskValue,
+			"name":       l.name,
+			"trainable":  l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (m *Masking) GetCustomLayerDefinition() string {
+func (l *LMasking) GetCustomLayerDefinition() string {
 	return ``
 }

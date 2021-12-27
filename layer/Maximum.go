@@ -2,81 +2,75 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Maximum struct {
-	name      string
+type LMaximum struct {
 	dtype     DataType
 	inputs    []Layer
+	name      string
 	shape     tf.Shape
 	trainable bool
 }
 
-func NewMaximum(options ...MaximumOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		m := &Maximum{
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("maximum"),
-		}
-		for _, option := range options {
-			option(m)
-		}
-		return m
+func Maximum() *LMaximum {
+	return &LMaximum{
+		dtype:     Float32,
+		name:      UniqueName("maximum"),
+		trainable: true,
 	}
 }
 
-type MaximumOption func(*Maximum)
-
-func MaximumWithName(name string) func(m *Maximum) {
-	return func(m *Maximum) {
-		m.name = name
-	}
+func (l *LMaximum) SetDtype(dtype DataType) *LMaximum {
+	l.dtype = dtype
+	return l
 }
 
-func MaximumWithDtype(dtype DataType) func(m *Maximum) {
-	return func(m *Maximum) {
-		m.dtype = dtype
-	}
+func (l *LMaximum) SetName(name string) *LMaximum {
+	l.name = name
+	return l
 }
 
-func MaximumWithTrainable(trainable bool) func(m *Maximum) {
-	return func(m *Maximum) {
-		m.trainable = trainable
-	}
+func (l *LMaximum) SetShape(shape tf.Shape) *LMaximum {
+	l.shape = shape
+	return l
 }
 
-func (m *Maximum) GetShape() tf.Shape {
-	return m.shape
+func (l *LMaximum) SetTrainable(trainable bool) *LMaximum {
+	l.trainable = trainable
+	return l
 }
 
-func (m *Maximum) GetDtype() DataType {
-	return m.dtype
+func (l *LMaximum) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (m *Maximum) SetInput(inputs []Layer) {
-	m.inputs = inputs
-	m.dtype = inputs[0].GetDtype()
+func (l *LMaximum) GetDtype() DataType {
+	return l.dtype
 }
 
-func (m *Maximum) GetInputs() []Layer {
-	return m.inputs
+func (l *LMaximum) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (m *Maximum) GetName() string {
-	return m.name
+func (l *LMaximum) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigMaximum struct {
+func (l *LMaximum) GetName() string {
+	return l.name
+}
+
+type jsonConfigLMaximum struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (m *Maximum) GetKerasLayerConfig() interface{} {
+func (l *LMaximum) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range m.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -84,18 +78,18 @@ func (m *Maximum) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigMaximum{
+	return jsonConfigLMaximum{
 		ClassName: "Maximum",
-		Name:      m.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     m.dtype.String(),
-			"name":      m.name,
-			"trainable": m.trainable,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (m *Maximum) GetCustomLayerDefinition() string {
+func (l *LMaximum) GetCustomLayerDefinition() string {
 	return ``
 }

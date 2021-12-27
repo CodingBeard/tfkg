@@ -1,100 +1,101 @@
 package optimizer
 
-type Ftrl struct {
-	learningRate                      float64
-	learningRatePower                 float64
+type OFtrl struct {
+	beta                              float64
+	decay                             float64
 	initialAccumulatorValue           float64
 	l1RegularizationStrength          float64
 	l2RegularizationStrength          float64
-	name                              string
 	l2ShrinkageRegularizationStrength float64
-	beta                              float64
-	decay                             float64
+	learningRate                      float64
+	learningRatePower                 float64
+	name                              string
 }
 
-func NewFtrl() *Ftrl {
-	return &Ftrl{
-		learningRate:                      0.001,
-		learningRatePower:                 -0.5,
+func Ftrl() *OFtrl {
+	return &OFtrl{
+		beta:                              0,
+		decay:                             0,
 		initialAccumulatorValue:           0.1,
 		l1RegularizationStrength:          0,
 		l2RegularizationStrength:          0,
-		name:                              "Ftrl",
 		l2ShrinkageRegularizationStrength: 0,
-		beta:                              0,
+		learningRate:                      0.001,
+		learningRatePower:                 -0.5,
+		name:                              UniqueName("Ftrl"),
 	}
 }
 
-func FtrlWithLearningRate(learningRate float64) func(f *Ftrl) {
-	return func(f *Ftrl) {
-		f.learningRate = learningRate
-	}
+func (o *OFtrl) SetBeta(beta float64) *OFtrl {
+	o.beta = beta
+	return o
 }
 
-func FtrlWithLearningRatePower(learningRatePower float64) func(f *Ftrl) {
-	return func(f *Ftrl) {
-		f.learningRatePower = learningRatePower
-	}
+func (o *OFtrl) SetDecay(decay float64) *OFtrl {
+	o.decay = decay
+	return o
 }
 
-func FtrlWithInitialAccumulatorValue(initialAccumulatorValue float64) func(f *Ftrl) {
-	return func(f *Ftrl) {
-		f.initialAccumulatorValue = initialAccumulatorValue
-	}
+func (o *OFtrl) SetInitialAccumulatorValue(initialAccumulatorValue float64) *OFtrl {
+	o.initialAccumulatorValue = initialAccumulatorValue
+	return o
 }
 
-func FtrlWithL1RegularizationStrength(l1RegularizationStrength float64) func(f *Ftrl) {
-	return func(f *Ftrl) {
-		f.l1RegularizationStrength = l1RegularizationStrength
-	}
+func (o *OFtrl) SetL1RegularizationStrength(l1RegularizationStrength float64) *OFtrl {
+	o.l1RegularizationStrength = l1RegularizationStrength
+	return o
 }
 
-func FtrlWithL2RegularizationStrength(l2RegularizationStrength float64) func(f *Ftrl) {
-	return func(f *Ftrl) {
-		f.l2RegularizationStrength = l2RegularizationStrength
-	}
+func (o *OFtrl) SetL2RegularizationStrength(l2RegularizationStrength float64) *OFtrl {
+	o.l2RegularizationStrength = l2RegularizationStrength
+	return o
 }
 
-func FtrlWithName(name string) func(f *Ftrl) {
-	return func(f *Ftrl) {
-		f.name = name
-	}
+func (o *OFtrl) SetL2ShrinkageRegularizationStrength(l2ShrinkageRegularizationStrength float64) *OFtrl {
+	o.l2ShrinkageRegularizationStrength = l2ShrinkageRegularizationStrength
+	return o
 }
 
-func FtrlWithL2ShrinkageRegularizationStrength(l2ShrinkageRegularizationStrength float64) func(f *Ftrl) {
-	return func(f *Ftrl) {
-		f.l2ShrinkageRegularizationStrength = l2ShrinkageRegularizationStrength
-	}
+func (o *OFtrl) SetLearningRate(learningRate float64) *OFtrl {
+	o.learningRate = learningRate
+	return o
 }
 
-func FtrlWithBeta(beta float64) func(f *Ftrl) {
-	return func(f *Ftrl) {
-		f.beta = beta
-	}
+func (o *OFtrl) SetLearningRatePower(learningRatePower float64) *OFtrl {
+	o.learningRatePower = learningRatePower
+	return o
 }
 
-type jsonConfigFtrl struct {
+func (o *OFtrl) SetName(name string) *OFtrl {
+	o.name = name
+	return o
+}
+
+type jsonConfigOFtrl struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (f *Ftrl) GetKerasLayerConfig() interface{} {
-	if f == nil {
-		return nil
-	}
-	return jsonConfigFtrl{
+func (o *OFtrl) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigOFtrl{
 		ClassName: "Ftrl",
+		Name:      o.name,
 		Config: map[string]interface{}{
-			"beta":                                 f.beta,
-			"decay":                                f.decay,
-			"initial_accumulator_value":            f.initialAccumulatorValue,
-			"l1_regularization_strength":           f.l1RegularizationStrength,
-			"l2_regularization_strength":           f.l2RegularizationStrength,
-			"l2_shrinkage_regularization_strength": f.l2ShrinkageRegularizationStrength,
-			"learning_rate":                        f.learningRate,
-			"learning_rate_power":                  f.learningRatePower,
-			"name":                                 f.name,
+			"beta":                                 o.beta,
+			"decay":                                o.decay,
+			"initial_accumulator_value":            o.initialAccumulatorValue,
+			"l1_regularization_strength":           o.l1RegularizationStrength,
+			"l2_regularization_strength":           o.l2RegularizationStrength,
+			"l2_shrinkage_regularization_strength": o.l2ShrinkageRegularizationStrength,
+			"learning_rate":                        o.learningRate,
+			"learning_rate_power":                  o.learningRatePower,
+			"name":                                 o.name,
 		},
 	}
+}
+
+func (o *OFtrl) GetCustomLayerDefinition() string {
+	return ``
 }

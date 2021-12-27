@@ -1,73 +1,77 @@
 package optimizer
 
-type Adamax struct {
-	learningRate float64
+type OAdamax struct {
 	beta1        float64
 	beta2        float64
-	epsilon      float64
-	name         string
 	decay        float64
+	epsilon      float64
+	learningRate float64
+	name         string
 }
 
-func NewAdamax() *Adamax {
-	return &Adamax{
-		learningRate: 0.001,
+func Adamax() *OAdamax {
+	return &OAdamax{
 		beta1:        0.9,
 		beta2:        0.999,
+		decay:        0,
 		epsilon:      1e-07,
-		name:         "Adamax",
+		learningRate: 0.001,
+		name:         UniqueName("Adamax"),
 	}
 }
 
-func AdamaxWithLearningRate(learningRate float64) func(a *Adamax) {
-	return func(a *Adamax) {
-		a.learningRate = learningRate
-	}
+func (o *OAdamax) SetBeta1(beta1 float64) *OAdamax {
+	o.beta1 = beta1
+	return o
 }
 
-func AdamaxWithBeta1(beta1 float64) func(a *Adamax) {
-	return func(a *Adamax) {
-		a.beta1 = beta1
-	}
+func (o *OAdamax) SetBeta2(beta2 float64) *OAdamax {
+	o.beta2 = beta2
+	return o
 }
 
-func AdamaxWithBeta2(beta2 float64) func(a *Adamax) {
-	return func(a *Adamax) {
-		a.beta2 = beta2
-	}
+func (o *OAdamax) SetDecay(decay float64) *OAdamax {
+	o.decay = decay
+	return o
 }
 
-func AdamaxWithEpsilon(epsilon float64) func(a *Adamax) {
-	return func(a *Adamax) {
-		a.epsilon = epsilon
-	}
+func (o *OAdamax) SetEpsilon(epsilon float64) *OAdamax {
+	o.epsilon = epsilon
+	return o
 }
 
-func AdamaxWithName(name string) func(a *Adamax) {
-	return func(a *Adamax) {
-		a.name = name
-	}
+func (o *OAdamax) SetLearningRate(learningRate float64) *OAdamax {
+	o.learningRate = learningRate
+	return o
 }
 
-type jsonConfigAdamax struct {
+func (o *OAdamax) SetName(name string) *OAdamax {
+	o.name = name
+	return o
+}
+
+type jsonConfigOAdamax struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (a *Adamax) GetKerasLayerConfig() interface{} {
-	if a == nil {
-		return nil
-	}
-	return jsonConfigAdamax{
+func (o *OAdamax) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigOAdamax{
 		ClassName: "Adamax",
+		Name:      o.name,
 		Config: map[string]interface{}{
-			"beta_1":        a.beta1,
-			"beta_2":        a.beta2,
-			"decay":         a.decay,
-			"epsilon":       a.epsilon,
-			"learning_rate": a.learningRate,
-			"name":          a.name,
+			"beta_1":        o.beta1,
+			"beta_2":        o.beta2,
+			"decay":         o.decay,
+			"epsilon":       o.epsilon,
+			"learning_rate": o.learningRate,
+			"name":          o.name,
 		},
 	}
+}
+
+func (o *OAdamax) GetCustomLayerDefinition() string {
+	return ``
 }

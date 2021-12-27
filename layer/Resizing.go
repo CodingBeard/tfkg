@@ -2,101 +2,93 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Resizing struct {
-	name              string
+type LResizing struct {
+	cropToAspectRatio bool
 	dtype             DataType
+	height            float64
 	inputs            []Layer
+	interpolation     string
+	name              string
 	shape             tf.Shape
 	trainable         bool
-	height            float64
 	width             float64
-	interpolation     string
-	cropToAspectRatio bool
 }
 
-func NewResizing(height float64, width float64, options ...ResizingOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &Resizing{
-			height:            height,
-			width:             width,
-			interpolation:     "bilinear",
-			cropToAspectRatio: false,
-			trainable:         true,
-			inputs:            inputs,
-			name:              UniqueName("resizing"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func Resizing(height float64, width float64) *LResizing {
+	return &LResizing{
+		cropToAspectRatio: false,
+		dtype:             Float32,
+		height:            height,
+		interpolation:     "bilinear",
+		name:              UniqueName("resizing"),
+		trainable:         true,
+		width:             width,
 	}
 }
 
-type ResizingOption func(*Resizing)
-
-func ResizingWithName(name string) func(r *Resizing) {
-	return func(r *Resizing) {
-		r.name = name
-	}
+func (l *LResizing) SetCropToAspectRatio(cropToAspectRatio bool) *LResizing {
+	l.cropToAspectRatio = cropToAspectRatio
+	return l
 }
 
-func ResizingWithDtype(dtype DataType) func(r *Resizing) {
-	return func(r *Resizing) {
-		r.dtype = dtype
-	}
+func (l *LResizing) SetDtype(dtype DataType) *LResizing {
+	l.dtype = dtype
+	return l
 }
 
-func ResizingWithTrainable(trainable bool) func(r *Resizing) {
-	return func(r *Resizing) {
-		r.trainable = trainable
-	}
+func (l *LResizing) SetInterpolation(interpolation string) *LResizing {
+	l.interpolation = interpolation
+	return l
 }
 
-func ResizingWithInterpolation(interpolation string) func(r *Resizing) {
-	return func(r *Resizing) {
-		r.interpolation = interpolation
-	}
+func (l *LResizing) SetName(name string) *LResizing {
+	l.name = name
+	return l
 }
 
-func ResizingWithCropToAspectRatio(cropToAspectRatio bool) func(r *Resizing) {
-	return func(r *Resizing) {
-		r.cropToAspectRatio = cropToAspectRatio
-	}
+func (l *LResizing) SetShape(shape tf.Shape) *LResizing {
+	l.shape = shape
+	return l
 }
 
-func (r *Resizing) GetShape() tf.Shape {
-	return r.shape
+func (l *LResizing) SetTrainable(trainable bool) *LResizing {
+	l.trainable = trainable
+	return l
 }
 
-func (r *Resizing) GetDtype() DataType {
-	return r.dtype
+func (l *LResizing) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *Resizing) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LResizing) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *Resizing) GetInputs() []Layer {
-	return r.inputs
+func (l *LResizing) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *Resizing) GetName() string {
-	return r.name
+func (l *LResizing) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigResizing struct {
+func (l *LResizing) GetName() string {
+	return l.name
+}
+
+type jsonConfigLResizing struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *Resizing) GetKerasLayerConfig() interface{} {
+func (l *LResizing) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -104,22 +96,22 @@ func (r *Resizing) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigResizing{
+	return jsonConfigLResizing{
 		ClassName: "Resizing",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"crop_to_aspect_ratio": r.cropToAspectRatio,
-			"dtype":                r.dtype.String(),
-			"height":               r.height,
-			"interpolation":        r.interpolation,
-			"name":                 r.name,
-			"trainable":            r.trainable,
-			"width":                r.width,
+			"crop_to_aspect_ratio": l.cropToAspectRatio,
+			"dtype":                l.dtype.String(),
+			"height":               l.height,
+			"interpolation":        l.interpolation,
+			"name":                 l.name,
+			"trainable":            l.trainable,
+			"width":                l.width,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *Resizing) GetCustomLayerDefinition() string {
+func (l *LResizing) GetCustomLayerDefinition() string {
 	return ``
 }

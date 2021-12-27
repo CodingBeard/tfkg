@@ -2,81 +2,75 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type PreprocessingLayer struct {
-	name      string
+type LPreprocessingLayer struct {
 	dtype     DataType
 	inputs    []Layer
+	name      string
 	shape     tf.Shape
 	trainable bool
 }
 
-func NewPreprocessingLayer(options ...PreprocessingLayerOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		p := &PreprocessingLayer{
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("preprocessinglayer"),
-		}
-		for _, option := range options {
-			option(p)
-		}
-		return p
+func PreprocessingLayer() *LPreprocessingLayer {
+	return &LPreprocessingLayer{
+		dtype:     Float32,
+		name:      UniqueName("preprocessing_layer"),
+		trainable: true,
 	}
 }
 
-type PreprocessingLayerOption func(*PreprocessingLayer)
-
-func PreprocessingLayerWithName(name string) func(p *PreprocessingLayer) {
-	return func(p *PreprocessingLayer) {
-		p.name = name
-	}
+func (l *LPreprocessingLayer) SetDtype(dtype DataType) *LPreprocessingLayer {
+	l.dtype = dtype
+	return l
 }
 
-func PreprocessingLayerWithDtype(dtype DataType) func(p *PreprocessingLayer) {
-	return func(p *PreprocessingLayer) {
-		p.dtype = dtype
-	}
+func (l *LPreprocessingLayer) SetName(name string) *LPreprocessingLayer {
+	l.name = name
+	return l
 }
 
-func PreprocessingLayerWithTrainable(trainable bool) func(p *PreprocessingLayer) {
-	return func(p *PreprocessingLayer) {
-		p.trainable = trainable
-	}
+func (l *LPreprocessingLayer) SetShape(shape tf.Shape) *LPreprocessingLayer {
+	l.shape = shape
+	return l
 }
 
-func (p *PreprocessingLayer) GetShape() tf.Shape {
-	return p.shape
+func (l *LPreprocessingLayer) SetTrainable(trainable bool) *LPreprocessingLayer {
+	l.trainable = trainable
+	return l
 }
 
-func (p *PreprocessingLayer) GetDtype() DataType {
-	return p.dtype
+func (l *LPreprocessingLayer) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (p *PreprocessingLayer) SetInput(inputs []Layer) {
-	p.inputs = inputs
-	p.dtype = inputs[0].GetDtype()
+func (l *LPreprocessingLayer) GetDtype() DataType {
+	return l.dtype
 }
 
-func (p *PreprocessingLayer) GetInputs() []Layer {
-	return p.inputs
+func (l *LPreprocessingLayer) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (p *PreprocessingLayer) GetName() string {
-	return p.name
+func (l *LPreprocessingLayer) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigPreprocessingLayer struct {
+func (l *LPreprocessingLayer) GetName() string {
+	return l.name
+}
+
+type jsonConfigLPreprocessingLayer struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (p *PreprocessingLayer) GetKerasLayerConfig() interface{} {
+func (l *LPreprocessingLayer) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range p.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -84,18 +78,18 @@ func (p *PreprocessingLayer) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigPreprocessingLayer{
+	return jsonConfigLPreprocessingLayer{
 		ClassName: "PreprocessingLayer",
-		Name:      p.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     p.dtype.String(),
-			"name":      p.name,
-			"trainable": p.trainable,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (p *PreprocessingLayer) GetCustomLayerDefinition() string {
+func (l *LPreprocessingLayer) GetCustomLayerDefinition() string {
 	return ``
 }

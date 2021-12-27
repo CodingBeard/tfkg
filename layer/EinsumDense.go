@@ -1,161 +1,146 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type EinsumDense struct {
-	name                string
+type LEinsumDense struct {
+	activation          string
+	activityRegularizer regularizer.Regularizer
+	biasAxes            interface{}
+	biasConstraint      constraint.Constraint
+	biasInitializer     initializer.Initializer
+	biasRegularizer     regularizer.Regularizer
 	dtype               DataType
+	equation            float64
 	inputs              []Layer
+	kernelConstraint    constraint.Constraint
+	kernelInitializer   initializer.Initializer
+	kernelRegularizer   regularizer.Regularizer
+	name                string
+	outputShape         float64
 	shape               tf.Shape
 	trainable           bool
-	equation            float64
-	outputShape         float64
-	activation          string
-	biasAxes            interface{}
-	kernelInitializer   initializer.Initializer
-	biasInitializer     initializer.Initializer
-	kernelRegularizer   regularizer.Regularizer
-	biasRegularizer     regularizer.Regularizer
-	activityRegularizer regularizer.Regularizer
-	kernelConstraint    constraint.Constraint
-	biasConstraint      constraint.Constraint
 }
 
-func NewEinsumDense(equation float64, outputShape float64, options ...EinsumDenseOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		e := &EinsumDense{
-			equation:            equation,
-			outputShape:         outputShape,
-			activation:          "linear",
-			biasAxes:            nil,
-			kernelInitializer:   &initializer.GlorotUniform{},
-			biasInitializer:     &initializer.Zeros{},
-			kernelRegularizer:   &regularizer.NilRegularizer{},
-			biasRegularizer:     &regularizer.NilRegularizer{},
-			activityRegularizer: &regularizer.NilRegularizer{},
-			kernelConstraint:    &constraint.NilConstraint{},
-			biasConstraint:      &constraint.NilConstraint{},
-			trainable:           true,
-			inputs:              inputs,
-			name:                UniqueName("einsumdense"),
-		}
-		for _, option := range options {
-			option(e)
-		}
-		return e
+func EinsumDense(equation float64, outputShape float64) *LEinsumDense {
+	return &LEinsumDense{
+		activation:          "linear",
+		activityRegularizer: &regularizer.NilRegularizer{},
+		biasAxes:            nil,
+		biasConstraint:      &constraint.NilConstraint{},
+		biasInitializer:     initializer.Zeros(),
+		biasRegularizer:     &regularizer.NilRegularizer{},
+		dtype:               Float32,
+		equation:            equation,
+		kernelConstraint:    &constraint.NilConstraint{},
+		kernelInitializer:   initializer.GlorotUniform(),
+		kernelRegularizer:   &regularizer.NilRegularizer{},
+		name:                UniqueName("einsum_dense"),
+		outputShape:         outputShape,
+		trainable:           true,
 	}
 }
 
-type EinsumDenseOption func(*EinsumDense)
-
-func EinsumDenseWithName(name string) func(e *EinsumDense) {
-	return func(e *EinsumDense) {
-		e.name = name
-	}
+func (l *LEinsumDense) SetActivation(activation string) *LEinsumDense {
+	l.activation = activation
+	return l
 }
 
-func EinsumDenseWithDtype(dtype DataType) func(e *EinsumDense) {
-	return func(e *EinsumDense) {
-		e.dtype = dtype
-	}
+func (l *LEinsumDense) SetActivityRegularizer(activityRegularizer regularizer.Regularizer) *LEinsumDense {
+	l.activityRegularizer = activityRegularizer
+	return l
 }
 
-func EinsumDenseWithTrainable(trainable bool) func(e *EinsumDense) {
-	return func(e *EinsumDense) {
-		e.trainable = trainable
-	}
+func (l *LEinsumDense) SetBiasAxes(biasAxes interface{}) *LEinsumDense {
+	l.biasAxes = biasAxes
+	return l
 }
 
-func EinsumDenseWithActivation(activation string) func(e *EinsumDense) {
-	return func(e *EinsumDense) {
-		e.activation = activation
-	}
+func (l *LEinsumDense) SetBiasConstraint(biasConstraint constraint.Constraint) *LEinsumDense {
+	l.biasConstraint = biasConstraint
+	return l
 }
 
-func EinsumDenseWithBiasAxes(biasAxes interface{}) func(e *EinsumDense) {
-	return func(e *EinsumDense) {
-		e.biasAxes = biasAxes
-	}
+func (l *LEinsumDense) SetBiasInitializer(biasInitializer initializer.Initializer) *LEinsumDense {
+	l.biasInitializer = biasInitializer
+	return l
 }
 
-func EinsumDenseWithKernelInitializer(kernelInitializer initializer.Initializer) func(e *EinsumDense) {
-	return func(e *EinsumDense) {
-		e.kernelInitializer = kernelInitializer
-	}
+func (l *LEinsumDense) SetBiasRegularizer(biasRegularizer regularizer.Regularizer) *LEinsumDense {
+	l.biasRegularizer = biasRegularizer
+	return l
 }
 
-func EinsumDenseWithBiasInitializer(biasInitializer initializer.Initializer) func(e *EinsumDense) {
-	return func(e *EinsumDense) {
-		e.biasInitializer = biasInitializer
-	}
+func (l *LEinsumDense) SetDtype(dtype DataType) *LEinsumDense {
+	l.dtype = dtype
+	return l
 }
 
-func EinsumDenseWithKernelRegularizer(kernelRegularizer regularizer.Regularizer) func(e *EinsumDense) {
-	return func(e *EinsumDense) {
-		e.kernelRegularizer = kernelRegularizer
-	}
+func (l *LEinsumDense) SetKernelConstraint(kernelConstraint constraint.Constraint) *LEinsumDense {
+	l.kernelConstraint = kernelConstraint
+	return l
 }
 
-func EinsumDenseWithBiasRegularizer(biasRegularizer regularizer.Regularizer) func(e *EinsumDense) {
-	return func(e *EinsumDense) {
-		e.biasRegularizer = biasRegularizer
-	}
+func (l *LEinsumDense) SetKernelInitializer(kernelInitializer initializer.Initializer) *LEinsumDense {
+	l.kernelInitializer = kernelInitializer
+	return l
 }
 
-func EinsumDenseWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(e *EinsumDense) {
-	return func(e *EinsumDense) {
-		e.activityRegularizer = activityRegularizer
-	}
+func (l *LEinsumDense) SetKernelRegularizer(kernelRegularizer regularizer.Regularizer) *LEinsumDense {
+	l.kernelRegularizer = kernelRegularizer
+	return l
 }
 
-func EinsumDenseWithKernelConstraint(kernelConstraint constraint.Constraint) func(e *EinsumDense) {
-	return func(e *EinsumDense) {
-		e.kernelConstraint = kernelConstraint
-	}
+func (l *LEinsumDense) SetName(name string) *LEinsumDense {
+	l.name = name
+	return l
 }
 
-func EinsumDenseWithBiasConstraint(biasConstraint constraint.Constraint) func(e *EinsumDense) {
-	return func(e *EinsumDense) {
-		e.biasConstraint = biasConstraint
-	}
+func (l *LEinsumDense) SetShape(shape tf.Shape) *LEinsumDense {
+	l.shape = shape
+	return l
 }
 
-func (e *EinsumDense) GetShape() tf.Shape {
-	return e.shape
+func (l *LEinsumDense) SetTrainable(trainable bool) *LEinsumDense {
+	l.trainable = trainable
+	return l
 }
 
-func (e *EinsumDense) GetDtype() DataType {
-	return e.dtype
+func (l *LEinsumDense) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (e *EinsumDense) SetInput(inputs []Layer) {
-	e.inputs = inputs
-	e.dtype = inputs[0].GetDtype()
+func (l *LEinsumDense) GetDtype() DataType {
+	return l.dtype
 }
 
-func (e *EinsumDense) GetInputs() []Layer {
-	return e.inputs
+func (l *LEinsumDense) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (e *EinsumDense) GetName() string {
-	return e.name
+func (l *LEinsumDense) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigEinsumDense struct {
+func (l *LEinsumDense) GetName() string {
+	return l.name
+}
+
+type jsonConfigLEinsumDense struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (e *EinsumDense) GetKerasLayerConfig() interface{} {
+func (l *LEinsumDense) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range e.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -163,29 +148,29 @@ func (e *EinsumDense) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigEinsumDense{
+	return jsonConfigLEinsumDense{
 		ClassName: "EinsumDense",
-		Name:      e.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"activation":           e.activation,
-			"activity_regularizer": e.activityRegularizer.GetKerasLayerConfig(),
-			"bias_axes":            e.biasAxes,
-			"bias_constraint":      e.biasConstraint.GetKerasLayerConfig(),
-			"bias_initializer":     e.biasInitializer.GetKerasLayerConfig(),
-			"bias_regularizer":     e.biasRegularizer.GetKerasLayerConfig(),
-			"dtype":                e.dtype.String(),
-			"equation":             e.equation,
-			"kernel_constraint":    e.kernelConstraint.GetKerasLayerConfig(),
-			"kernel_initializer":   e.kernelInitializer.GetKerasLayerConfig(),
-			"kernel_regularizer":   e.kernelRegularizer.GetKerasLayerConfig(),
-			"name":                 e.name,
-			"output_shape":         e.outputShape,
-			"trainable":            e.trainable,
+			"activation":           l.activation,
+			"activity_regularizer": l.activityRegularizer.GetKerasLayerConfig(),
+			"bias_axes":            l.biasAxes,
+			"bias_constraint":      l.biasConstraint.GetKerasLayerConfig(),
+			"bias_initializer":     l.biasInitializer.GetKerasLayerConfig(),
+			"bias_regularizer":     l.biasRegularizer.GetKerasLayerConfig(),
+			"dtype":                l.dtype.String(),
+			"equation":             l.equation,
+			"kernel_constraint":    l.kernelConstraint.GetKerasLayerConfig(),
+			"kernel_initializer":   l.kernelInitializer.GetKerasLayerConfig(),
+			"kernel_regularizer":   l.kernelRegularizer.GetKerasLayerConfig(),
+			"name":                 l.name,
+			"output_shape":         l.outputShape,
+			"trainable":            l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (e *EinsumDense) GetCustomLayerDefinition() string {
+func (l *LEinsumDense) GetCustomLayerDefinition() string {
 	return ``
 }

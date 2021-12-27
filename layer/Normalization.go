@@ -2,105 +2,96 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Normalization struct {
-	name      string
+type LNormalization struct {
+	axis      float64
 	dtype     DataType
 	inputs    []Layer
+	mean      interface{}
+	name      string
 	shape     tf.Shape
 	trainable bool
-	axis      float64
-	mean      interface{}
 	variance  interface{}
 }
 
-func NewNormalization(options ...NormalizationOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		n := &Normalization{
-			axis:      -1,
-			mean:      nil,
-			variance:  nil,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("normalization"),
-		}
-		for _, option := range options {
-			option(n)
-		}
-		return n
+func Normalization() *LNormalization {
+	return &LNormalization{
+		axis:      -1,
+		dtype:     Float32,
+		mean:      nil,
+		name:      UniqueName("normalization"),
+		trainable: true,
+		variance:  nil,
 	}
 }
 
-type NormalizationOption func(*Normalization)
-
-func NormalizationWithName(name string) func(n *Normalization) {
-	return func(n *Normalization) {
-		n.name = name
-	}
+func (l *LNormalization) SetAxis(axis float64) *LNormalization {
+	l.axis = axis
+	return l
 }
 
-func NormalizationWithDtype(dtype DataType) func(n *Normalization) {
-	return func(n *Normalization) {
-		n.dtype = dtype
-	}
+func (l *LNormalization) SetDtype(dtype DataType) *LNormalization {
+	l.dtype = dtype
+	return l
 }
 
-func NormalizationWithTrainable(trainable bool) func(n *Normalization) {
-	return func(n *Normalization) {
-		n.trainable = trainable
-	}
+func (l *LNormalization) SetMean(mean interface{}) *LNormalization {
+	l.mean = mean
+	return l
 }
 
-func NormalizationWithAxis(axis float64) func(n *Normalization) {
-	return func(n *Normalization) {
-		n.axis = axis
-	}
+func (l *LNormalization) SetName(name string) *LNormalization {
+	l.name = name
+	return l
 }
 
-func NormalizationWithMean(mean interface{}) func(n *Normalization) {
-	return func(n *Normalization) {
-		n.mean = mean
-	}
+func (l *LNormalization) SetShape(shape tf.Shape) *LNormalization {
+	l.shape = shape
+	return l
 }
 
-func NormalizationWithVariance(variance interface{}) func(n *Normalization) {
-	return func(n *Normalization) {
-		n.variance = variance
-	}
+func (l *LNormalization) SetTrainable(trainable bool) *LNormalization {
+	l.trainable = trainable
+	return l
 }
 
-func (n *Normalization) GetShape() tf.Shape {
-	return n.shape
+func (l *LNormalization) SetVariance(variance interface{}) *LNormalization {
+	l.variance = variance
+	return l
 }
 
-func (n *Normalization) GetDtype() DataType {
-	return n.dtype
+func (l *LNormalization) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (n *Normalization) SetInput(inputs []Layer) {
-	n.inputs = inputs
-	n.dtype = inputs[0].GetDtype()
+func (l *LNormalization) GetDtype() DataType {
+	return l.dtype
 }
 
-func (n *Normalization) GetInputs() []Layer {
-	return n.inputs
+func (l *LNormalization) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (n *Normalization) GetName() string {
-	return n.name
+func (l *LNormalization) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigNormalization struct {
+func (l *LNormalization) GetName() string {
+	return l.name
+}
+
+type jsonConfigLNormalization struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (n *Normalization) GetKerasLayerConfig() interface{} {
+func (l *LNormalization) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range n.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -108,21 +99,21 @@ func (n *Normalization) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigNormalization{
+	return jsonConfigLNormalization{
 		ClassName: "Normalization",
-		Name:      n.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"axis":      n.axis,
-			"dtype":     n.dtype.String(),
-			"mean":      n.mean,
-			"name":      n.name,
-			"trainable": n.trainable,
-			"variance":  n.variance,
+			"axis":      l.axis,
+			"dtype":     l.dtype.String(),
+			"mean":      l.mean,
+			"name":      l.name,
+			"trainable": l.trainable,
+			"variance":  l.variance,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (n *Normalization) GetCustomLayerDefinition() string {
+func (l *LNormalization) GetCustomLayerDefinition() string {
 	return ``
 }

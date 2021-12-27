@@ -2,105 +2,96 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Discretization struct {
-	name          string
+type LDiscretization struct {
+	binBoundaries interface{}
 	dtype         DataType
+	epsilon       float64
 	inputs        []Layer
+	name          string
+	numBins       interface{}
 	shape         tf.Shape
 	trainable     bool
-	binBoundaries interface{}
-	numBins       interface{}
-	epsilon       float64
 }
 
-func NewDiscretization(options ...DiscretizationOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		d := &Discretization{
-			binBoundaries: nil,
-			numBins:       nil,
-			epsilon:       0.01,
-			trainable:     true,
-			inputs:        inputs,
-			name:          UniqueName("discretization"),
-		}
-		for _, option := range options {
-			option(d)
-		}
-		return d
+func Discretization() *LDiscretization {
+	return &LDiscretization{
+		binBoundaries: nil,
+		dtype:         Float32,
+		epsilon:       0.01,
+		name:          UniqueName("discretization"),
+		numBins:       nil,
+		trainable:     true,
 	}
 }
 
-type DiscretizationOption func(*Discretization)
-
-func DiscretizationWithName(name string) func(d *Discretization) {
-	return func(d *Discretization) {
-		d.name = name
-	}
+func (l *LDiscretization) SetBinBoundaries(binBoundaries interface{}) *LDiscretization {
+	l.binBoundaries = binBoundaries
+	return l
 }
 
-func DiscretizationWithDtype(dtype DataType) func(d *Discretization) {
-	return func(d *Discretization) {
-		d.dtype = dtype
-	}
+func (l *LDiscretization) SetDtype(dtype DataType) *LDiscretization {
+	l.dtype = dtype
+	return l
 }
 
-func DiscretizationWithTrainable(trainable bool) func(d *Discretization) {
-	return func(d *Discretization) {
-		d.trainable = trainable
-	}
+func (l *LDiscretization) SetEpsilon(epsilon float64) *LDiscretization {
+	l.epsilon = epsilon
+	return l
 }
 
-func DiscretizationWithBinBoundaries(binBoundaries interface{}) func(d *Discretization) {
-	return func(d *Discretization) {
-		d.binBoundaries = binBoundaries
-	}
+func (l *LDiscretization) SetName(name string) *LDiscretization {
+	l.name = name
+	return l
 }
 
-func DiscretizationWithNumBins(numBins interface{}) func(d *Discretization) {
-	return func(d *Discretization) {
-		d.numBins = numBins
-	}
+func (l *LDiscretization) SetNumBins(numBins interface{}) *LDiscretization {
+	l.numBins = numBins
+	return l
 }
 
-func DiscretizationWithEpsilon(epsilon float64) func(d *Discretization) {
-	return func(d *Discretization) {
-		d.epsilon = epsilon
-	}
+func (l *LDiscretization) SetShape(shape tf.Shape) *LDiscretization {
+	l.shape = shape
+	return l
 }
 
-func (d *Discretization) GetShape() tf.Shape {
-	return d.shape
+func (l *LDiscretization) SetTrainable(trainable bool) *LDiscretization {
+	l.trainable = trainable
+	return l
 }
 
-func (d *Discretization) GetDtype() DataType {
-	return d.dtype
+func (l *LDiscretization) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (d *Discretization) SetInput(inputs []Layer) {
-	d.inputs = inputs
-	d.dtype = inputs[0].GetDtype()
+func (l *LDiscretization) GetDtype() DataType {
+	return l.dtype
 }
 
-func (d *Discretization) GetInputs() []Layer {
-	return d.inputs
+func (l *LDiscretization) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (d *Discretization) GetName() string {
-	return d.name
+func (l *LDiscretization) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigDiscretization struct {
+func (l *LDiscretization) GetName() string {
+	return l.name
+}
+
+type jsonConfigLDiscretization struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (d *Discretization) GetKerasLayerConfig() interface{} {
+func (l *LDiscretization) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range d.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -108,21 +99,21 @@ func (d *Discretization) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigDiscretization{
+	return jsonConfigLDiscretization{
 		ClassName: "Discretization",
-		Name:      d.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"bin_boundaries": d.binBoundaries,
-			"dtype":          d.dtype.String(),
-			"epsilon":        d.epsilon,
-			"name":           d.name,
-			"num_bins":       d.numBins,
-			"trainable":      d.trainable,
+			"bin_boundaries": l.binBoundaries,
+			"dtype":          l.dtype.String(),
+			"epsilon":        l.epsilon,
+			"name":           l.name,
+			"num_bins":       l.numBins,
+			"trainable":      l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (d *Discretization) GetCustomLayerDefinition() string {
+func (l *LDiscretization) GetCustomLayerDefinition() string {
 	return ``
 }

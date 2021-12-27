@@ -2,83 +2,77 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Permute struct {
-	name      string
+type LPermute struct {
+	dims      []interface{}
 	dtype     DataType
 	inputs    []Layer
+	name      string
 	shape     tf.Shape
 	trainable bool
-	dims      []interface{}
 }
 
-func NewPermute(dims []interface{}, options ...PermuteOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		p := &Permute{
-			dims:      dims,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("permute"),
-		}
-		for _, option := range options {
-			option(p)
-		}
-		return p
+func Permute(dims []interface{}) *LPermute {
+	return &LPermute{
+		dims:      dims,
+		dtype:     Float32,
+		name:      UniqueName("permute"),
+		trainable: true,
 	}
 }
 
-type PermuteOption func(*Permute)
-
-func PermuteWithName(name string) func(p *Permute) {
-	return func(p *Permute) {
-		p.name = name
-	}
+func (l *LPermute) SetDtype(dtype DataType) *LPermute {
+	l.dtype = dtype
+	return l
 }
 
-func PermuteWithDtype(dtype DataType) func(p *Permute) {
-	return func(p *Permute) {
-		p.dtype = dtype
-	}
+func (l *LPermute) SetName(name string) *LPermute {
+	l.name = name
+	return l
 }
 
-func PermuteWithTrainable(trainable bool) func(p *Permute) {
-	return func(p *Permute) {
-		p.trainable = trainable
-	}
+func (l *LPermute) SetShape(shape tf.Shape) *LPermute {
+	l.shape = shape
+	return l
 }
 
-func (p *Permute) GetShape() tf.Shape {
-	return p.shape
+func (l *LPermute) SetTrainable(trainable bool) *LPermute {
+	l.trainable = trainable
+	return l
 }
 
-func (p *Permute) GetDtype() DataType {
-	return p.dtype
+func (l *LPermute) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (p *Permute) SetInput(inputs []Layer) {
-	p.inputs = inputs
-	p.dtype = inputs[0].GetDtype()
+func (l *LPermute) GetDtype() DataType {
+	return l.dtype
 }
 
-func (p *Permute) GetInputs() []Layer {
-	return p.inputs
+func (l *LPermute) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (p *Permute) GetName() string {
-	return p.name
+func (l *LPermute) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigPermute struct {
+func (l *LPermute) GetName() string {
+	return l.name
+}
+
+type jsonConfigLPermute struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (p *Permute) GetKerasLayerConfig() interface{} {
+func (l *LPermute) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range p.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -86,19 +80,19 @@ func (p *Permute) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigPermute{
+	return jsonConfigLPermute{
 		ClassName: "Permute",
-		Name:      p.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dims":      p.dims,
-			"dtype":     p.dtype.String(),
-			"name":      p.name,
-			"trainable": p.trainable,
+			"dims":      l.dims,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (p *Permute) GetCustomLayerDefinition() string {
+func (l *LPermute) GetCustomLayerDefinition() string {
 	return ``
 }

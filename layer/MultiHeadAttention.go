@@ -1,191 +1,188 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type MultiHeadAttention struct {
-	name                string
+type LMultiHeadAttention struct {
+	activityRegularizer regularizer.Regularizer
+	attentionAxes       interface{}
+	biasConstraint      constraint.Constraint
+	biasInitializer     initializer.Initializer
+	biasRegularizer     regularizer.Regularizer
+	dropout             float64
 	dtype               DataType
 	inputs              []Layer
+	kernelConstraint    constraint.Constraint
+	kernelInitializer   initializer.Initializer
+	kernelRegularizer   regularizer.Regularizer
+	keyDim              float64
+	keyShape            interface{}
+	name                string
+	numHeads            float64
+	outputShape         interface{}
+	queryShape          interface{}
 	shape               tf.Shape
 	trainable           bool
-	numHeads            float64
-	keyDim              float64
-	valueDim            interface{}
-	dropout             float64
 	useBias             bool
-	outputShape         interface{}
-	attentionAxes       interface{}
-	kernelInitializer   initializer.Initializer
-	biasInitializer     initializer.Initializer
-	kernelRegularizer   regularizer.Regularizer
-	biasRegularizer     regularizer.Regularizer
-	activityRegularizer regularizer.Regularizer
-	kernelConstraint    constraint.Constraint
-	biasConstraint      constraint.Constraint
-	keyShape            interface{}
-	queryShape          interface{}
+	valueDim            interface{}
 	valueShape          interface{}
 }
 
-func NewMultiHeadAttention(numHeads float64, keyDim float64, options ...MultiHeadAttentionOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		m := &MultiHeadAttention{
-			numHeads:            numHeads,
-			keyDim:              keyDim,
-			valueDim:            nil,
-			dropout:             0,
-			useBias:             true,
-			outputShape:         nil,
-			attentionAxes:       nil,
-			kernelInitializer:   &initializer.GlorotUniform{},
-			biasInitializer:     &initializer.Zeros{},
-			kernelRegularizer:   &regularizer.NilRegularizer{},
-			biasRegularizer:     &regularizer.NilRegularizer{},
-			activityRegularizer: &regularizer.NilRegularizer{},
-			kernelConstraint:    &constraint.NilConstraint{},
-			biasConstraint:      &constraint.NilConstraint{},
-			queryShape:          nil,
-			valueShape:          nil,
-			keyShape:            nil,
-			trainable:           true,
-			inputs:              inputs,
-			name:                UniqueName("multiheadattention"),
-		}
-		for _, option := range options {
-			option(m)
-		}
-		return m
+func MultiHeadAttention(keyDim float64, numHeads float64) *LMultiHeadAttention {
+	return &LMultiHeadAttention{
+		activityRegularizer: &regularizer.NilRegularizer{},
+		attentionAxes:       nil,
+		biasConstraint:      &constraint.NilConstraint{},
+		biasInitializer:     initializer.Zeros(),
+		biasRegularizer:     &regularizer.NilRegularizer{},
+		dropout:             0,
+		dtype:               Float32,
+		kernelConstraint:    &constraint.NilConstraint{},
+		kernelInitializer:   initializer.GlorotUniform(),
+		kernelRegularizer:   &regularizer.NilRegularizer{},
+		keyDim:              keyDim,
+		keyShape:            nil,
+		name:                UniqueName("multi_head_attention"),
+		numHeads:            numHeads,
+		outputShape:         nil,
+		queryShape:          nil,
+		trainable:           true,
+		useBias:             true,
+		valueDim:            nil,
+		valueShape:          nil,
 	}
 }
 
-type MultiHeadAttentionOption func(*MultiHeadAttention)
-
-func MultiHeadAttentionWithName(name string) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.name = name
-	}
+func (l *LMultiHeadAttention) SetActivityRegularizer(activityRegularizer regularizer.Regularizer) *LMultiHeadAttention {
+	l.activityRegularizer = activityRegularizer
+	return l
 }
 
-func MultiHeadAttentionWithDtype(dtype DataType) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.dtype = dtype
-	}
+func (l *LMultiHeadAttention) SetAttentionAxes(attentionAxes interface{}) *LMultiHeadAttention {
+	l.attentionAxes = attentionAxes
+	return l
 }
 
-func MultiHeadAttentionWithTrainable(trainable bool) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.trainable = trainable
-	}
+func (l *LMultiHeadAttention) SetBiasConstraint(biasConstraint constraint.Constraint) *LMultiHeadAttention {
+	l.biasConstraint = biasConstraint
+	return l
 }
 
-func MultiHeadAttentionWithValueDim(valueDim interface{}) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.valueDim = valueDim
-	}
+func (l *LMultiHeadAttention) SetBiasInitializer(biasInitializer initializer.Initializer) *LMultiHeadAttention {
+	l.biasInitializer = biasInitializer
+	return l
 }
 
-func MultiHeadAttentionWithDropout(dropout float64) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.dropout = dropout
-	}
+func (l *LMultiHeadAttention) SetBiasRegularizer(biasRegularizer regularizer.Regularizer) *LMultiHeadAttention {
+	l.biasRegularizer = biasRegularizer
+	return l
 }
 
-func MultiHeadAttentionWithUseBias(useBias bool) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.useBias = useBias
-	}
+func (l *LMultiHeadAttention) SetDropout(dropout float64) *LMultiHeadAttention {
+	l.dropout = dropout
+	return l
 }
 
-func MultiHeadAttentionWithOutputShape(outputShape interface{}) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.outputShape = outputShape
-	}
+func (l *LMultiHeadAttention) SetDtype(dtype DataType) *LMultiHeadAttention {
+	l.dtype = dtype
+	return l
 }
 
-func MultiHeadAttentionWithAttentionAxes(attentionAxes interface{}) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.attentionAxes = attentionAxes
-	}
+func (l *LMultiHeadAttention) SetKernelConstraint(kernelConstraint constraint.Constraint) *LMultiHeadAttention {
+	l.kernelConstraint = kernelConstraint
+	return l
 }
 
-func MultiHeadAttentionWithKernelInitializer(kernelInitializer initializer.Initializer) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.kernelInitializer = kernelInitializer
-	}
+func (l *LMultiHeadAttention) SetKernelInitializer(kernelInitializer initializer.Initializer) *LMultiHeadAttention {
+	l.kernelInitializer = kernelInitializer
+	return l
 }
 
-func MultiHeadAttentionWithBiasInitializer(biasInitializer initializer.Initializer) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.biasInitializer = biasInitializer
-	}
+func (l *LMultiHeadAttention) SetKernelRegularizer(kernelRegularizer regularizer.Regularizer) *LMultiHeadAttention {
+	l.kernelRegularizer = kernelRegularizer
+	return l
 }
 
-func MultiHeadAttentionWithKernelRegularizer(kernelRegularizer regularizer.Regularizer) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.kernelRegularizer = kernelRegularizer
-	}
+func (l *LMultiHeadAttention) SetKeyShape(keyShape interface{}) *LMultiHeadAttention {
+	l.keyShape = keyShape
+	return l
 }
 
-func MultiHeadAttentionWithBiasRegularizer(biasRegularizer regularizer.Regularizer) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.biasRegularizer = biasRegularizer
-	}
+func (l *LMultiHeadAttention) SetName(name string) *LMultiHeadAttention {
+	l.name = name
+	return l
 }
 
-func MultiHeadAttentionWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.activityRegularizer = activityRegularizer
-	}
+func (l *LMultiHeadAttention) SetOutputShape(outputShape interface{}) *LMultiHeadAttention {
+	l.outputShape = outputShape
+	return l
 }
 
-func MultiHeadAttentionWithKernelConstraint(kernelConstraint constraint.Constraint) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.kernelConstraint = kernelConstraint
-	}
+func (l *LMultiHeadAttention) SetQueryShape(queryShape interface{}) *LMultiHeadAttention {
+	l.queryShape = queryShape
+	return l
 }
 
-func MultiHeadAttentionWithBiasConstraint(biasConstraint constraint.Constraint) func(m *MultiHeadAttention) {
-	return func(m *MultiHeadAttention) {
-		m.biasConstraint = biasConstraint
-	}
+func (l *LMultiHeadAttention) SetShape(shape tf.Shape) *LMultiHeadAttention {
+	l.shape = shape
+	return l
 }
 
-func (m *MultiHeadAttention) GetShape() tf.Shape {
-	return m.shape
+func (l *LMultiHeadAttention) SetTrainable(trainable bool) *LMultiHeadAttention {
+	l.trainable = trainable
+	return l
 }
 
-func (m *MultiHeadAttention) GetDtype() DataType {
-	return m.dtype
+func (l *LMultiHeadAttention) SetUseBias(useBias bool) *LMultiHeadAttention {
+	l.useBias = useBias
+	return l
 }
 
-func (m *MultiHeadAttention) SetInput(inputs []Layer) {
-	m.inputs = inputs
-	m.dtype = inputs[0].GetDtype()
+func (l *LMultiHeadAttention) SetValueDim(valueDim interface{}) *LMultiHeadAttention {
+	l.valueDim = valueDim
+	return l
 }
 
-func (m *MultiHeadAttention) GetInputs() []Layer {
-	return m.inputs
+func (l *LMultiHeadAttention) SetValueShape(valueShape interface{}) *LMultiHeadAttention {
+	l.valueShape = valueShape
+	return l
 }
 
-func (m *MultiHeadAttention) GetName() string {
-	return m.name
+func (l *LMultiHeadAttention) GetShape() tf.Shape {
+	return l.shape
 }
 
-type jsonConfigMultiHeadAttention struct {
+func (l *LMultiHeadAttention) GetDtype() DataType {
+	return l.dtype
+}
+
+func (l *LMultiHeadAttention) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
+}
+
+func (l *LMultiHeadAttention) GetInputs() []Layer {
+	return l.inputs
+}
+
+func (l *LMultiHeadAttention) GetName() string {
+	return l.name
+}
+
+type jsonConfigLMultiHeadAttention struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (m *MultiHeadAttention) GetKerasLayerConfig() interface{} {
+func (l *LMultiHeadAttention) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range m.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -193,35 +190,35 @@ func (m *MultiHeadAttention) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigMultiHeadAttention{
+	return jsonConfigLMultiHeadAttention{
 		ClassName: "MultiHeadAttention",
-		Name:      m.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"activity_regularizer": m.activityRegularizer.GetKerasLayerConfig(),
-			"attention_axes":       m.attentionAxes,
-			"bias_constraint":      m.biasConstraint.GetKerasLayerConfig(),
-			"bias_initializer":     m.biasInitializer.GetKerasLayerConfig(),
-			"bias_regularizer":     m.biasRegularizer.GetKerasLayerConfig(),
-			"dropout":              m.dropout,
-			"dtype":                m.dtype.String(),
-			"kernel_constraint":    m.kernelConstraint.GetKerasLayerConfig(),
-			"kernel_initializer":   m.kernelInitializer.GetKerasLayerConfig(),
-			"kernel_regularizer":   m.kernelRegularizer.GetKerasLayerConfig(),
-			"key_dim":              m.keyDim,
-			"key_shape":            m.keyShape,
-			"name":                 m.name,
-			"num_heads":            m.numHeads,
-			"output_shape":         m.outputShape,
-			"query_shape":          m.queryShape,
-			"trainable":            m.trainable,
-			"use_bias":             m.useBias,
-			"value_dim":            m.valueDim,
-			"value_shape":          m.valueShape,
+			"activity_regularizer": l.activityRegularizer.GetKerasLayerConfig(),
+			"attention_axes":       l.attentionAxes,
+			"bias_constraint":      l.biasConstraint.GetKerasLayerConfig(),
+			"bias_initializer":     l.biasInitializer.GetKerasLayerConfig(),
+			"bias_regularizer":     l.biasRegularizer.GetKerasLayerConfig(),
+			"dropout":              l.dropout,
+			"dtype":                l.dtype.String(),
+			"kernel_constraint":    l.kernelConstraint.GetKerasLayerConfig(),
+			"kernel_initializer":   l.kernelInitializer.GetKerasLayerConfig(),
+			"kernel_regularizer":   l.kernelRegularizer.GetKerasLayerConfig(),
+			"key_dim":              l.keyDim,
+			"key_shape":            l.keyShape,
+			"name":                 l.name,
+			"num_heads":            l.numHeads,
+			"output_shape":         l.outputShape,
+			"query_shape":          l.queryShape,
+			"trainable":            l.trainable,
+			"use_bias":             l.useBias,
+			"value_dim":            l.valueDim,
+			"value_shape":          l.valueShape,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (m *MultiHeadAttention) GetCustomLayerDefinition() string {
+func (l *LMultiHeadAttention) GetCustomLayerDefinition() string {
 	return ``
 }

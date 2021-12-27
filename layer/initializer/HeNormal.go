@@ -1,35 +1,43 @@
 package initializer
 
-type HeNormal struct {
+type IHeNormal struct {
+	name string
 	seed interface{}
 }
 
-func NewHeNormal() *HeNormal {
-	return &HeNormal{
+func HeNormal() *IHeNormal {
+	return &IHeNormal{
 		seed: nil,
 	}
 }
 
-func HeNormalWithSeed(seed interface{}) func(h *HeNormal) {
-	return func(h *HeNormal) {
-		h.seed = seed
-	}
+func (i *IHeNormal) SetName(name string) *IHeNormal {
+	i.name = name
+	return i
 }
 
-type jsonConfigHeNormal struct {
+func (i *IHeNormal) SetSeed(seed interface{}) *IHeNormal {
+	i.seed = seed
+	return i
+}
+
+type jsonConfigIHeNormal struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (h *HeNormal) GetKerasLayerConfig() interface{} {
-	if h == nil {
-		return nil
-	}
-	return jsonConfigHeNormal{
+func (i *IHeNormal) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigIHeNormal{
 		ClassName: "HeNormal",
+		Name:      i.name,
 		Config: map[string]interface{}{
-			"seed": h.seed,
+			"seed": i.seed,
 		},
 	}
+}
+
+func (i *IHeNormal) GetCustomLayerDefinition() string {
+	return ``
 }

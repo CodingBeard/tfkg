@@ -1,285 +1,265 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type ConvLSTM2D struct {
-	name                 string
-	dtype                DataType
-	inputs               []Layer
-	shape                tf.Shape
-	trainable            bool
-	filters              float64
-	kernelSize           float64
-	strides              []interface{}
-	padding              string
+type LConvLSTM2D struct {
+	activation           string
+	activityRegularizer  regularizer.Regularizer
+	biasConstraint       constraint.Constraint
+	biasInitializer      initializer.Initializer
+	biasRegularizer      regularizer.Regularizer
 	dataFormat           interface{}
 	dilationRate         []interface{}
-	activation           string
-	recurrentActivation  string
-	useBias              bool
-	kernelInitializer    initializer.Initializer
-	recurrentInitializer initializer.Initializer
-	biasInitializer      initializer.Initializer
-	unitForgetBias       bool
-	kernelRegularizer    regularizer.Regularizer
-	recurrentRegularizer regularizer.Regularizer
-	biasRegularizer      regularizer.Regularizer
-	activityRegularizer  regularizer.Regularizer
+	dropout              float64
+	dtype                DataType
+	filters              float64
+	goBackwards          bool
+	inputs               []Layer
 	kernelConstraint     constraint.Constraint
+	kernelInitializer    initializer.Initializer
+	kernelRegularizer    regularizer.Regularizer
+	kernelSize           float64
+	name                 string
+	padding              string
+	recurrentActivation  string
 	recurrentConstraint  constraint.Constraint
-	biasConstraint       constraint.Constraint
+	recurrentDropout     float64
+	recurrentInitializer initializer.Initializer
+	recurrentRegularizer regularizer.Regularizer
 	returnSequences      bool
 	returnState          bool
-	goBackwards          bool
+	shape                tf.Shape
 	stateful             bool
-	dropout              float64
-	recurrentDropout     float64
+	strides              []interface{}
 	timeMajor            bool
+	trainable            bool
+	unitForgetBias       bool
 	unroll               bool
+	useBias              bool
 }
 
-func NewConvLSTM2D(filters float64, kernelSize float64, options ...ConvLSTM2DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		c := &ConvLSTM2D{
-			filters:              filters,
-			kernelSize:           kernelSize,
-			strides:              []interface{}{1, 1},
-			padding:              "valid",
-			dataFormat:           nil,
-			dilationRate:         []interface{}{1, 1},
-			activation:           "tanh",
-			recurrentActivation:  "hard_sigmoid",
-			useBias:              true,
-			kernelInitializer:    &initializer.GlorotUniform{},
-			recurrentInitializer: &initializer.Orthogonal{},
-			biasInitializer:      &initializer.Zeros{},
-			unitForgetBias:       true,
-			kernelRegularizer:    &regularizer.NilRegularizer{},
-			recurrentRegularizer: &regularizer.NilRegularizer{},
-			biasRegularizer:      &regularizer.NilRegularizer{},
-			activityRegularizer:  &regularizer.NilRegularizer{},
-			kernelConstraint:     &constraint.NilConstraint{},
-			recurrentConstraint:  &constraint.NilConstraint{},
-			biasConstraint:       &constraint.NilConstraint{},
-			returnSequences:      false,
-			returnState:          false,
-			goBackwards:          false,
-			stateful:             false,
-			dropout:              0,
-			recurrentDropout:     0,
-			timeMajor:            false,
-			unroll:               false,
-			trainable:            true,
-			inputs:               inputs,
-			name:                 UniqueName("convlstm2d"),
-		}
-		for _, option := range options {
-			option(c)
-		}
-		return c
+func ConvLSTM2D(filters float64, kernelSize float64) *LConvLSTM2D {
+	return &LConvLSTM2D{
+		activation:           "tanh",
+		activityRegularizer:  &regularizer.NilRegularizer{},
+		biasConstraint:       &constraint.NilConstraint{},
+		biasInitializer:      initializer.Zeros(),
+		biasRegularizer:      &regularizer.NilRegularizer{},
+		dataFormat:           nil,
+		dilationRate:         []interface{}{1, 1},
+		dropout:              0,
+		dtype:                Float32,
+		filters:              filters,
+		goBackwards:          false,
+		kernelConstraint:     &constraint.NilConstraint{},
+		kernelInitializer:    initializer.GlorotUniform(),
+		kernelRegularizer:    &regularizer.NilRegularizer{},
+		kernelSize:           kernelSize,
+		name:                 UniqueName("conv_lst_m2d"),
+		padding:              "valid",
+		recurrentActivation:  "hard_sigmoid",
+		recurrentConstraint:  &constraint.NilConstraint{},
+		recurrentDropout:     0,
+		recurrentInitializer: initializer.Orthogonal(),
+		recurrentRegularizer: &regularizer.NilRegularizer{},
+		returnSequences:      false,
+		returnState:          false,
+		stateful:             false,
+		strides:              []interface{}{1, 1},
+		timeMajor:            false,
+		trainable:            true,
+		unitForgetBias:       true,
+		unroll:               false,
+		useBias:              true,
 	}
 }
 
-type ConvLSTM2DOption func(*ConvLSTM2D)
-
-func ConvLSTM2DWithName(name string) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.name = name
-	}
+func (l *LConvLSTM2D) SetActivation(activation string) *LConvLSTM2D {
+	l.activation = activation
+	return l
 }
 
-func ConvLSTM2DWithDtype(dtype DataType) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.dtype = dtype
-	}
+func (l *LConvLSTM2D) SetActivityRegularizer(activityRegularizer regularizer.Regularizer) *LConvLSTM2D {
+	l.activityRegularizer = activityRegularizer
+	return l
 }
 
-func ConvLSTM2DWithTrainable(trainable bool) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.trainable = trainable
-	}
+func (l *LConvLSTM2D) SetBiasConstraint(biasConstraint constraint.Constraint) *LConvLSTM2D {
+	l.biasConstraint = biasConstraint
+	return l
 }
 
-func ConvLSTM2DWithStrides(strides []interface{}) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.strides = strides
-	}
+func (l *LConvLSTM2D) SetBiasInitializer(biasInitializer initializer.Initializer) *LConvLSTM2D {
+	l.biasInitializer = biasInitializer
+	return l
 }
 
-func ConvLSTM2DWithPadding(padding string) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.padding = padding
-	}
+func (l *LConvLSTM2D) SetBiasRegularizer(biasRegularizer regularizer.Regularizer) *LConvLSTM2D {
+	l.biasRegularizer = biasRegularizer
+	return l
 }
 
-func ConvLSTM2DWithDataFormat(dataFormat interface{}) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.dataFormat = dataFormat
-	}
+func (l *LConvLSTM2D) SetDataFormat(dataFormat interface{}) *LConvLSTM2D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func ConvLSTM2DWithDilationRate(dilationRate []interface{}) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.dilationRate = dilationRate
-	}
+func (l *LConvLSTM2D) SetDilationRate(dilationRate []interface{}) *LConvLSTM2D {
+	l.dilationRate = dilationRate
+	return l
 }
 
-func ConvLSTM2DWithActivation(activation string) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.activation = activation
-	}
+func (l *LConvLSTM2D) SetDropout(dropout float64) *LConvLSTM2D {
+	l.dropout = dropout
+	return l
 }
 
-func ConvLSTM2DWithRecurrentActivation(recurrentActivation string) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.recurrentActivation = recurrentActivation
-	}
+func (l *LConvLSTM2D) SetDtype(dtype DataType) *LConvLSTM2D {
+	l.dtype = dtype
+	return l
 }
 
-func ConvLSTM2DWithUseBias(useBias bool) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.useBias = useBias
-	}
+func (l *LConvLSTM2D) SetGoBackwards(goBackwards bool) *LConvLSTM2D {
+	l.goBackwards = goBackwards
+	return l
 }
 
-func ConvLSTM2DWithKernelInitializer(kernelInitializer initializer.Initializer) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.kernelInitializer = kernelInitializer
-	}
+func (l *LConvLSTM2D) SetKernelConstraint(kernelConstraint constraint.Constraint) *LConvLSTM2D {
+	l.kernelConstraint = kernelConstraint
+	return l
 }
 
-func ConvLSTM2DWithRecurrentInitializer(recurrentInitializer initializer.Initializer) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.recurrentInitializer = recurrentInitializer
-	}
+func (l *LConvLSTM2D) SetKernelInitializer(kernelInitializer initializer.Initializer) *LConvLSTM2D {
+	l.kernelInitializer = kernelInitializer
+	return l
 }
 
-func ConvLSTM2DWithBiasInitializer(biasInitializer initializer.Initializer) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.biasInitializer = biasInitializer
-	}
+func (l *LConvLSTM2D) SetKernelRegularizer(kernelRegularizer regularizer.Regularizer) *LConvLSTM2D {
+	l.kernelRegularizer = kernelRegularizer
+	return l
 }
 
-func ConvLSTM2DWithUnitForgetBias(unitForgetBias bool) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.unitForgetBias = unitForgetBias
-	}
+func (l *LConvLSTM2D) SetName(name string) *LConvLSTM2D {
+	l.name = name
+	return l
 }
 
-func ConvLSTM2DWithKernelRegularizer(kernelRegularizer regularizer.Regularizer) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.kernelRegularizer = kernelRegularizer
-	}
+func (l *LConvLSTM2D) SetPadding(padding string) *LConvLSTM2D {
+	l.padding = padding
+	return l
 }
 
-func ConvLSTM2DWithRecurrentRegularizer(recurrentRegularizer regularizer.Regularizer) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.recurrentRegularizer = recurrentRegularizer
-	}
+func (l *LConvLSTM2D) SetRecurrentActivation(recurrentActivation string) *LConvLSTM2D {
+	l.recurrentActivation = recurrentActivation
+	return l
 }
 
-func ConvLSTM2DWithBiasRegularizer(biasRegularizer regularizer.Regularizer) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.biasRegularizer = biasRegularizer
-	}
+func (l *LConvLSTM2D) SetRecurrentConstraint(recurrentConstraint constraint.Constraint) *LConvLSTM2D {
+	l.recurrentConstraint = recurrentConstraint
+	return l
 }
 
-func ConvLSTM2DWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.activityRegularizer = activityRegularizer
-	}
+func (l *LConvLSTM2D) SetRecurrentDropout(recurrentDropout float64) *LConvLSTM2D {
+	l.recurrentDropout = recurrentDropout
+	return l
 }
 
-func ConvLSTM2DWithKernelConstraint(kernelConstraint constraint.Constraint) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.kernelConstraint = kernelConstraint
-	}
+func (l *LConvLSTM2D) SetRecurrentInitializer(recurrentInitializer initializer.Initializer) *LConvLSTM2D {
+	l.recurrentInitializer = recurrentInitializer
+	return l
 }
 
-func ConvLSTM2DWithRecurrentConstraint(recurrentConstraint constraint.Constraint) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.recurrentConstraint = recurrentConstraint
-	}
+func (l *LConvLSTM2D) SetRecurrentRegularizer(recurrentRegularizer regularizer.Regularizer) *LConvLSTM2D {
+	l.recurrentRegularizer = recurrentRegularizer
+	return l
 }
 
-func ConvLSTM2DWithBiasConstraint(biasConstraint constraint.Constraint) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.biasConstraint = biasConstraint
-	}
+func (l *LConvLSTM2D) SetReturnSequences(returnSequences bool) *LConvLSTM2D {
+	l.returnSequences = returnSequences
+	return l
 }
 
-func ConvLSTM2DWithReturnSequences(returnSequences bool) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.returnSequences = returnSequences
-	}
+func (l *LConvLSTM2D) SetReturnState(returnState bool) *LConvLSTM2D {
+	l.returnState = returnState
+	return l
 }
 
-func ConvLSTM2DWithReturnState(returnState bool) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.returnState = returnState
-	}
+func (l *LConvLSTM2D) SetShape(shape tf.Shape) *LConvLSTM2D {
+	l.shape = shape
+	return l
 }
 
-func ConvLSTM2DWithGoBackwards(goBackwards bool) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.goBackwards = goBackwards
-	}
+func (l *LConvLSTM2D) SetStateful(stateful bool) *LConvLSTM2D {
+	l.stateful = stateful
+	return l
 }
 
-func ConvLSTM2DWithStateful(stateful bool) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.stateful = stateful
-	}
+func (l *LConvLSTM2D) SetStrides(strides []interface{}) *LConvLSTM2D {
+	l.strides = strides
+	return l
 }
 
-func ConvLSTM2DWithDropout(dropout float64) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.dropout = dropout
-	}
+func (l *LConvLSTM2D) SetTimeMajor(timeMajor bool) *LConvLSTM2D {
+	l.timeMajor = timeMajor
+	return l
 }
 
-func ConvLSTM2DWithRecurrentDropout(recurrentDropout float64) func(c *ConvLSTM2D) {
-	return func(c *ConvLSTM2D) {
-		c.recurrentDropout = recurrentDropout
-	}
+func (l *LConvLSTM2D) SetTrainable(trainable bool) *LConvLSTM2D {
+	l.trainable = trainable
+	return l
 }
 
-func (c *ConvLSTM2D) GetShape() tf.Shape {
-	return c.shape
+func (l *LConvLSTM2D) SetUnitForgetBias(unitForgetBias bool) *LConvLSTM2D {
+	l.unitForgetBias = unitForgetBias
+	return l
 }
 
-func (c *ConvLSTM2D) GetDtype() DataType {
-	return c.dtype
+func (l *LConvLSTM2D) SetUnroll(unroll bool) *LConvLSTM2D {
+	l.unroll = unroll
+	return l
 }
 
-func (c *ConvLSTM2D) SetInput(inputs []Layer) {
-	c.inputs = inputs
-	c.dtype = inputs[0].GetDtype()
+func (l *LConvLSTM2D) SetUseBias(useBias bool) *LConvLSTM2D {
+	l.useBias = useBias
+	return l
 }
 
-func (c *ConvLSTM2D) GetInputs() []Layer {
-	return c.inputs
+func (l *LConvLSTM2D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (c *ConvLSTM2D) GetName() string {
-	return c.name
+func (l *LConvLSTM2D) GetDtype() DataType {
+	return l.dtype
 }
 
-type jsonConfigConvLSTM2D struct {
+func (l *LConvLSTM2D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
+}
+
+func (l *LConvLSTM2D) GetInputs() []Layer {
+	return l.inputs
+}
+
+func (l *LConvLSTM2D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLConvLSTM2D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (c *ConvLSTM2D) GetKerasLayerConfig() interface{} {
+func (l *LConvLSTM2D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range c.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -287,46 +267,46 @@ func (c *ConvLSTM2D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigConvLSTM2D{
+	return jsonConfigLConvLSTM2D{
 		ClassName: "ConvLSTM2D",
-		Name:      c.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"activation":            c.activation,
-			"activity_regularizer":  c.activityRegularizer.GetKerasLayerConfig(),
-			"bias_constraint":       c.biasConstraint.GetKerasLayerConfig(),
-			"bias_initializer":      c.biasInitializer.GetKerasLayerConfig(),
-			"bias_regularizer":      c.biasRegularizer.GetKerasLayerConfig(),
-			"data_format":           c.dataFormat,
-			"dilation_rate":         c.dilationRate,
-			"dropout":               c.dropout,
-			"dtype":                 c.dtype.String(),
-			"filters":               c.filters,
-			"go_backwards":          c.goBackwards,
-			"kernel_constraint":     c.kernelConstraint.GetKerasLayerConfig(),
-			"kernel_initializer":    c.kernelInitializer.GetKerasLayerConfig(),
-			"kernel_regularizer":    c.kernelRegularizer.GetKerasLayerConfig(),
-			"kernel_size":           c.kernelSize,
-			"name":                  c.name,
-			"padding":               c.padding,
-			"recurrent_activation":  c.recurrentActivation,
-			"recurrent_constraint":  c.recurrentConstraint.GetKerasLayerConfig(),
-			"recurrent_dropout":     c.recurrentDropout,
-			"recurrent_initializer": c.recurrentInitializer.GetKerasLayerConfig(),
-			"recurrent_regularizer": c.recurrentRegularizer.GetKerasLayerConfig(),
-			"return_sequences":      c.returnSequences,
-			"return_state":          c.returnState,
-			"stateful":              c.stateful,
-			"strides":               c.strides,
-			"time_major":            c.timeMajor,
-			"trainable":             c.trainable,
-			"unit_forget_bias":      c.unitForgetBias,
-			"unroll":                c.unroll,
-			"use_bias":              c.useBias,
+			"activation":            l.activation,
+			"activity_regularizer":  l.activityRegularizer.GetKerasLayerConfig(),
+			"bias_constraint":       l.biasConstraint.GetKerasLayerConfig(),
+			"bias_initializer":      l.biasInitializer.GetKerasLayerConfig(),
+			"bias_regularizer":      l.biasRegularizer.GetKerasLayerConfig(),
+			"data_format":           l.dataFormat,
+			"dilation_rate":         l.dilationRate,
+			"dropout":               l.dropout,
+			"dtype":                 l.dtype.String(),
+			"filters":               l.filters,
+			"go_backwards":          l.goBackwards,
+			"kernel_constraint":     l.kernelConstraint.GetKerasLayerConfig(),
+			"kernel_initializer":    l.kernelInitializer.GetKerasLayerConfig(),
+			"kernel_regularizer":    l.kernelRegularizer.GetKerasLayerConfig(),
+			"kernel_size":           l.kernelSize,
+			"name":                  l.name,
+			"padding":               l.padding,
+			"recurrent_activation":  l.recurrentActivation,
+			"recurrent_constraint":  l.recurrentConstraint.GetKerasLayerConfig(),
+			"recurrent_dropout":     l.recurrentDropout,
+			"recurrent_initializer": l.recurrentInitializer.GetKerasLayerConfig(),
+			"recurrent_regularizer": l.recurrentRegularizer.GetKerasLayerConfig(),
+			"return_sequences":      l.returnSequences,
+			"return_state":          l.returnState,
+			"stateful":              l.stateful,
+			"strides":               l.strides,
+			"time_major":            l.timeMajor,
+			"trainable":             l.trainable,
+			"unit_forget_bias":      l.unitForgetBias,
+			"unroll":                l.unroll,
+			"use_bias":              l.useBias,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (c *ConvLSTM2D) GetCustomLayerDefinition() string {
+func (l *LConvLSTM2D) GetCustomLayerDefinition() string {
 	return ``
 }

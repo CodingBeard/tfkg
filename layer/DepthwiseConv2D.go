@@ -1,201 +1,186 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type DepthwiseConv2D struct {
-	name                 string
-	dtype                DataType
-	inputs               []Layer
-	shape                tf.Shape
-	trainable            bool
-	kernelSize           float64
-	strides              []interface{}
-	padding              string
-	depthMultiplier      float64
-	dataFormat           interface{}
-	dilationRate         []interface{}
+type LDepthwiseConv2D struct {
 	activation           string
-	useBias              bool
-	depthwiseInitializer initializer.Initializer
-	biasInitializer      initializer.Initializer
-	depthwiseRegularizer regularizer.Regularizer
-	biasRegularizer      regularizer.Regularizer
 	activityRegularizer  regularizer.Regularizer
-	depthwiseConstraint  constraint.Constraint
 	biasConstraint       constraint.Constraint
+	biasInitializer      initializer.Initializer
+	biasRegularizer      regularizer.Regularizer
+	dataFormat           interface{}
+	depthMultiplier      float64
+	depthwiseConstraint  constraint.Constraint
+	depthwiseInitializer initializer.Initializer
+	depthwiseRegularizer regularizer.Regularizer
+	dilationRate         []interface{}
+	dtype                DataType
 	groups               float64
+	inputs               []Layer
+	kernelSize           float64
+	name                 string
+	padding              string
+	shape                tf.Shape
+	strides              []interface{}
+	trainable            bool
+	useBias              bool
 }
 
-func NewDepthwiseConv2D(kernelSize float64, options ...DepthwiseConv2DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		d := &DepthwiseConv2D{
-			kernelSize:           kernelSize,
-			strides:              []interface{}{1, 1},
-			padding:              "valid",
-			depthMultiplier:      1,
-			dataFormat:           nil,
-			dilationRate:         []interface{}{1, 1},
-			activation:           "linear",
-			useBias:              true,
-			depthwiseInitializer: &initializer.GlorotUniform{},
-			biasInitializer:      &initializer.Zeros{},
-			depthwiseRegularizer: &regularizer.NilRegularizer{},
-			biasRegularizer:      &regularizer.NilRegularizer{},
-			activityRegularizer:  &regularizer.NilRegularizer{},
-			depthwiseConstraint:  &constraint.NilConstraint{},
-			biasConstraint:       &constraint.NilConstraint{},
-			groups:               1,
-			trainable:            true,
-			inputs:               inputs,
-			name:                 UniqueName("depthwiseconv2d"),
-		}
-		for _, option := range options {
-			option(d)
-		}
-		return d
+func DepthwiseConv2D(kernelSize float64) *LDepthwiseConv2D {
+	return &LDepthwiseConv2D{
+		activation:           "linear",
+		activityRegularizer:  &regularizer.NilRegularizer{},
+		biasConstraint:       &constraint.NilConstraint{},
+		biasInitializer:      initializer.Zeros(),
+		biasRegularizer:      &regularizer.NilRegularizer{},
+		dataFormat:           nil,
+		depthMultiplier:      1,
+		depthwiseConstraint:  &constraint.NilConstraint{},
+		depthwiseInitializer: initializer.GlorotUniform(),
+		depthwiseRegularizer: &regularizer.NilRegularizer{},
+		dilationRate:         []interface{}{1, 1},
+		dtype:                Float32,
+		groups:               1,
+		kernelSize:           kernelSize,
+		name:                 UniqueName("depthwise_conv2d"),
+		padding:              "valid",
+		strides:              []interface{}{1, 1},
+		trainable:            true,
+		useBias:              true,
 	}
 }
 
-type DepthwiseConv2DOption func(*DepthwiseConv2D)
-
-func DepthwiseConv2DWithName(name string) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.name = name
-	}
+func (l *LDepthwiseConv2D) SetActivation(activation string) *LDepthwiseConv2D {
+	l.activation = activation
+	return l
 }
 
-func DepthwiseConv2DWithDtype(dtype DataType) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.dtype = dtype
-	}
+func (l *LDepthwiseConv2D) SetActivityRegularizer(activityRegularizer regularizer.Regularizer) *LDepthwiseConv2D {
+	l.activityRegularizer = activityRegularizer
+	return l
 }
 
-func DepthwiseConv2DWithTrainable(trainable bool) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.trainable = trainable
-	}
+func (l *LDepthwiseConv2D) SetBiasConstraint(biasConstraint constraint.Constraint) *LDepthwiseConv2D {
+	l.biasConstraint = biasConstraint
+	return l
 }
 
-func DepthwiseConv2DWithStrides(strides []interface{}) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.strides = strides
-	}
+func (l *LDepthwiseConv2D) SetBiasInitializer(biasInitializer initializer.Initializer) *LDepthwiseConv2D {
+	l.biasInitializer = biasInitializer
+	return l
 }
 
-func DepthwiseConv2DWithPadding(padding string) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.padding = padding
-	}
+func (l *LDepthwiseConv2D) SetBiasRegularizer(biasRegularizer regularizer.Regularizer) *LDepthwiseConv2D {
+	l.biasRegularizer = biasRegularizer
+	return l
 }
 
-func DepthwiseConv2DWithDepthMultiplier(depthMultiplier float64) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.depthMultiplier = depthMultiplier
-	}
+func (l *LDepthwiseConv2D) SetDataFormat(dataFormat interface{}) *LDepthwiseConv2D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func DepthwiseConv2DWithDataFormat(dataFormat interface{}) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.dataFormat = dataFormat
-	}
+func (l *LDepthwiseConv2D) SetDepthMultiplier(depthMultiplier float64) *LDepthwiseConv2D {
+	l.depthMultiplier = depthMultiplier
+	return l
 }
 
-func DepthwiseConv2DWithDilationRate(dilationRate []interface{}) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.dilationRate = dilationRate
-	}
+func (l *LDepthwiseConv2D) SetDepthwiseConstraint(depthwiseConstraint constraint.Constraint) *LDepthwiseConv2D {
+	l.depthwiseConstraint = depthwiseConstraint
+	return l
 }
 
-func DepthwiseConv2DWithActivation(activation string) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.activation = activation
-	}
+func (l *LDepthwiseConv2D) SetDepthwiseInitializer(depthwiseInitializer initializer.Initializer) *LDepthwiseConv2D {
+	l.depthwiseInitializer = depthwiseInitializer
+	return l
 }
 
-func DepthwiseConv2DWithUseBias(useBias bool) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.useBias = useBias
-	}
+func (l *LDepthwiseConv2D) SetDepthwiseRegularizer(depthwiseRegularizer regularizer.Regularizer) *LDepthwiseConv2D {
+	l.depthwiseRegularizer = depthwiseRegularizer
+	return l
 }
 
-func DepthwiseConv2DWithDepthwiseInitializer(depthwiseInitializer initializer.Initializer) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.depthwiseInitializer = depthwiseInitializer
-	}
+func (l *LDepthwiseConv2D) SetDilationRate(dilationRate []interface{}) *LDepthwiseConv2D {
+	l.dilationRate = dilationRate
+	return l
 }
 
-func DepthwiseConv2DWithBiasInitializer(biasInitializer initializer.Initializer) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.biasInitializer = biasInitializer
-	}
+func (l *LDepthwiseConv2D) SetDtype(dtype DataType) *LDepthwiseConv2D {
+	l.dtype = dtype
+	return l
 }
 
-func DepthwiseConv2DWithDepthwiseRegularizer(depthwiseRegularizer regularizer.Regularizer) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.depthwiseRegularizer = depthwiseRegularizer
-	}
+func (l *LDepthwiseConv2D) SetGroups(groups float64) *LDepthwiseConv2D {
+	l.groups = groups
+	return l
 }
 
-func DepthwiseConv2DWithBiasRegularizer(biasRegularizer regularizer.Regularizer) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.biasRegularizer = biasRegularizer
-	}
+func (l *LDepthwiseConv2D) SetName(name string) *LDepthwiseConv2D {
+	l.name = name
+	return l
 }
 
-func DepthwiseConv2DWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.activityRegularizer = activityRegularizer
-	}
+func (l *LDepthwiseConv2D) SetPadding(padding string) *LDepthwiseConv2D {
+	l.padding = padding
+	return l
 }
 
-func DepthwiseConv2DWithDepthwiseConstraint(depthwiseConstraint constraint.Constraint) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.depthwiseConstraint = depthwiseConstraint
-	}
+func (l *LDepthwiseConv2D) SetShape(shape tf.Shape) *LDepthwiseConv2D {
+	l.shape = shape
+	return l
 }
 
-func DepthwiseConv2DWithBiasConstraint(biasConstraint constraint.Constraint) func(d *DepthwiseConv2D) {
-	return func(d *DepthwiseConv2D) {
-		d.biasConstraint = biasConstraint
-	}
+func (l *LDepthwiseConv2D) SetStrides(strides []interface{}) *LDepthwiseConv2D {
+	l.strides = strides
+	return l
 }
 
-func (d *DepthwiseConv2D) GetShape() tf.Shape {
-	return d.shape
+func (l *LDepthwiseConv2D) SetTrainable(trainable bool) *LDepthwiseConv2D {
+	l.trainable = trainable
+	return l
 }
 
-func (d *DepthwiseConv2D) GetDtype() DataType {
-	return d.dtype
+func (l *LDepthwiseConv2D) SetUseBias(useBias bool) *LDepthwiseConv2D {
+	l.useBias = useBias
+	return l
 }
 
-func (d *DepthwiseConv2D) SetInput(inputs []Layer) {
-	d.inputs = inputs
-	d.dtype = inputs[0].GetDtype()
+func (l *LDepthwiseConv2D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (d *DepthwiseConv2D) GetInputs() []Layer {
-	return d.inputs
+func (l *LDepthwiseConv2D) GetDtype() DataType {
+	return l.dtype
 }
 
-func (d *DepthwiseConv2D) GetName() string {
-	return d.name
+func (l *LDepthwiseConv2D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-type jsonConfigDepthwiseConv2D struct {
+func (l *LDepthwiseConv2D) GetInputs() []Layer {
+	return l.inputs
+}
+
+func (l *LDepthwiseConv2D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLDepthwiseConv2D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (d *DepthwiseConv2D) GetKerasLayerConfig() interface{} {
+func (l *LDepthwiseConv2D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range d.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -203,34 +188,34 @@ func (d *DepthwiseConv2D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigDepthwiseConv2D{
+	return jsonConfigLDepthwiseConv2D{
 		ClassName: "DepthwiseConv2D",
-		Name:      d.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"activation":            d.activation,
-			"activity_regularizer":  d.activityRegularizer.GetKerasLayerConfig(),
-			"bias_constraint":       d.biasConstraint.GetKerasLayerConfig(),
-			"bias_initializer":      d.biasInitializer.GetKerasLayerConfig(),
-			"bias_regularizer":      d.biasRegularizer.GetKerasLayerConfig(),
-			"data_format":           d.dataFormat,
-			"depth_multiplier":      d.depthMultiplier,
-			"depthwise_constraint":  d.depthwiseConstraint.GetKerasLayerConfig(),
-			"depthwise_initializer": d.depthwiseInitializer.GetKerasLayerConfig(),
-			"depthwise_regularizer": d.depthwiseRegularizer.GetKerasLayerConfig(),
-			"dilation_rate":         d.dilationRate,
-			"dtype":                 d.dtype.String(),
-			"groups":                d.groups,
-			"kernel_size":           d.kernelSize,
-			"name":                  d.name,
-			"padding":               d.padding,
-			"strides":               d.strides,
-			"trainable":             d.trainable,
-			"use_bias":              d.useBias,
+			"activation":            l.activation,
+			"activity_regularizer":  l.activityRegularizer.GetKerasLayerConfig(),
+			"bias_constraint":       l.biasConstraint.GetKerasLayerConfig(),
+			"bias_initializer":      l.biasInitializer.GetKerasLayerConfig(),
+			"bias_regularizer":      l.biasRegularizer.GetKerasLayerConfig(),
+			"data_format":           l.dataFormat,
+			"depth_multiplier":      l.depthMultiplier,
+			"depthwise_constraint":  l.depthwiseConstraint.GetKerasLayerConfig(),
+			"depthwise_initializer": l.depthwiseInitializer.GetKerasLayerConfig(),
+			"depthwise_regularizer": l.depthwiseRegularizer.GetKerasLayerConfig(),
+			"dilation_rate":         l.dilationRate,
+			"dtype":                 l.dtype.String(),
+			"groups":                l.groups,
+			"kernel_size":           l.kernelSize,
+			"name":                  l.name,
+			"padding":               l.padding,
+			"strides":               l.strides,
+			"trainable":             l.trainable,
+			"use_bias":              l.useBias,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (d *DepthwiseConv2D) GetCustomLayerDefinition() string {
+func (l *LDepthwiseConv2D) GetCustomLayerDefinition() string {
 	return ``
 }

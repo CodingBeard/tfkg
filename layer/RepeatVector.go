@@ -2,83 +2,77 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type RepeatVector struct {
-	name      string
+type LRepeatVector struct {
 	dtype     DataType
 	inputs    []Layer
+	n         float64
+	name      string
 	shape     tf.Shape
 	trainable bool
-	n         float64
 }
 
-func NewRepeatVector(n float64, options ...RepeatVectorOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &RepeatVector{
-			n:         n,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("repeatvector"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func RepeatVector(n float64) *LRepeatVector {
+	return &LRepeatVector{
+		dtype:     Float32,
+		n:         n,
+		name:      UniqueName("repeat_vector"),
+		trainable: true,
 	}
 }
 
-type RepeatVectorOption func(*RepeatVector)
-
-func RepeatVectorWithName(name string) func(r *RepeatVector) {
-	return func(r *RepeatVector) {
-		r.name = name
-	}
+func (l *LRepeatVector) SetDtype(dtype DataType) *LRepeatVector {
+	l.dtype = dtype
+	return l
 }
 
-func RepeatVectorWithDtype(dtype DataType) func(r *RepeatVector) {
-	return func(r *RepeatVector) {
-		r.dtype = dtype
-	}
+func (l *LRepeatVector) SetName(name string) *LRepeatVector {
+	l.name = name
+	return l
 }
 
-func RepeatVectorWithTrainable(trainable bool) func(r *RepeatVector) {
-	return func(r *RepeatVector) {
-		r.trainable = trainable
-	}
+func (l *LRepeatVector) SetShape(shape tf.Shape) *LRepeatVector {
+	l.shape = shape
+	return l
 }
 
-func (r *RepeatVector) GetShape() tf.Shape {
-	return r.shape
+func (l *LRepeatVector) SetTrainable(trainable bool) *LRepeatVector {
+	l.trainable = trainable
+	return l
 }
 
-func (r *RepeatVector) GetDtype() DataType {
-	return r.dtype
+func (l *LRepeatVector) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *RepeatVector) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LRepeatVector) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *RepeatVector) GetInputs() []Layer {
-	return r.inputs
+func (l *LRepeatVector) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *RepeatVector) GetName() string {
-	return r.name
+func (l *LRepeatVector) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigRepeatVector struct {
+func (l *LRepeatVector) GetName() string {
+	return l.name
+}
+
+type jsonConfigLRepeatVector struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *RepeatVector) GetKerasLayerConfig() interface{} {
+func (l *LRepeatVector) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -86,19 +80,19 @@ func (r *RepeatVector) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigRepeatVector{
+	return jsonConfigLRepeatVector{
 		ClassName: "RepeatVector",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     r.dtype.String(),
-			"n":         r.n,
-			"name":      r.name,
-			"trainable": r.trainable,
+			"dtype":     l.dtype.String(),
+			"n":         l.n,
+			"name":      l.name,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *RepeatVector) GetCustomLayerDefinition() string {
+func (l *LRepeatVector) GetCustomLayerDefinition() string {
 	return ``
 }

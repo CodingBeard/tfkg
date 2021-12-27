@@ -1,35 +1,43 @@
 package initializer
 
-type HeUniform struct {
+type IHeUniform struct {
+	name string
 	seed interface{}
 }
 
-func NewHeUniform() *HeUniform {
-	return &HeUniform{
+func HeUniform() *IHeUniform {
+	return &IHeUniform{
 		seed: nil,
 	}
 }
 
-func HeUniformWithSeed(seed interface{}) func(h *HeUniform) {
-	return func(h *HeUniform) {
-		h.seed = seed
-	}
+func (i *IHeUniform) SetName(name string) *IHeUniform {
+	i.name = name
+	return i
 }
 
-type jsonConfigHeUniform struct {
+func (i *IHeUniform) SetSeed(seed interface{}) *IHeUniform {
+	i.seed = seed
+	return i
+}
+
+type jsonConfigIHeUniform struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (h *HeUniform) GetKerasLayerConfig() interface{} {
-	if h == nil {
-		return nil
-	}
-	return jsonConfigHeUniform{
+func (i *IHeUniform) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigIHeUniform{
 		ClassName: "HeUniform",
+		Name:      i.name,
 		Config: map[string]interface{}{
-			"seed": h.seed,
+			"seed": i.seed,
 		},
 	}
+}
+
+func (i *IHeUniform) GetCustomLayerDefinition() string {
+	return ``
 }

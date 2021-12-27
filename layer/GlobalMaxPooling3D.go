@@ -2,97 +2,89 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type GlobalMaxPooling3D struct {
-	name       string
+type LGlobalMaxPooling3D struct {
+	dataFormat interface{}
 	dtype      DataType
 	inputs     []Layer
+	keepdims   bool
+	name       string
 	shape      tf.Shape
 	trainable  bool
-	dataFormat interface{}
-	keepdims   bool
 }
 
-func NewGlobalMaxPooling3D(options ...GlobalMaxPooling3DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		g := &GlobalMaxPooling3D{
-			dataFormat: nil,
-			keepdims:   false,
-			trainable:  true,
-			inputs:     inputs,
-			name:       UniqueName("globalmaxpooling3d"),
-		}
-		for _, option := range options {
-			option(g)
-		}
-		return g
+func GlobalMaxPooling3D() *LGlobalMaxPooling3D {
+	return &LGlobalMaxPooling3D{
+		dataFormat: nil,
+		dtype:      Float32,
+		keepdims:   false,
+		name:       UniqueName("global_max_pooling3d"),
+		trainable:  true,
 	}
 }
 
-type GlobalMaxPooling3DOption func(*GlobalMaxPooling3D)
-
-func GlobalMaxPooling3DWithName(name string) func(g *GlobalMaxPooling3D) {
-	return func(g *GlobalMaxPooling3D) {
-		g.name = name
-	}
+func (l *LGlobalMaxPooling3D) SetDataFormat(dataFormat interface{}) *LGlobalMaxPooling3D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func GlobalMaxPooling3DWithDtype(dtype DataType) func(g *GlobalMaxPooling3D) {
-	return func(g *GlobalMaxPooling3D) {
-		g.dtype = dtype
-	}
+func (l *LGlobalMaxPooling3D) SetDtype(dtype DataType) *LGlobalMaxPooling3D {
+	l.dtype = dtype
+	return l
 }
 
-func GlobalMaxPooling3DWithTrainable(trainable bool) func(g *GlobalMaxPooling3D) {
-	return func(g *GlobalMaxPooling3D) {
-		g.trainable = trainable
-	}
+func (l *LGlobalMaxPooling3D) SetKeepdims(keepdims bool) *LGlobalMaxPooling3D {
+	l.keepdims = keepdims
+	return l
 }
 
-func GlobalMaxPooling3DWithDataFormat(dataFormat interface{}) func(g *GlobalMaxPooling3D) {
-	return func(g *GlobalMaxPooling3D) {
-		g.dataFormat = dataFormat
-	}
+func (l *LGlobalMaxPooling3D) SetName(name string) *LGlobalMaxPooling3D {
+	l.name = name
+	return l
 }
 
-func GlobalMaxPooling3DWithKeepdims(keepdims bool) func(g *GlobalMaxPooling3D) {
-	return func(g *GlobalMaxPooling3D) {
-		g.keepdims = keepdims
-	}
+func (l *LGlobalMaxPooling3D) SetShape(shape tf.Shape) *LGlobalMaxPooling3D {
+	l.shape = shape
+	return l
 }
 
-func (g *GlobalMaxPooling3D) GetShape() tf.Shape {
-	return g.shape
+func (l *LGlobalMaxPooling3D) SetTrainable(trainable bool) *LGlobalMaxPooling3D {
+	l.trainable = trainable
+	return l
 }
 
-func (g *GlobalMaxPooling3D) GetDtype() DataType {
-	return g.dtype
+func (l *LGlobalMaxPooling3D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (g *GlobalMaxPooling3D) SetInput(inputs []Layer) {
-	g.inputs = inputs
-	g.dtype = inputs[0].GetDtype()
+func (l *LGlobalMaxPooling3D) GetDtype() DataType {
+	return l.dtype
 }
 
-func (g *GlobalMaxPooling3D) GetInputs() []Layer {
-	return g.inputs
+func (l *LGlobalMaxPooling3D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (g *GlobalMaxPooling3D) GetName() string {
-	return g.name
+func (l *LGlobalMaxPooling3D) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigGlobalMaxPooling3D struct {
+func (l *LGlobalMaxPooling3D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLGlobalMaxPooling3D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (g *GlobalMaxPooling3D) GetKerasLayerConfig() interface{} {
+func (l *LGlobalMaxPooling3D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range g.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -100,20 +92,20 @@ func (g *GlobalMaxPooling3D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigGlobalMaxPooling3D{
+	return jsonConfigLGlobalMaxPooling3D{
 		ClassName: "GlobalMaxPooling3D",
-		Name:      g.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"data_format": g.dataFormat,
-			"dtype":       g.dtype.String(),
-			"keepdims":    g.keepdims,
-			"name":        g.name,
-			"trainable":   g.trainable,
+			"data_format": l.dataFormat,
+			"dtype":       l.dtype.String(),
+			"keepdims":    l.keepdims,
+			"name":        l.name,
+			"trainable":   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (g *GlobalMaxPooling3D) GetCustomLayerDefinition() string {
+func (l *LGlobalMaxPooling3D) GetCustomLayerDefinition() string {
 	return ``
 }

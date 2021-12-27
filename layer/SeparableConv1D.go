@@ -1,233 +1,230 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type SeparableConv1D struct {
-	name                 string
-	dtype                DataType
-	inputs               []Layer
-	shape                tf.Shape
-	trainable            bool
-	filters              float64
-	kernelSize           float64
-	strides              float64
-	padding              string
-	dataFormat           interface{}
-	dilationRate         float64
-	depthMultiplier      float64
+type LSeparableConv1D struct {
 	activation           string
-	useBias              bool
-	depthwiseInitializer initializer.Initializer
-	pointwiseInitializer initializer.Initializer
-	biasInitializer      initializer.Initializer
-	depthwiseRegularizer regularizer.Regularizer
-	pointwiseRegularizer regularizer.Regularizer
-	biasRegularizer      regularizer.Regularizer
 	activityRegularizer  regularizer.Regularizer
-	depthwiseConstraint  constraint.Constraint
-	pointwiseConstraint  constraint.Constraint
 	biasConstraint       constraint.Constraint
-	kernelRegularizer    regularizer.Regularizer
+	biasInitializer      initializer.Initializer
+	biasRegularizer      regularizer.Regularizer
+	dataFormat           interface{}
+	depthMultiplier      float64
+	depthwiseConstraint  constraint.Constraint
+	depthwiseInitializer initializer.Initializer
+	depthwiseRegularizer regularizer.Regularizer
+	dilationRate         float64
+	dtype                DataType
+	filters              float64
 	groups               float64
-	kernelInitializer    initializer.Initializer
+	inputs               []Layer
 	kernelConstraint     constraint.Constraint
+	kernelInitializer    initializer.Initializer
+	kernelRegularizer    regularizer.Regularizer
+	kernelSize           float64
+	name                 string
+	padding              string
+	pointwiseConstraint  constraint.Constraint
+	pointwiseInitializer initializer.Initializer
+	pointwiseRegularizer regularizer.Regularizer
+	shape                tf.Shape
+	strides              float64
+	trainable            bool
+	useBias              bool
 }
 
-func NewSeparableConv1D(filters float64, kernelSize float64, options ...SeparableConv1DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		s := &SeparableConv1D{
-			filters:              filters,
-			kernelSize:           kernelSize,
-			strides:              1,
-			padding:              "valid",
-			dataFormat:           nil,
-			dilationRate:         1,
-			depthMultiplier:      1,
-			activation:           "linear",
-			useBias:              true,
-			depthwiseInitializer: &initializer.GlorotUniform{},
-			pointwiseInitializer: &initializer.GlorotUniform{},
-			biasInitializer:      &initializer.Zeros{},
-			depthwiseRegularizer: &regularizer.NilRegularizer{},
-			pointwiseRegularizer: &regularizer.NilRegularizer{},
-			biasRegularizer:      &regularizer.NilRegularizer{},
-			activityRegularizer:  &regularizer.NilRegularizer{},
-			depthwiseConstraint:  &constraint.NilConstraint{},
-			pointwiseConstraint:  &constraint.NilConstraint{},
-			biasConstraint:       &constraint.NilConstraint{},
-			kernelRegularizer:    &regularizer.NilRegularizer{},
-			groups:               1,
-			kernelInitializer:    &initializer.GlorotUniform{},
-			kernelConstraint:     &constraint.NilConstraint{},
-			trainable:            true,
-			inputs:               inputs,
-			name:                 UniqueName("separableconv1d"),
-		}
-		for _, option := range options {
-			option(s)
-		}
-		return s
+func SeparableConv1D(filters float64, kernelSize float64) *LSeparableConv1D {
+	return &LSeparableConv1D{
+		activation:           "linear",
+		activityRegularizer:  &regularizer.NilRegularizer{},
+		biasConstraint:       &constraint.NilConstraint{},
+		biasInitializer:      initializer.Zeros(),
+		biasRegularizer:      &regularizer.NilRegularizer{},
+		dataFormat:           nil,
+		depthMultiplier:      1,
+		depthwiseConstraint:  &constraint.NilConstraint{},
+		depthwiseInitializer: initializer.GlorotUniform(),
+		depthwiseRegularizer: &regularizer.NilRegularizer{},
+		dilationRate:         1,
+		dtype:                Float32,
+		filters:              filters,
+		groups:               1,
+		kernelConstraint:     &constraint.NilConstraint{},
+		kernelInitializer:    initializer.GlorotUniform(),
+		kernelRegularizer:    &regularizer.NilRegularizer{},
+		kernelSize:           kernelSize,
+		name:                 UniqueName("separable_conv1d"),
+		padding:              "valid",
+		pointwiseConstraint:  &constraint.NilConstraint{},
+		pointwiseInitializer: initializer.GlorotUniform(),
+		pointwiseRegularizer: &regularizer.NilRegularizer{},
+		strides:              1,
+		trainable:            true,
+		useBias:              true,
 	}
 }
 
-type SeparableConv1DOption func(*SeparableConv1D)
-
-func SeparableConv1DWithName(name string) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.name = name
-	}
+func (l *LSeparableConv1D) SetActivation(activation string) *LSeparableConv1D {
+	l.activation = activation
+	return l
 }
 
-func SeparableConv1DWithDtype(dtype DataType) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.dtype = dtype
-	}
+func (l *LSeparableConv1D) SetActivityRegularizer(activityRegularizer regularizer.Regularizer) *LSeparableConv1D {
+	l.activityRegularizer = activityRegularizer
+	return l
 }
 
-func SeparableConv1DWithTrainable(trainable bool) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.trainable = trainable
-	}
+func (l *LSeparableConv1D) SetBiasConstraint(biasConstraint constraint.Constraint) *LSeparableConv1D {
+	l.biasConstraint = biasConstraint
+	return l
 }
 
-func SeparableConv1DWithStrides(strides float64) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.strides = strides
-	}
+func (l *LSeparableConv1D) SetBiasInitializer(biasInitializer initializer.Initializer) *LSeparableConv1D {
+	l.biasInitializer = biasInitializer
+	return l
 }
 
-func SeparableConv1DWithPadding(padding string) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.padding = padding
-	}
+func (l *LSeparableConv1D) SetBiasRegularizer(biasRegularizer regularizer.Regularizer) *LSeparableConv1D {
+	l.biasRegularizer = biasRegularizer
+	return l
 }
 
-func SeparableConv1DWithDataFormat(dataFormat interface{}) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.dataFormat = dataFormat
-	}
+func (l *LSeparableConv1D) SetDataFormat(dataFormat interface{}) *LSeparableConv1D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func SeparableConv1DWithDilationRate(dilationRate float64) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.dilationRate = dilationRate
-	}
+func (l *LSeparableConv1D) SetDepthMultiplier(depthMultiplier float64) *LSeparableConv1D {
+	l.depthMultiplier = depthMultiplier
+	return l
 }
 
-func SeparableConv1DWithDepthMultiplier(depthMultiplier float64) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.depthMultiplier = depthMultiplier
-	}
+func (l *LSeparableConv1D) SetDepthwiseConstraint(depthwiseConstraint constraint.Constraint) *LSeparableConv1D {
+	l.depthwiseConstraint = depthwiseConstraint
+	return l
 }
 
-func SeparableConv1DWithActivation(activation string) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.activation = activation
-	}
+func (l *LSeparableConv1D) SetDepthwiseInitializer(depthwiseInitializer initializer.Initializer) *LSeparableConv1D {
+	l.depthwiseInitializer = depthwiseInitializer
+	return l
 }
 
-func SeparableConv1DWithUseBias(useBias bool) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.useBias = useBias
-	}
+func (l *LSeparableConv1D) SetDepthwiseRegularizer(depthwiseRegularizer regularizer.Regularizer) *LSeparableConv1D {
+	l.depthwiseRegularizer = depthwiseRegularizer
+	return l
 }
 
-func SeparableConv1DWithDepthwiseInitializer(depthwiseInitializer initializer.Initializer) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.depthwiseInitializer = depthwiseInitializer
-	}
+func (l *LSeparableConv1D) SetDilationRate(dilationRate float64) *LSeparableConv1D {
+	l.dilationRate = dilationRate
+	return l
 }
 
-func SeparableConv1DWithPointwiseInitializer(pointwiseInitializer initializer.Initializer) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.pointwiseInitializer = pointwiseInitializer
-	}
+func (l *LSeparableConv1D) SetDtype(dtype DataType) *LSeparableConv1D {
+	l.dtype = dtype
+	return l
 }
 
-func SeparableConv1DWithBiasInitializer(biasInitializer initializer.Initializer) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.biasInitializer = biasInitializer
-	}
+func (l *LSeparableConv1D) SetGroups(groups float64) *LSeparableConv1D {
+	l.groups = groups
+	return l
 }
 
-func SeparableConv1DWithDepthwiseRegularizer(depthwiseRegularizer regularizer.Regularizer) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.depthwiseRegularizer = depthwiseRegularizer
-	}
+func (l *LSeparableConv1D) SetKernelConstraint(kernelConstraint constraint.Constraint) *LSeparableConv1D {
+	l.kernelConstraint = kernelConstraint
+	return l
 }
 
-func SeparableConv1DWithPointwiseRegularizer(pointwiseRegularizer regularizer.Regularizer) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.pointwiseRegularizer = pointwiseRegularizer
-	}
+func (l *LSeparableConv1D) SetKernelInitializer(kernelInitializer initializer.Initializer) *LSeparableConv1D {
+	l.kernelInitializer = kernelInitializer
+	return l
 }
 
-func SeparableConv1DWithBiasRegularizer(biasRegularizer regularizer.Regularizer) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.biasRegularizer = biasRegularizer
-	}
+func (l *LSeparableConv1D) SetKernelRegularizer(kernelRegularizer regularizer.Regularizer) *LSeparableConv1D {
+	l.kernelRegularizer = kernelRegularizer
+	return l
 }
 
-func SeparableConv1DWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.activityRegularizer = activityRegularizer
-	}
+func (l *LSeparableConv1D) SetName(name string) *LSeparableConv1D {
+	l.name = name
+	return l
 }
 
-func SeparableConv1DWithDepthwiseConstraint(depthwiseConstraint constraint.Constraint) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.depthwiseConstraint = depthwiseConstraint
-	}
+func (l *LSeparableConv1D) SetPadding(padding string) *LSeparableConv1D {
+	l.padding = padding
+	return l
 }
 
-func SeparableConv1DWithPointwiseConstraint(pointwiseConstraint constraint.Constraint) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.pointwiseConstraint = pointwiseConstraint
-	}
+func (l *LSeparableConv1D) SetPointwiseConstraint(pointwiseConstraint constraint.Constraint) *LSeparableConv1D {
+	l.pointwiseConstraint = pointwiseConstraint
+	return l
 }
 
-func SeparableConv1DWithBiasConstraint(biasConstraint constraint.Constraint) func(s *SeparableConv1D) {
-	return func(s *SeparableConv1D) {
-		s.biasConstraint = biasConstraint
-	}
+func (l *LSeparableConv1D) SetPointwiseInitializer(pointwiseInitializer initializer.Initializer) *LSeparableConv1D {
+	l.pointwiseInitializer = pointwiseInitializer
+	return l
 }
 
-func (s *SeparableConv1D) GetShape() tf.Shape {
-	return s.shape
+func (l *LSeparableConv1D) SetPointwiseRegularizer(pointwiseRegularizer regularizer.Regularizer) *LSeparableConv1D {
+	l.pointwiseRegularizer = pointwiseRegularizer
+	return l
 }
 
-func (s *SeparableConv1D) GetDtype() DataType {
-	return s.dtype
+func (l *LSeparableConv1D) SetShape(shape tf.Shape) *LSeparableConv1D {
+	l.shape = shape
+	return l
 }
 
-func (s *SeparableConv1D) SetInput(inputs []Layer) {
-	s.inputs = inputs
-	s.dtype = inputs[0].GetDtype()
+func (l *LSeparableConv1D) SetStrides(strides float64) *LSeparableConv1D {
+	l.strides = strides
+	return l
 }
 
-func (s *SeparableConv1D) GetInputs() []Layer {
-	return s.inputs
+func (l *LSeparableConv1D) SetTrainable(trainable bool) *LSeparableConv1D {
+	l.trainable = trainable
+	return l
 }
 
-func (s *SeparableConv1D) GetName() string {
-	return s.name
+func (l *LSeparableConv1D) SetUseBias(useBias bool) *LSeparableConv1D {
+	l.useBias = useBias
+	return l
 }
 
-type jsonConfigSeparableConv1D struct {
+func (l *LSeparableConv1D) GetShape() tf.Shape {
+	return l.shape
+}
+
+func (l *LSeparableConv1D) GetDtype() DataType {
+	return l.dtype
+}
+
+func (l *LSeparableConv1D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
+}
+
+func (l *LSeparableConv1D) GetInputs() []Layer {
+	return l.inputs
+}
+
+func (l *LSeparableConv1D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLSeparableConv1D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (s *SeparableConv1D) GetKerasLayerConfig() interface{} {
+func (l *LSeparableConv1D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range s.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -235,41 +232,41 @@ func (s *SeparableConv1D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigSeparableConv1D{
+	return jsonConfigLSeparableConv1D{
 		ClassName: "SeparableConv1D",
-		Name:      s.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"activation":            s.activation,
-			"activity_regularizer":  s.activityRegularizer.GetKerasLayerConfig(),
-			"bias_constraint":       s.biasConstraint.GetKerasLayerConfig(),
-			"bias_initializer":      s.biasInitializer.GetKerasLayerConfig(),
-			"bias_regularizer":      s.biasRegularizer.GetKerasLayerConfig(),
-			"data_format":           s.dataFormat,
-			"depth_multiplier":      s.depthMultiplier,
-			"depthwise_constraint":  s.depthwiseConstraint.GetKerasLayerConfig(),
-			"depthwise_initializer": s.depthwiseInitializer.GetKerasLayerConfig(),
-			"depthwise_regularizer": s.depthwiseRegularizer.GetKerasLayerConfig(),
-			"dilation_rate":         s.dilationRate,
-			"dtype":                 s.dtype.String(),
-			"filters":               s.filters,
-			"groups":                s.groups,
-			"kernel_constraint":     s.kernelConstraint.GetKerasLayerConfig(),
-			"kernel_initializer":    s.kernelInitializer.GetKerasLayerConfig(),
-			"kernel_regularizer":    s.kernelRegularizer.GetKerasLayerConfig(),
-			"kernel_size":           s.kernelSize,
-			"name":                  s.name,
-			"padding":               s.padding,
-			"pointwise_constraint":  s.pointwiseConstraint.GetKerasLayerConfig(),
-			"pointwise_initializer": s.pointwiseInitializer.GetKerasLayerConfig(),
-			"pointwise_regularizer": s.pointwiseRegularizer.GetKerasLayerConfig(),
-			"strides":               s.strides,
-			"trainable":             s.trainable,
-			"use_bias":              s.useBias,
+			"activation":            l.activation,
+			"activity_regularizer":  l.activityRegularizer.GetKerasLayerConfig(),
+			"bias_constraint":       l.biasConstraint.GetKerasLayerConfig(),
+			"bias_initializer":      l.biasInitializer.GetKerasLayerConfig(),
+			"bias_regularizer":      l.biasRegularizer.GetKerasLayerConfig(),
+			"data_format":           l.dataFormat,
+			"depth_multiplier":      l.depthMultiplier,
+			"depthwise_constraint":  l.depthwiseConstraint.GetKerasLayerConfig(),
+			"depthwise_initializer": l.depthwiseInitializer.GetKerasLayerConfig(),
+			"depthwise_regularizer": l.depthwiseRegularizer.GetKerasLayerConfig(),
+			"dilation_rate":         l.dilationRate,
+			"dtype":                 l.dtype.String(),
+			"filters":               l.filters,
+			"groups":                l.groups,
+			"kernel_constraint":     l.kernelConstraint.GetKerasLayerConfig(),
+			"kernel_initializer":    l.kernelInitializer.GetKerasLayerConfig(),
+			"kernel_regularizer":    l.kernelRegularizer.GetKerasLayerConfig(),
+			"kernel_size":           l.kernelSize,
+			"name":                  l.name,
+			"padding":               l.padding,
+			"pointwise_constraint":  l.pointwiseConstraint.GetKerasLayerConfig(),
+			"pointwise_initializer": l.pointwiseInitializer.GetKerasLayerConfig(),
+			"pointwise_regularizer": l.pointwiseRegularizer.GetKerasLayerConfig(),
+			"strides":               l.strides,
+			"trainable":             l.trainable,
+			"use_bias":              l.useBias,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (s *SeparableConv1D) GetCustomLayerDefinition() string {
+func (l *LSeparableConv1D) GetCustomLayerDefinition() string {
 	return ``
 }

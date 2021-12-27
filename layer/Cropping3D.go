@@ -2,97 +2,89 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Cropping3D struct {
-	name       string
-	dtype      DataType
-	inputs     []Layer
-	shape      tf.Shape
-	trainable  bool
+type LCropping3D struct {
 	cropping   []interface{}
 	dataFormat interface{}
+	dtype      DataType
+	inputs     []Layer
+	name       string
+	shape      tf.Shape
+	trainable  bool
 }
 
-func NewCropping3D(options ...Cropping3DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		c := &Cropping3D{
-			cropping:   []interface{}{[]interface{}{1, 1}, []interface{}{1, 1}, []interface{}{1, 1}},
-			dataFormat: nil,
-			trainable:  true,
-			inputs:     inputs,
-			name:       UniqueName("cropping3d"),
-		}
-		for _, option := range options {
-			option(c)
-		}
-		return c
+func Cropping3D() *LCropping3D {
+	return &LCropping3D{
+		cropping:   []interface{}{[]interface{}{1, 1}, []interface{}{1, 1}, []interface{}{1, 1}},
+		dataFormat: nil,
+		dtype:      Float32,
+		name:       UniqueName("cropping3d"),
+		trainable:  true,
 	}
 }
 
-type Cropping3DOption func(*Cropping3D)
-
-func Cropping3DWithName(name string) func(c *Cropping3D) {
-	return func(c *Cropping3D) {
-		c.name = name
-	}
+func (l *LCropping3D) SetCropping(cropping []interface{}) *LCropping3D {
+	l.cropping = cropping
+	return l
 }
 
-func Cropping3DWithDtype(dtype DataType) func(c *Cropping3D) {
-	return func(c *Cropping3D) {
-		c.dtype = dtype
-	}
+func (l *LCropping3D) SetDataFormat(dataFormat interface{}) *LCropping3D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func Cropping3DWithTrainable(trainable bool) func(c *Cropping3D) {
-	return func(c *Cropping3D) {
-		c.trainable = trainable
-	}
+func (l *LCropping3D) SetDtype(dtype DataType) *LCropping3D {
+	l.dtype = dtype
+	return l
 }
 
-func Cropping3DWithCropping(cropping []interface{}) func(c *Cropping3D) {
-	return func(c *Cropping3D) {
-		c.cropping = cropping
-	}
+func (l *LCropping3D) SetName(name string) *LCropping3D {
+	l.name = name
+	return l
 }
 
-func Cropping3DWithDataFormat(dataFormat interface{}) func(c *Cropping3D) {
-	return func(c *Cropping3D) {
-		c.dataFormat = dataFormat
-	}
+func (l *LCropping3D) SetShape(shape tf.Shape) *LCropping3D {
+	l.shape = shape
+	return l
 }
 
-func (c *Cropping3D) GetShape() tf.Shape {
-	return c.shape
+func (l *LCropping3D) SetTrainable(trainable bool) *LCropping3D {
+	l.trainable = trainable
+	return l
 }
 
-func (c *Cropping3D) GetDtype() DataType {
-	return c.dtype
+func (l *LCropping3D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (c *Cropping3D) SetInput(inputs []Layer) {
-	c.inputs = inputs
-	c.dtype = inputs[0].GetDtype()
+func (l *LCropping3D) GetDtype() DataType {
+	return l.dtype
 }
 
-func (c *Cropping3D) GetInputs() []Layer {
-	return c.inputs
+func (l *LCropping3D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (c *Cropping3D) GetName() string {
-	return c.name
+func (l *LCropping3D) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigCropping3D struct {
+func (l *LCropping3D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLCropping3D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (c *Cropping3D) GetKerasLayerConfig() interface{} {
+func (l *LCropping3D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range c.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -100,20 +92,20 @@ func (c *Cropping3D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigCropping3D{
+	return jsonConfigLCropping3D{
 		ClassName: "Cropping3D",
-		Name:      c.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"cropping":    c.cropping,
-			"data_format": c.dataFormat,
-			"dtype":       c.dtype.String(),
-			"name":        c.name,
-			"trainable":   c.trainable,
+			"cropping":    l.cropping,
+			"data_format": l.dataFormat,
+			"dtype":       l.dtype.String(),
+			"name":        l.name,
+			"trainable":   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (c *Cropping3D) GetCustomLayerDefinition() string {
+func (l *LCropping3D) GetCustomLayerDefinition() string {
 	return ``
 }

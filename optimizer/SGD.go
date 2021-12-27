@@ -1,64 +1,69 @@
 package optimizer
 
-type SGD struct {
+type OSGD struct {
+	decay        float64
 	learningRate float64
 	momentum     float64
-	nesterov     bool
 	name         string
-	decay        float64
+	nesterov     bool
 }
 
-func NewSGD() *SGD {
-	return &SGD{
+func SGD() *OSGD {
+	return &OSGD{
+		decay:        0,
 		learningRate: 0.01,
 		momentum:     0,
+		name:         UniqueName("SGD"),
 		nesterov:     false,
-		name:         "SGD",
 	}
 }
 
-func SGDWithLearningRate(learningRate float64) func(s *SGD) {
-	return func(s *SGD) {
-		s.learningRate = learningRate
-	}
+func (o *OSGD) SetDecay(decay float64) *OSGD {
+	o.decay = decay
+	return o
 }
 
-func SGDWithMomentum(momentum float64) func(s *SGD) {
-	return func(s *SGD) {
-		s.momentum = momentum
-	}
+func (o *OSGD) SetLearningRate(learningRate float64) *OSGD {
+	o.learningRate = learningRate
+	return o
 }
 
-func SGDWithNesterov(nesterov bool) func(s *SGD) {
-	return func(s *SGD) {
-		s.nesterov = nesterov
-	}
+func (o *OSGD) SetMomentum(momentum float64) *OSGD {
+	o.momentum = momentum
+	return o
 }
 
-func SGDWithName(name string) func(s *SGD) {
-	return func(s *SGD) {
-		s.name = name
-	}
+func (o *OSGD) SetName(name string) *OSGD {
+	o.name = name
+	return o
 }
 
-type jsonConfigSGD struct {
+func (o *OSGD) SetNesterov(nesterov bool) *OSGD {
+	o.nesterov = nesterov
+	return o
+}
+
+type jsonConfigOSGD struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (s *SGD) GetKerasLayerConfig() interface{} {
-	if s == nil {
-		return nil
-	}
-	return jsonConfigSGD{
+func (o *OSGD) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigOSGD{
 		ClassName: "SGD",
+		Name:      o.name,
 		Config: map[string]interface{}{
-			"decay":         s.decay,
-			"learning_rate": s.learningRate,
-			"momentum":      s.momentum,
-			"name":          s.name,
-			"nesterov":      s.nesterov,
+			"decay":         o.decay,
+			"learning_rate": o.learningRate,
+			"momentum":      o.momentum,
+			"name":          o.name,
+			"nesterov":      o.nesterov,
 		},
 	}
+}
+
+func (o *OSGD) GetCustomLayerDefinition() string {
+	return ``
 }

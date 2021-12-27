@@ -2,83 +2,77 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type GaussianNoise struct {
-	name      string
+type LGaussianNoise struct {
 	dtype     DataType
 	inputs    []Layer
+	name      string
 	shape     tf.Shape
-	trainable bool
 	stddev    float64
+	trainable bool
 }
 
-func NewGaussianNoise(stddev float64, options ...GaussianNoiseOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		g := &GaussianNoise{
-			stddev:    stddev,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("gaussiannoise"),
-		}
-		for _, option := range options {
-			option(g)
-		}
-		return g
+func GaussianNoise(stddev float64) *LGaussianNoise {
+	return &LGaussianNoise{
+		dtype:     Float32,
+		name:      UniqueName("gaussian_noise"),
+		stddev:    stddev,
+		trainable: true,
 	}
 }
 
-type GaussianNoiseOption func(*GaussianNoise)
-
-func GaussianNoiseWithName(name string) func(g *GaussianNoise) {
-	return func(g *GaussianNoise) {
-		g.name = name
-	}
+func (l *LGaussianNoise) SetDtype(dtype DataType) *LGaussianNoise {
+	l.dtype = dtype
+	return l
 }
 
-func GaussianNoiseWithDtype(dtype DataType) func(g *GaussianNoise) {
-	return func(g *GaussianNoise) {
-		g.dtype = dtype
-	}
+func (l *LGaussianNoise) SetName(name string) *LGaussianNoise {
+	l.name = name
+	return l
 }
 
-func GaussianNoiseWithTrainable(trainable bool) func(g *GaussianNoise) {
-	return func(g *GaussianNoise) {
-		g.trainable = trainable
-	}
+func (l *LGaussianNoise) SetShape(shape tf.Shape) *LGaussianNoise {
+	l.shape = shape
+	return l
 }
 
-func (g *GaussianNoise) GetShape() tf.Shape {
-	return g.shape
+func (l *LGaussianNoise) SetTrainable(trainable bool) *LGaussianNoise {
+	l.trainable = trainable
+	return l
 }
 
-func (g *GaussianNoise) GetDtype() DataType {
-	return g.dtype
+func (l *LGaussianNoise) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (g *GaussianNoise) SetInput(inputs []Layer) {
-	g.inputs = inputs
-	g.dtype = inputs[0].GetDtype()
+func (l *LGaussianNoise) GetDtype() DataType {
+	return l.dtype
 }
 
-func (g *GaussianNoise) GetInputs() []Layer {
-	return g.inputs
+func (l *LGaussianNoise) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (g *GaussianNoise) GetName() string {
-	return g.name
+func (l *LGaussianNoise) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigGaussianNoise struct {
+func (l *LGaussianNoise) GetName() string {
+	return l.name
+}
+
+type jsonConfigLGaussianNoise struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (g *GaussianNoise) GetKerasLayerConfig() interface{} {
+func (l *LGaussianNoise) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range g.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -86,19 +80,19 @@ func (g *GaussianNoise) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigGaussianNoise{
+	return jsonConfigLGaussianNoise{
 		ClassName: "GaussianNoise",
-		Name:      g.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     g.dtype.String(),
-			"name":      g.name,
-			"stddev":    g.stddev,
-			"trainable": g.trainable,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"stddev":    l.stddev,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (g *GaussianNoise) GetCustomLayerDefinition() string {
+func (l *LGaussianNoise) GetCustomLayerDefinition() string {
 	return ``
 }

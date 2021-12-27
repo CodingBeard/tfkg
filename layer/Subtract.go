@@ -2,81 +2,75 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Subtract struct {
-	name      string
+type LSubtract struct {
 	dtype     DataType
 	inputs    []Layer
+	name      string
 	shape     tf.Shape
 	trainable bool
 }
 
-func NewSubtract(options ...SubtractOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		s := &Subtract{
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("subtract"),
-		}
-		for _, option := range options {
-			option(s)
-		}
-		return s
+func Subtract() *LSubtract {
+	return &LSubtract{
+		dtype:     Float32,
+		name:      UniqueName("subtract"),
+		trainable: true,
 	}
 }
 
-type SubtractOption func(*Subtract)
-
-func SubtractWithName(name string) func(s *Subtract) {
-	return func(s *Subtract) {
-		s.name = name
-	}
+func (l *LSubtract) SetDtype(dtype DataType) *LSubtract {
+	l.dtype = dtype
+	return l
 }
 
-func SubtractWithDtype(dtype DataType) func(s *Subtract) {
-	return func(s *Subtract) {
-		s.dtype = dtype
-	}
+func (l *LSubtract) SetName(name string) *LSubtract {
+	l.name = name
+	return l
 }
 
-func SubtractWithTrainable(trainable bool) func(s *Subtract) {
-	return func(s *Subtract) {
-		s.trainable = trainable
-	}
+func (l *LSubtract) SetShape(shape tf.Shape) *LSubtract {
+	l.shape = shape
+	return l
 }
 
-func (s *Subtract) GetShape() tf.Shape {
-	return s.shape
+func (l *LSubtract) SetTrainable(trainable bool) *LSubtract {
+	l.trainable = trainable
+	return l
 }
 
-func (s *Subtract) GetDtype() DataType {
-	return s.dtype
+func (l *LSubtract) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (s *Subtract) SetInput(inputs []Layer) {
-	s.inputs = inputs
-	s.dtype = inputs[0].GetDtype()
+func (l *LSubtract) GetDtype() DataType {
+	return l.dtype
 }
 
-func (s *Subtract) GetInputs() []Layer {
-	return s.inputs
+func (l *LSubtract) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (s *Subtract) GetName() string {
-	return s.name
+func (l *LSubtract) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigSubtract struct {
+func (l *LSubtract) GetName() string {
+	return l.name
+}
+
+type jsonConfigLSubtract struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (s *Subtract) GetKerasLayerConfig() interface{} {
+func (l *LSubtract) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range s.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -84,18 +78,18 @@ func (s *Subtract) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigSubtract{
+	return jsonConfigLSubtract{
 		ClassName: "Subtract",
-		Name:      s.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     s.dtype.String(),
-			"name":      s.name,
-			"trainable": s.trainable,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (s *Subtract) GetCustomLayerDefinition() string {
+func (l *LSubtract) GetCustomLayerDefinition() string {
 	return ``
 }

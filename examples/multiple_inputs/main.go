@@ -44,62 +44,63 @@ func main() {
 	errorHandler := cberrors.NewErrorContainer(iowriterprovider.New(logger))
 
 	// Define four inputs, each going into one of four dense layers. One set for each of the data points in the iris dataset
-	input1 := layer.NewInput(layer.InputWithInputShape(tf.MakeShape(-1, 1)), layer.InputWithDtype(layer.Float32))
-	dense1 := layer.NewDense(
-		10,
-		layer.DenseWithDtype(layer.Float32),
-		layer.DenseWithName("dense_1"),
-		layer.DenseWithActivation("swish"),
-	)(input1)
+	input1 := layer.Input().
+		SetInputShape(tf.MakeShape(-1, 1)).
+		SetDtype(layer.Float32)
+	dense1 := layer.Dense(10).
+		SetDtype(layer.Float32).
+		SetName("dense_1").
+		SetActivation("swish").
+		SetInputs(input1)
 
-	input2 := layer.NewInput(layer.InputWithInputShape(tf.MakeShape(-1, 1)), layer.InputWithDtype(layer.Float32))
-	dense2 := layer.NewDense(
-		10,
-		layer.DenseWithDtype(layer.Float32),
-		layer.DenseWithName("dense_2"),
-		layer.DenseWithActivation("swish"),
-	)(input2)
+	input2 := layer.Input().
+		SetInputShape(tf.MakeShape(-1, 1)).
+		SetDtype(layer.Float32)
+	dense2 := layer.Dense(10).
+		SetDtype(layer.Float32).
+		SetName("dense_2").
+		SetActivation("swish").
+		SetInputs(input2)
 
-	input3 := layer.NewInput(layer.InputWithInputShape(tf.MakeShape(-1, 1)), layer.InputWithDtype(layer.Float32))
-	dense3 := layer.NewDense(
-		10,
-		layer.DenseWithDtype(layer.Float32),
-		layer.DenseWithName("dense_3"),
-		layer.DenseWithActivation("swish"),
-	)(input3)
+	input3 := layer.Input().
+		SetInputShape(tf.MakeShape(-1, 1)).
+		SetDtype(layer.Float32)
+	dense3 := layer.Dense(10).
+		SetDtype(layer.Float32).
+		SetName("dense_3").
+		SetActivation("swish").
+		SetInputs(input3)
 
-	input4 := layer.NewInput(layer.InputWithInputShape(tf.MakeShape(-1, 1)), layer.InputWithDtype(layer.Float32))
-	dense4 := layer.NewDense(
-		10,
-		layer.DenseWithDtype(layer.Float32),
-		layer.DenseWithName("dense_4"),
-		layer.DenseWithActivation("swish"),
-	)(input4)
+	input4 := layer.Input().
+		SetInputShape(tf.MakeShape(-1, 1)).
+		SetDtype(layer.Float32)
+	dense4 := layer.Dense(10).
+		SetDtype(layer.Float32).
+		SetName("dense_4").
+		SetActivation("swish").
+		SetInputs(input4)
 
 	// Concatenate all the dense layers into a single layer
-	concat := layer.NewConcatenate()(dense1, dense2, dense3, dense4)
+	concat := layer.Concatenate().SetInputs(dense1, dense2, dense3, dense4)
 
 	// Pass the concatenated into a simple dense network
-	denseMerged := layer.NewDense(
-		100,
-		layer.DenseWithDtype(layer.Float32),
-		layer.DenseWithName("dense_merged"),
-		layer.DenseWithActivation("swish"),
-	)(concat)
-	denseMerged2 := layer.NewDense(
-		100,
-		layer.DenseWithDtype(layer.Float32),
-		layer.DenseWithName("dense_merged_2"),
-		layer.DenseWithActivation("swish"),
-	)(denseMerged)
+	denseMerged := layer.Dense(100).
+		SetDtype(layer.Float32).
+		SetName("dense_merged").
+		SetActivation("swish").
+		SetInputs(concat)
+	denseMerged2 := layer.Dense(100).
+		SetDtype(layer.Float32).
+		SetName("dense_merged_2").
+		SetActivation("swish").
+		SetInputs(denseMerged)
 
 	// Define the output as having three units, as there are three classes to predict
-	output := layer.NewDense(
-		3,
-		layer.DenseWithDtype(layer.Float32),
-		layer.DenseWithName("output"),
-		layer.DenseWithActivation("softmax"),
-	)(denseMerged2)
+	output := layer.Dense(3).
+		SetDtype(layer.Float32).
+		SetName("output").
+		SetActivation("softmax").
+		SetInputs(denseMerged2)
 
 	// Define a simple keras style Functional model
 	// Note that you don't need to pass in the inputs, the output variable contains all the other nodes as long as you use the same syntax of layer.New()(input)
@@ -112,7 +113,7 @@ func main() {
 	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and execute it to save the model in a format we can load and train
 	// A python binary must be available to use for this to work
 	// The batchSize MUST match the batch size in the call to Fit or Evaluate
-	e = m.CompileAndLoad(model.LossSparseCategoricalCrossentropy, optimizer.NewAdam(), saveDir)
+	e = m.CompileAndLoad(model.LossSparseCategoricalCrossentropy, optimizer.Adam(), saveDir)
 	if e != nil {
 		return
 	}

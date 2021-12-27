@@ -2,7 +2,7 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Input struct {
+type LInput struct {
 	name        string
 	dtype       DataType
 	shape       tf.Shape
@@ -13,9 +13,8 @@ type Input struct {
 	ragged      bool
 }
 
-func NewInput(options ...InputOption) *Input {
-	i := &Input{
-		shape:       tf.MakeShape(0),
+func Input() *LInput {
+	i := &LInput{
 		batchSize:   -1,
 		dtype:       Float32,
 		inputTensor: nil,
@@ -23,79 +22,60 @@ func NewInput(options ...InputOption) *Input {
 		ragged:      false,
 		name:        UniqueName("input"),
 	}
-	for _, option := range options {
-		option(i)
-	}
 	return i
 }
 
-type InputOption func(*Input)
-
-func InputWithName(name string) func(i *Input) {
-	return func(i *Input) {
-		i.name = name
-	}
+func (i *LInput) SetName(name string) *LInput {
+	i.name = name
+	return i
 }
 
-func InputWithTrainable(trainable bool) func(i *Input) {
-	return func(i *Input) {
-		i.trainable = trainable
-	}
+func (i *LInput) SetTrainable(trainable bool) *LInput {
+	i.trainable = trainable
+	return i
 }
 
-func InputWithInputShape(inputShape tf.Shape) func(i *Input) {
-	return func(i *Input) {
-		i.shape = inputShape
-	}
+func (i *LInput) SetInputShape(inputShape tf.Shape) *LInput {
+	i.shape = inputShape
+	return i
 }
 
-func InputWithBatchSize(batchSize float64) func(i *Input) {
-	return func(i *Input) {
-		i.batchSize = batchSize
-	}
+func (i *LInput) SetBatchSize(batchSize float64) *LInput {
+	i.batchSize = batchSize
+	return i
 }
 
-func InputWithDtype(dtype DataType) func(i *Input) {
-	return func(i *Input) {
-		i.dtype = dtype
-	}
+func (i *LInput) SetDtype(dtype DataType) *LInput {
+	i.dtype = dtype
+	return i
+}
+func (i *LInput) SetSparse(sparse bool) *LInput {
+	i.sparse = sparse
+	return i
 }
 
-func InputWithInputTensor(inputTensor interface{}) func(i *Input) {
-	return func(i *Input) {
-		i.inputTensor = inputTensor
-	}
+func (i *LInput) SetRagged(ragged bool) *LInput {
+	i.ragged = ragged
+	return i
 }
 
-func InputWithSparse(sparse bool) func(i *Input) {
-	return func(i *Input) {
-		i.sparse = sparse
-	}
-}
-
-func InputWithRagged(ragged bool) func(i *Input) {
-	return func(i *Input) {
-		i.ragged = ragged
-	}
-}
-
-func (i *Input) GetShape() tf.Shape {
+func (i *LInput) GetShape() tf.Shape {
 	return i.shape
 }
 
-func (i *Input) GetDtype() DataType {
+func (i *LInput) GetDtype() DataType {
 	return i.dtype
 }
 
-func (i *Input) SetInput(inputs []Layer) {
-
+func (i *LInput) SetInputs(inputs ...Layer) Layer {
+	return i
 }
 
-func (i *Input) GetInputs() []Layer {
+func (i *LInput) GetInputs() []Layer {
 	return []Layer{}
 }
 
-func (i *Input) GetName() string {
+func (i *LInput) GetName() string {
 	return i.name
 }
 
@@ -106,7 +86,7 @@ type jsonConfigInput struct {
 	InboundNodes []interface{}          `json:"inbound_nodes"`
 }
 
-func (i *Input) GetKerasLayerConfig() interface{} {
+func (i *LInput) GetKerasLayerConfig() interface{} {
 	var shape []interface{}
 
 	dims, _ := i.shape.ToSlice()
@@ -133,6 +113,6 @@ func (i *Input) GetKerasLayerConfig() interface{} {
 	}
 }
 
-func (i *Input) GetCustomLayerDefinition() string {
+func (i *LInput) GetCustomLayerDefinition() string {
 	return ``
 }

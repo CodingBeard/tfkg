@@ -1,64 +1,69 @@
 package optimizer
 
-type Adadelta struct {
-	learningRate float64
-	rho          float64
-	epsilon      float64
-	name         string
+type OAdadelta struct {
 	decay        float64
+	epsilon      float64
+	learningRate float64
+	name         string
+	rho          float64
 }
 
-func NewAdadelta() *Adadelta {
-	return &Adadelta{
-		learningRate: 0.001,
-		rho:          0.95,
+func Adadelta() *OAdadelta {
+	return &OAdadelta{
+		decay:        0,
 		epsilon:      1e-07,
-		name:         "Adadelta",
+		learningRate: 0.001,
+		name:         UniqueName("Adadelta"),
+		rho:          0.95,
 	}
 }
 
-func AdadeltaWithLearningRate(learningRate float64) func(a *Adadelta) {
-	return func(a *Adadelta) {
-		a.learningRate = learningRate
-	}
+func (o *OAdadelta) SetDecay(decay float64) *OAdadelta {
+	o.decay = decay
+	return o
 }
 
-func AdadeltaWithRho(rho float64) func(a *Adadelta) {
-	return func(a *Adadelta) {
-		a.rho = rho
-	}
+func (o *OAdadelta) SetEpsilon(epsilon float64) *OAdadelta {
+	o.epsilon = epsilon
+	return o
 }
 
-func AdadeltaWithEpsilon(epsilon float64) func(a *Adadelta) {
-	return func(a *Adadelta) {
-		a.epsilon = epsilon
-	}
+func (o *OAdadelta) SetLearningRate(learningRate float64) *OAdadelta {
+	o.learningRate = learningRate
+	return o
 }
 
-func AdadeltaWithName(name string) func(a *Adadelta) {
-	return func(a *Adadelta) {
-		a.name = name
-	}
+func (o *OAdadelta) SetName(name string) *OAdadelta {
+	o.name = name
+	return o
 }
 
-type jsonConfigAdadelta struct {
+func (o *OAdadelta) SetRho(rho float64) *OAdadelta {
+	o.rho = rho
+	return o
+}
+
+type jsonConfigOAdadelta struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (a *Adadelta) GetKerasLayerConfig() interface{} {
-	if a == nil {
-		return nil
-	}
-	return jsonConfigAdadelta{
+func (o *OAdadelta) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigOAdadelta{
 		ClassName: "Adadelta",
+		Name:      o.name,
 		Config: map[string]interface{}{
-			"decay":         a.decay,
-			"epsilon":       a.epsilon,
-			"learning_rate": a.learningRate,
-			"name":          a.name,
-			"rho":           a.rho,
+			"decay":         o.decay,
+			"epsilon":       o.epsilon,
+			"learning_rate": o.learningRate,
+			"name":          o.name,
+			"rho":           o.rho,
 		},
 	}
+}
+
+func (o *OAdadelta) GetCustomLayerDefinition() string {
+	return ``
 }

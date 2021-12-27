@@ -2,161 +2,145 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type StringLookup struct {
-	name           string
+type LStringLookup struct {
 	dtype          DataType
-	inputs         []Layer
-	shape          tf.Shape
-	trainable      bool
-	maxTokens      interface{}
-	numOovIndices  float64
-	maskToken      interface{}
-	oovToken       string
-	vocabulary     interface{}
 	encoding       interface{}
+	inputs         []Layer
 	invert         bool
+	maskToken      interface{}
+	maxTokens      interface{}
+	name           string
+	numOovIndices  float64
+	oovToken       string
 	outputMode     string
-	sparse         bool
 	padToMaxTokens bool
+	shape          tf.Shape
+	sparse         bool
+	trainable      bool
+	vocabulary     interface{}
 }
 
-func NewStringLookup(options ...StringLookupOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		s := &StringLookup{
-			maxTokens:      nil,
-			numOovIndices:  1,
-			maskToken:      nil,
-			oovToken:       "[UNK]",
-			vocabulary:     nil,
-			encoding:       nil,
-			invert:         false,
-			outputMode:     "int",
-			sparse:         false,
-			padToMaxTokens: false,
-			trainable:      true,
-			inputs:         inputs,
-			name:           UniqueName("stringlookup"),
-		}
-		for _, option := range options {
-			option(s)
-		}
-		return s
+func StringLookup() *LStringLookup {
+	return &LStringLookup{
+		dtype:          String,
+		encoding:       nil,
+		invert:         false,
+		maskToken:      nil,
+		maxTokens:      nil,
+		name:           UniqueName("string_lookup"),
+		numOovIndices:  1,
+		oovToken:       "[UNK]",
+		outputMode:     "int",
+		padToMaxTokens: false,
+		sparse:         false,
+		trainable:      true,
+		vocabulary:     nil,
 	}
 }
 
-type StringLookupOption func(*StringLookup)
-
-func StringLookupWithName(name string) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.name = name
-	}
+func (l *LStringLookup) SetDtype(dtype DataType) *LStringLookup {
+	l.dtype = dtype
+	return l
 }
 
-func StringLookupWithDtype(dtype DataType) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.dtype = dtype
-	}
+func (l *LStringLookup) SetEncoding(encoding interface{}) *LStringLookup {
+	l.encoding = encoding
+	return l
 }
 
-func StringLookupWithTrainable(trainable bool) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.trainable = trainable
-	}
+func (l *LStringLookup) SetInvert(invert bool) *LStringLookup {
+	l.invert = invert
+	return l
 }
 
-func StringLookupWithMaxTokens(maxTokens interface{}) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.maxTokens = maxTokens
-	}
+func (l *LStringLookup) SetMaskToken(maskToken interface{}) *LStringLookup {
+	l.maskToken = maskToken
+	return l
 }
 
-func StringLookupWithNumOovIndices(numOovIndices float64) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.numOovIndices = numOovIndices
-	}
+func (l *LStringLookup) SetMaxTokens(maxTokens interface{}) *LStringLookup {
+	l.maxTokens = maxTokens
+	return l
 }
 
-func StringLookupWithMaskToken(maskToken interface{}) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.maskToken = maskToken
-	}
+func (l *LStringLookup) SetName(name string) *LStringLookup {
+	l.name = name
+	return l
 }
 
-func StringLookupWithOovToken(oovToken string) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.oovToken = oovToken
-	}
+func (l *LStringLookup) SetNumOovIndices(numOovIndices float64) *LStringLookup {
+	l.numOovIndices = numOovIndices
+	return l
 }
 
-func StringLookupWithVocabulary(vocabulary interface{}) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.vocabulary = vocabulary
-	}
+func (l *LStringLookup) SetOovToken(oovToken string) *LStringLookup {
+	l.oovToken = oovToken
+	return l
 }
 
-func StringLookupWithEncoding(encoding interface{}) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.encoding = encoding
-	}
+func (l *LStringLookup) SetOutputMode(outputMode string) *LStringLookup {
+	l.outputMode = outputMode
+	return l
 }
 
-func StringLookupWithInvert(invert bool) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.invert = invert
-	}
+func (l *LStringLookup) SetPadToMaxTokens(padToMaxTokens bool) *LStringLookup {
+	l.padToMaxTokens = padToMaxTokens
+	return l
 }
 
-func StringLookupWithOutputMode(outputMode string) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.outputMode = outputMode
-	}
+func (l *LStringLookup) SetShape(shape tf.Shape) *LStringLookup {
+	l.shape = shape
+	return l
 }
 
-func StringLookupWithSparse(sparse bool) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.sparse = sparse
-	}
+func (l *LStringLookup) SetSparse(sparse bool) *LStringLookup {
+	l.sparse = sparse
+	return l
 }
 
-func StringLookupWithPadToMaxTokens(padToMaxTokens bool) func(s *StringLookup) {
-	return func(s *StringLookup) {
-		s.padToMaxTokens = padToMaxTokens
-	}
+func (l *LStringLookup) SetTrainable(trainable bool) *LStringLookup {
+	l.trainable = trainable
+	return l
 }
 
-func (s *StringLookup) GetShape() tf.Shape {
-	return s.shape
+func (l *LStringLookup) SetVocabulary(vocabulary interface{}) *LStringLookup {
+	l.vocabulary = vocabulary
+	return l
 }
 
-func (s *StringLookup) GetDtype() DataType {
-	return s.dtype
+func (l *LStringLookup) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (s *StringLookup) SetInput(inputs []Layer) {
-	s.inputs = inputs
-	s.dtype = inputs[0].GetDtype()
+func (l *LStringLookup) GetDtype() DataType {
+	return l.dtype
 }
 
-func (s *StringLookup) GetInputs() []Layer {
-	return s.inputs
+func (l *LStringLookup) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (s *StringLookup) GetName() string {
-	return s.name
+func (l *LStringLookup) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigStringLookup struct {
+func (l *LStringLookup) GetName() string {
+	return l.name
+}
+
+type jsonConfigLStringLookup struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (s *StringLookup) GetKerasLayerConfig() interface{} {
+func (l *LStringLookup) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range s.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -164,27 +148,28 @@ func (s *StringLookup) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigStringLookup{
+	return jsonConfigLStringLookup{
 		ClassName: "StringLookup",
-		Name:      s.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":             s.dtype.String(),
-			"encoding":          s.encoding,
-			"invert":            s.invert,
-			"mask_token":        s.maskToken,
-			"max_tokens":        s.maxTokens,
-			"name":              s.name,
-			"num_oov_indices":   s.numOovIndices,
-			"oov_token":         s.oovToken,
-			"output_mode":       s.outputMode,
-			"pad_to_max_tokens": s.padToMaxTokens,
-			"trainable":         s.trainable,
-			"vocabulary":        s.vocabulary,
+			"dtype":             l.dtype.String(),
+			"encoding":          l.encoding,
+			"invert":            l.invert,
+			"mask_token":        l.maskToken,
+			"max_tokens":        l.maxTokens,
+			"name":              l.name,
+			"num_oov_indices":   l.numOovIndices,
+			"oov_token":         l.oovToken,
+			"output_mode":       l.outputMode,
+			"pad_to_max_tokens": l.padToMaxTokens,
+			"sparse":            l.sparse,
+			"trainable":         l.trainable,
+			"vocabulary":        l.vocabulary,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (s *StringLookup) GetCustomLayerDefinition() string {
+func (l *LStringLookup) GetCustomLayerDefinition() string {
 	return ``
 }

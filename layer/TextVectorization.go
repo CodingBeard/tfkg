@@ -2,145 +2,131 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type TextVectorization struct {
-	name                 string
+type LTextVectorization struct {
 	dtype                DataType
 	inputs               []Layer
-	shape                tf.Shape
-	trainable            bool
 	maxTokens            interface{}
-	standardize          string
-	split                string
+	name                 string
 	ngrams               interface{}
 	outputMode           string
 	outputSequenceLength interface{}
 	padToMaxTokens       bool
+	shape                tf.Shape
+	split                string
+	standardize          string
+	trainable            bool
 	vocabulary           interface{}
 }
 
-func NewTextVectorization(options ...TextVectorizationOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		t := &TextVectorization{
-			maxTokens:            nil,
-			standardize:          "lower_and_strip_punctuation",
-			split:                "whitespace",
-			ngrams:               nil,
-			outputMode:           "int",
-			outputSequenceLength: nil,
-			padToMaxTokens:       false,
-			vocabulary:           nil,
-			trainable:            true,
-			inputs:               inputs,
-			name:                 UniqueName("textvectorization"),
-		}
-		for _, option := range options {
-			option(t)
-		}
-		return t
+func TextVectorization() *LTextVectorization {
+	return &LTextVectorization{
+		dtype:                String,
+		maxTokens:            nil,
+		name:                 UniqueName("text_vectorization"),
+		ngrams:               nil,
+		outputMode:           "int",
+		outputSequenceLength: nil,
+		padToMaxTokens:       false,
+		split:                "whitespace",
+		standardize:          "lower_and_strip_punctuation",
+		trainable:            true,
+		vocabulary:           nil,
 	}
 }
 
-type TextVectorizationOption func(*TextVectorization)
-
-func TextVectorizationWithName(name string) func(t *TextVectorization) {
-	return func(t *TextVectorization) {
-		t.name = name
-	}
+func (l *LTextVectorization) SetDtype(dtype DataType) *LTextVectorization {
+	l.dtype = dtype
+	return l
 }
 
-func TextVectorizationWithDtype(dtype DataType) func(t *TextVectorization) {
-	return func(t *TextVectorization) {
-		t.dtype = dtype
-	}
+func (l *LTextVectorization) SetMaxTokens(maxTokens interface{}) *LTextVectorization {
+	l.maxTokens = maxTokens
+	return l
 }
 
-func TextVectorizationWithTrainable(trainable bool) func(t *TextVectorization) {
-	return func(t *TextVectorization) {
-		t.trainable = trainable
-	}
+func (l *LTextVectorization) SetName(name string) *LTextVectorization {
+	l.name = name
+	return l
 }
 
-func TextVectorizationWithMaxTokens(maxTokens interface{}) func(t *TextVectorization) {
-	return func(t *TextVectorization) {
-		t.maxTokens = maxTokens
-	}
+func (l *LTextVectorization) SetNgrams(ngrams interface{}) *LTextVectorization {
+	l.ngrams = ngrams
+	return l
 }
 
-func TextVectorizationWithStandardize(standardize string) func(t *TextVectorization) {
-	return func(t *TextVectorization) {
-		t.standardize = standardize
-	}
+func (l *LTextVectorization) SetOutputMode(outputMode string) *LTextVectorization {
+	l.outputMode = outputMode
+	return l
 }
 
-func TextVectorizationWithSplit(split string) func(t *TextVectorization) {
-	return func(t *TextVectorization) {
-		t.split = split
-	}
+func (l *LTextVectorization) SetOutputSequenceLength(outputSequenceLength interface{}) *LTextVectorization {
+	l.outputSequenceLength = outputSequenceLength
+	return l
 }
 
-func TextVectorizationWithNgrams(ngrams interface{}) func(t *TextVectorization) {
-	return func(t *TextVectorization) {
-		t.ngrams = ngrams
-	}
+func (l *LTextVectorization) SetPadToMaxTokens(padToMaxTokens bool) *LTextVectorization {
+	l.padToMaxTokens = padToMaxTokens
+	return l
 }
 
-func TextVectorizationWithOutputMode(outputMode string) func(t *TextVectorization) {
-	return func(t *TextVectorization) {
-		t.outputMode = outputMode
-	}
+func (l *LTextVectorization) SetShape(shape tf.Shape) *LTextVectorization {
+	l.shape = shape
+	return l
 }
 
-func TextVectorizationWithOutputSequenceLength(outputSequenceLength interface{}) func(t *TextVectorization) {
-	return func(t *TextVectorization) {
-		t.outputSequenceLength = outputSequenceLength
-	}
+func (l *LTextVectorization) SetSplit(split string) *LTextVectorization {
+	l.split = split
+	return l
 }
 
-func TextVectorizationWithPadToMaxTokens(padToMaxTokens bool) func(t *TextVectorization) {
-	return func(t *TextVectorization) {
-		t.padToMaxTokens = padToMaxTokens
-	}
+func (l *LTextVectorization) SetStandardize(standardize string) *LTextVectorization {
+	l.standardize = standardize
+	return l
 }
 
-func TextVectorizationWithVocabulary(vocabulary interface{}) func(t *TextVectorization) {
-	return func(t *TextVectorization) {
-		t.vocabulary = vocabulary
-	}
+func (l *LTextVectorization) SetTrainable(trainable bool) *LTextVectorization {
+	l.trainable = trainable
+	return l
 }
 
-func (t *TextVectorization) GetShape() tf.Shape {
-	return t.shape
+func (l *LTextVectorization) SetVocabulary(vocabulary interface{}) *LTextVectorization {
+	l.vocabulary = vocabulary
+	return l
 }
 
-func (t *TextVectorization) GetDtype() DataType {
-	return t.dtype
+func (l *LTextVectorization) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (t *TextVectorization) SetInput(inputs []Layer) {
-	t.inputs = inputs
-	t.dtype = inputs[0].GetDtype()
+func (l *LTextVectorization) GetDtype() DataType {
+	return l.dtype
 }
 
-func (t *TextVectorization) GetInputs() []Layer {
-	return t.inputs
+func (l *LTextVectorization) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (t *TextVectorization) GetName() string {
-	return t.name
+func (l *LTextVectorization) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigTextVectorization struct {
+func (l *LTextVectorization) GetName() string {
+	return l.name
+}
+
+type jsonConfigLTextVectorization struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (t *TextVectorization) GetKerasLayerConfig() interface{} {
+func (l *LTextVectorization) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range t.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -148,25 +134,26 @@ func (t *TextVectorization) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigTextVectorization{
+	return jsonConfigLTextVectorization{
 		ClassName: "TextVectorization",
-		Name:      t.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":                  t.dtype.String(),
-			"max_tokens":             t.maxTokens,
-			"name":                   t.name,
-			"ngrams":                 t.ngrams,
-			"output_mode":            t.outputMode,
-			"output_sequence_length": t.outputSequenceLength,
-			"pad_to_max_tokens":      t.padToMaxTokens,
-			"split":                  t.split,
-			"standardize":            t.standardize,
-			"trainable":              t.trainable,
+			"dtype":                  l.dtype.String(),
+			"max_tokens":             l.maxTokens,
+			"name":                   l.name,
+			"ngrams":                 l.ngrams,
+			"output_mode":            l.outputMode,
+			"output_sequence_length": l.outputSequenceLength,
+			"pad_to_max_tokens":      l.padToMaxTokens,
+			"split":                  l.split,
+			"standardize":            l.standardize,
+			"trainable":              l.trainable,
+			"vocabulary":             l.vocabulary,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (t *TextVectorization) GetCustomLayerDefinition() string {
+func (l *LTextVectorization) GetCustomLayerDefinition() string {
 	return ``
 }

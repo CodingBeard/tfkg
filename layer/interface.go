@@ -39,7 +39,7 @@ const (
 type Layer interface {
 	GetShape() tf.Shape
 	GetDtype() DataType
-	SetInput(inputs []Layer)
+	SetInputs(inputs ...Layer) Layer
 	GetInputs() []Layer
 	GetName() string
 	GetKerasLayerConfig() interface{}

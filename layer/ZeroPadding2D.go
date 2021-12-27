@@ -2,97 +2,89 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type ZeroPadding2D struct {
-	name       string
+type LZeroPadding2D struct {
+	dataFormat interface{}
 	dtype      DataType
 	inputs     []Layer
+	name       string
+	padding    []interface{}
 	shape      tf.Shape
 	trainable  bool
-	padding    []interface{}
-	dataFormat interface{}
 }
 
-func NewZeroPadding2D(options ...ZeroPadding2DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		z := &ZeroPadding2D{
-			padding:    []interface{}{1, 1},
-			dataFormat: nil,
-			trainable:  true,
-			inputs:     inputs,
-			name:       UniqueName("zeropadding2d"),
-		}
-		for _, option := range options {
-			option(z)
-		}
-		return z
+func ZeroPadding2D() *LZeroPadding2D {
+	return &LZeroPadding2D{
+		dataFormat: nil,
+		dtype:      Float32,
+		name:       UniqueName("zero_padding2d"),
+		padding:    []interface{}{1, 1},
+		trainable:  true,
 	}
 }
 
-type ZeroPadding2DOption func(*ZeroPadding2D)
-
-func ZeroPadding2DWithName(name string) func(z *ZeroPadding2D) {
-	return func(z *ZeroPadding2D) {
-		z.name = name
-	}
+func (l *LZeroPadding2D) SetDataFormat(dataFormat interface{}) *LZeroPadding2D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func ZeroPadding2DWithDtype(dtype DataType) func(z *ZeroPadding2D) {
-	return func(z *ZeroPadding2D) {
-		z.dtype = dtype
-	}
+func (l *LZeroPadding2D) SetDtype(dtype DataType) *LZeroPadding2D {
+	l.dtype = dtype
+	return l
 }
 
-func ZeroPadding2DWithTrainable(trainable bool) func(z *ZeroPadding2D) {
-	return func(z *ZeroPadding2D) {
-		z.trainable = trainable
-	}
+func (l *LZeroPadding2D) SetName(name string) *LZeroPadding2D {
+	l.name = name
+	return l
 }
 
-func ZeroPadding2DWithPadding(padding []interface{}) func(z *ZeroPadding2D) {
-	return func(z *ZeroPadding2D) {
-		z.padding = padding
-	}
+func (l *LZeroPadding2D) SetPadding(padding []interface{}) *LZeroPadding2D {
+	l.padding = padding
+	return l
 }
 
-func ZeroPadding2DWithDataFormat(dataFormat interface{}) func(z *ZeroPadding2D) {
-	return func(z *ZeroPadding2D) {
-		z.dataFormat = dataFormat
-	}
+func (l *LZeroPadding2D) SetShape(shape tf.Shape) *LZeroPadding2D {
+	l.shape = shape
+	return l
 }
 
-func (z *ZeroPadding2D) GetShape() tf.Shape {
-	return z.shape
+func (l *LZeroPadding2D) SetTrainable(trainable bool) *LZeroPadding2D {
+	l.trainable = trainable
+	return l
 }
 
-func (z *ZeroPadding2D) GetDtype() DataType {
-	return z.dtype
+func (l *LZeroPadding2D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (z *ZeroPadding2D) SetInput(inputs []Layer) {
-	z.inputs = inputs
-	z.dtype = inputs[0].GetDtype()
+func (l *LZeroPadding2D) GetDtype() DataType {
+	return l.dtype
 }
 
-func (z *ZeroPadding2D) GetInputs() []Layer {
-	return z.inputs
+func (l *LZeroPadding2D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (z *ZeroPadding2D) GetName() string {
-	return z.name
+func (l *LZeroPadding2D) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigZeroPadding2D struct {
+func (l *LZeroPadding2D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLZeroPadding2D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (z *ZeroPadding2D) GetKerasLayerConfig() interface{} {
+func (l *LZeroPadding2D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range z.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -100,20 +92,20 @@ func (z *ZeroPadding2D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigZeroPadding2D{
+	return jsonConfigLZeroPadding2D{
 		ClassName: "ZeroPadding2D",
-		Name:      z.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"data_format": z.dataFormat,
-			"dtype":       z.dtype.String(),
-			"name":        z.name,
-			"padding":     z.padding,
-			"trainable":   z.trainable,
+			"data_format": l.dataFormat,
+			"dtype":       l.dtype.String(),
+			"name":        l.name,
+			"padding":     l.padding,
+			"trainable":   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (z *ZeroPadding2D) GetCustomLayerDefinition() string {
+func (l *LZeroPadding2D) GetCustomLayerDefinition() string {
 	return ``
 }

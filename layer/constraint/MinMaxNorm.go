@@ -1,62 +1,67 @@
 package constraint
 
-type MinMaxNorm struct {
-	minValue float64
-	maxValue float64
-	rate     float64
+type CMinMaxNorm struct {
 	axis     float64
+	maxValue float64
+	minValue float64
+	name     string
+	rate     float64
 }
 
-func NewMinMaxNorm() *MinMaxNorm {
-	return &MinMaxNorm{
-		minValue: 0,
-		maxValue: 1,
-		rate:     1,
+func MinMaxNorm() *CMinMaxNorm {
+	return &CMinMaxNorm{
 		axis:     0,
+		maxValue: 1,
+		minValue: 0,
+		rate:     1,
 	}
 }
 
-func MinMaxNormWithMinValue(minValue float64) func(m *MinMaxNorm) {
-	return func(m *MinMaxNorm) {
-		m.minValue = minValue
-	}
+func (c *CMinMaxNorm) SetAxis(axis float64) *CMinMaxNorm {
+	c.axis = axis
+	return c
 }
 
-func MinMaxNormWithMaxValue(maxValue float64) func(m *MinMaxNorm) {
-	return func(m *MinMaxNorm) {
-		m.maxValue = maxValue
-	}
+func (c *CMinMaxNorm) SetMaxValue(maxValue float64) *CMinMaxNorm {
+	c.maxValue = maxValue
+	return c
 }
 
-func MinMaxNormWithRate(rate float64) func(m *MinMaxNorm) {
-	return func(m *MinMaxNorm) {
-		m.rate = rate
-	}
+func (c *CMinMaxNorm) SetMinValue(minValue float64) *CMinMaxNorm {
+	c.minValue = minValue
+	return c
 }
 
-func MinMaxNormWithAxis(axis float64) func(m *MinMaxNorm) {
-	return func(m *MinMaxNorm) {
-		m.axis = axis
-	}
+func (c *CMinMaxNorm) SetName(name string) *CMinMaxNorm {
+	c.name = name
+	return c
 }
 
-type jsonConfigMinMaxNorm struct {
+func (c *CMinMaxNorm) SetRate(rate float64) *CMinMaxNorm {
+	c.rate = rate
+	return c
+}
+
+type jsonConfigCMinMaxNorm struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (m *MinMaxNorm) GetKerasLayerConfig() interface{} {
-	if m == nil {
-		return nil
-	}
-	return jsonConfigMinMaxNorm{
+func (c *CMinMaxNorm) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigCMinMaxNorm{
 		ClassName: "MinMaxNorm",
+		Name:      c.name,
 		Config: map[string]interface{}{
-			"axis":      m.axis,
-			"max_value": m.maxValue,
-			"min_value": m.minValue,
-			"rate":      m.rate,
+			"axis":      c.axis,
+			"max_value": c.maxValue,
+			"min_value": c.minValue,
+			"rate":      c.rate,
 		},
 	}
+}
+
+func (c *CMinMaxNorm) GetCustomLayerDefinition() string {
+	return ``
 }

@@ -1,139 +1,132 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Embedding struct {
-	name                  string
+type LEmbedding struct {
+	activityRegularizer   regularizer.Regularizer
+	batchInputShape       []interface{}
 	dtype                 DataType
-	inputs                []Layer
-	shape                 tf.Shape
-	trainable             bool
-	inputDim              float64
-	outputDim             float64
+	embeddingsConstraint  constraint.Constraint
 	embeddingsInitializer initializer.Initializer
 	embeddingsRegularizer regularizer.Regularizer
-	activityRegularizer   regularizer.Regularizer
-	embeddingsConstraint  constraint.Constraint
-	maskZero              bool
+	inputDim              float64
 	inputLength           interface{}
-	batchInputShape       []interface{}
+	inputs                []Layer
+	maskZero              bool
+	name                  string
+	outputDim             float64
+	shape                 tf.Shape
+	trainable             bool
 }
 
-func NewEmbedding(inputDim float64, outputDim float64, options ...EmbeddingOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		e := &Embedding{
-			inputDim:              inputDim,
-			outputDim:             outputDim,
-			embeddingsInitializer: &initializer.RandomUniform{},
-			embeddingsRegularizer: &regularizer.NilRegularizer{},
-			activityRegularizer:   &regularizer.NilRegularizer{},
-			embeddingsConstraint:  &constraint.NilConstraint{},
-			maskZero:              false,
-			inputLength:           nil,
-			batchInputShape:       []interface{}{interface{}(nil), interface{}(nil)},
-			trainable:             true,
-			inputs:                inputs,
-			name:                  UniqueName("embedding"),
-		}
-		for _, option := range options {
-			option(e)
-		}
-		return e
+func Embedding(inputDim float64, outputDim float64) *LEmbedding {
+	return &LEmbedding{
+		activityRegularizer:   &regularizer.NilRegularizer{},
+		batchInputShape:       []interface{}{interface{}(nil), interface{}(nil)},
+		dtype:                 Float32,
+		embeddingsConstraint:  &constraint.NilConstraint{},
+		embeddingsInitializer: initializer.RandomUniform(),
+		embeddingsRegularizer: &regularizer.NilRegularizer{},
+		inputDim:              inputDim,
+		inputLength:           nil,
+		maskZero:              false,
+		name:                  UniqueName("embedding"),
+		outputDim:             outputDim,
+		trainable:             true,
 	}
 }
 
-type EmbeddingOption func(*Embedding)
-
-func EmbeddingWithName(name string) func(e *Embedding) {
-	return func(e *Embedding) {
-		e.name = name
-	}
+func (l *LEmbedding) SetActivityRegularizer(activityRegularizer regularizer.Regularizer) *LEmbedding {
+	l.activityRegularizer = activityRegularizer
+	return l
 }
 
-func EmbeddingWithDtype(dtype DataType) func(e *Embedding) {
-	return func(e *Embedding) {
-		e.dtype = dtype
-	}
+func (l *LEmbedding) SetBatchInputShape(batchInputShape []interface{}) *LEmbedding {
+	l.batchInputShape = batchInputShape
+	return l
 }
 
-func EmbeddingWithTrainable(trainable bool) func(e *Embedding) {
-	return func(e *Embedding) {
-		e.trainable = trainable
-	}
+func (l *LEmbedding) SetDtype(dtype DataType) *LEmbedding {
+	l.dtype = dtype
+	return l
 }
 
-func EmbeddingWithEmbeddingsInitializer(embeddingsInitializer initializer.Initializer) func(e *Embedding) {
-	return func(e *Embedding) {
-		e.embeddingsInitializer = embeddingsInitializer
-	}
+func (l *LEmbedding) SetEmbeddingsConstraint(embeddingsConstraint constraint.Constraint) *LEmbedding {
+	l.embeddingsConstraint = embeddingsConstraint
+	return l
 }
 
-func EmbeddingWithEmbeddingsRegularizer(embeddingsRegularizer regularizer.Regularizer) func(e *Embedding) {
-	return func(e *Embedding) {
-		e.embeddingsRegularizer = embeddingsRegularizer
-	}
+func (l *LEmbedding) SetEmbeddingsInitializer(embeddingsInitializer initializer.Initializer) *LEmbedding {
+	l.embeddingsInitializer = embeddingsInitializer
+	return l
 }
 
-func EmbeddingWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(e *Embedding) {
-	return func(e *Embedding) {
-		e.activityRegularizer = activityRegularizer
-	}
+func (l *LEmbedding) SetEmbeddingsRegularizer(embeddingsRegularizer regularizer.Regularizer) *LEmbedding {
+	l.embeddingsRegularizer = embeddingsRegularizer
+	return l
 }
 
-func EmbeddingWithEmbeddingsConstraint(embeddingsConstraint constraint.Constraint) func(e *Embedding) {
-	return func(e *Embedding) {
-		e.embeddingsConstraint = embeddingsConstraint
-	}
+func (l *LEmbedding) SetInputLength(inputLength interface{}) *LEmbedding {
+	l.inputLength = inputLength
+	return l
 }
 
-func EmbeddingWithMaskZero(maskZero bool) func(e *Embedding) {
-	return func(e *Embedding) {
-		e.maskZero = maskZero
-	}
+func (l *LEmbedding) SetMaskZero(maskZero bool) *LEmbedding {
+	l.maskZero = maskZero
+	return l
 }
 
-func EmbeddingWithInputLength(inputLength interface{}) func(e *Embedding) {
-	return func(e *Embedding) {
-		e.inputLength = inputLength
-	}
+func (l *LEmbedding) SetName(name string) *LEmbedding {
+	l.name = name
+	return l
 }
 
-func (e *Embedding) GetShape() tf.Shape {
-	return e.shape
+func (l *LEmbedding) SetShape(shape tf.Shape) *LEmbedding {
+	l.shape = shape
+	return l
 }
 
-func (e *Embedding) GetDtype() DataType {
-	return e.dtype
+func (l *LEmbedding) SetTrainable(trainable bool) *LEmbedding {
+	l.trainable = trainable
+	return l
 }
 
-func (e *Embedding) SetInput(inputs []Layer) {
-	e.inputs = inputs
-	e.dtype = inputs[0].GetDtype()
+func (l *LEmbedding) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (e *Embedding) GetInputs() []Layer {
-	return e.inputs
+func (l *LEmbedding) GetDtype() DataType {
+	return l.dtype
 }
 
-func (e *Embedding) GetName() string {
-	return e.name
+func (l *LEmbedding) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-type jsonConfigEmbedding struct {
+func (l *LEmbedding) GetInputs() []Layer {
+	return l.inputs
+}
+
+func (l *LEmbedding) GetName() string {
+	return l.name
+}
+
+type jsonConfigLEmbedding struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (e *Embedding) GetKerasLayerConfig() interface{} {
+func (l *LEmbedding) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range e.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -141,27 +134,27 @@ func (e *Embedding) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigEmbedding{
+	return jsonConfigLEmbedding{
 		ClassName: "Embedding",
-		Name:      e.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"activity_regularizer":   e.activityRegularizer.GetKerasLayerConfig(),
-			"batch_input_shape":      e.batchInputShape,
-			"dtype":                  e.dtype.String(),
-			"embeddings_constraint":  e.embeddingsConstraint.GetKerasLayerConfig(),
-			"embeddings_initializer": e.embeddingsInitializer.GetKerasLayerConfig(),
-			"embeddings_regularizer": e.embeddingsRegularizer.GetKerasLayerConfig(),
-			"input_dim":              e.inputDim,
-			"input_length":           e.inputLength,
-			"mask_zero":              e.maskZero,
-			"name":                   e.name,
-			"output_dim":             e.outputDim,
-			"trainable":              e.trainable,
+			"activity_regularizer":   l.activityRegularizer.GetKerasLayerConfig(),
+			"batch_input_shape":      l.batchInputShape,
+			"dtype":                  l.dtype.String(),
+			"embeddings_constraint":  l.embeddingsConstraint.GetKerasLayerConfig(),
+			"embeddings_initializer": l.embeddingsInitializer.GetKerasLayerConfig(),
+			"embeddings_regularizer": l.embeddingsRegularizer.GetKerasLayerConfig(),
+			"input_dim":              l.inputDim,
+			"input_length":           l.inputLength,
+			"mask_zero":              l.maskZero,
+			"name":                   l.name,
+			"output_dim":             l.outputDim,
+			"trainable":              l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (e *Embedding) GetCustomLayerDefinition() string {
+func (l *LEmbedding) GetCustomLayerDefinition() string {
 	return ``
 }

@@ -37,497 +37,332 @@ func main() {
 	for _, object := range objects {
 		fmt.Println(object.Type, object.Name)
 		if object.Type == "optimizer" {
-			createOptimizer(object)
+			f := newFileGenerator(
+				object,
+				"../../optimizer",
+				&parameter{
+					Name: "name",
+				},
+			)
+			f.generate()
 		} else if object.Type == "initializer" {
-			createInitializer(object)
+			f := newFileGenerator(
+				object,
+				"../../layer/initializer",
+				&parameter{
+					Name: "name",
+				},
+			)
+			f.generate()
 		} else if object.Type == "regularizer" {
-			createRegularizer(object)
+			f := newFileGenerator(
+				object,
+				"../../layer/regularizer",
+				&parameter{
+					Name: "name",
+				},
+			)
+			f.generate()
 		} else if object.Type == "constraint" {
-			createConstraint(object)
+			f := newFileGenerator(
+				object,
+				"../../layer/constraint",
+				&parameter{
+					Name: "name",
+				},
+			)
+			f.generate()
 		} else if object.Type == "layer" {
-			createLayer(object)
+			f := newFileGenerator(
+				object,
+				"../../layer",
+				&parameter{
+					Name:       "shape",
+					StringType: "tf.Shape",
+				},
+				&parameter{
+					Name:       "inputs",
+					StringType: "[]Layer",
+				},
+				&parameter{
+					Name: "name",
+				},
+			)
+			f.generate()
 		}
-	}
-
-	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/layer").Output()
-	if e != nil {
-		panic(e)
-	}
-
-	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/layer/constraint").Output()
-	if e != nil {
-		panic(e)
-	}
-
-	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/layer/initializer").Output()
-	if e != nil {
-		panic(e)
-	}
-
-	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/layer/regularizer").Output()
-	if e != nil {
-		panic(e)
 	}
 
 	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/optimizer").Output()
 	if e != nil {
 		panic(e)
 	}
-}
-
-func createOptimizer(object objectJson) {
-	e := os.MkdirAll("../../optimizer", os.ModePerm)
+	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/layer/initializer").Output()
 	if e != nil {
 		panic(e)
 	}
-
-	var setters []string
-	var objectProperties []string
-	objectPropertyNames := make(map[string]bool)
-	for _, param := range getRequiredParams(object) {
-		objectPropertyNames[param[0]] = true
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
+	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/layer/regularizer").Output()
+	if e != nil {
+		panic(e)
 	}
-	for _, param := range getOptionalParams(object) {
-		objectPropertyNames[param[0]] = true
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
-		setters = append(setters, getOptionString(object.Name, param[0], param[1]))
+	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/layer/constraint").Output()
+	if e != nil {
+		panic(e)
 	}
-
-	subConfig := object.Config["config"].(map[string]interface{})
-	for originalName, value := range subConfig {
-		name := snakeCaseToCamelCase(originalName)
-		if _, ok := objectPropertyNames[name]; ok {
-			continue
-		}
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", snakeCaseToCamelCase(name), getGolangTypeFromValue(object.Name, originalName, value)))
-	}
-
-	var requiredParamSetters []string
-	for _, paramName := range getRequiredParamNames(object) {
-		requiredParamSetters = append(requiredParamSetters, fmt.Sprintf("%s: %s", paramName, paramName))
-	}
-
-	var defaultParamSetters []string
-	for _, param := range getOptionalParamDefaults(object) {
-		defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("%s: %s,", param[0], param[1]))
-	}
-
-	lines := []string{
-		"package optimizer",
-		"",
-		fmt.Sprintf("type %s struct {", object.Name),
-		"\t" + strings.Join(objectProperties, "\n\t"),
-		"}",
-		"",
-		fmt.Sprintf("func New%s(%s) *%s {", object.Name, getRequiredParamsString(object), object.Name),
-		fmt.Sprintf(
-			"\treturn &%s{\n\t\t%s%s\t\n\t}",
-			object.Name,
-			strings.Join(requiredParamSetters, "\n\t\t"),
-			strings.Join(defaultParamSetters, "\n\t\t"),
-		),
-		"}",
-		"",
-		strings.Join(setters, "\n\n"),
-		"",
-		fmt.Sprintf("type jsonConfig%s struct {", object.Name),
-		"\tClassName string `json:\"class_name\"`",
-		"\tName string `json:\"name\"`",
-		"\tConfig map[string]interface{} `json:\"config\"`",
-		"}",
-		fmt.Sprintf(
-			"func (%s *%s) GetKerasLayerConfig() interface{} {",
-			strings.ToLower(string(object.Name[0])),
-			object.Name,
-		),
-		fmt.Sprintf("\tif %s == nil {", strings.ToLower(string(object.Name[0]))),
-		"\t\treturn nil",
-		"\t}",
-		fmt.Sprintf("\treturn jsonConfig%s{", object.Name),
-		fmt.Sprintf("\t\tClassName: \"%s\",", object.Config["class_name"]),
-		fmt.Sprintf("\t\tConfig: %s,", getConfigValue(object)),
-		"\t}",
-		"}",
-	}
-
-	e = ioutil.WriteFile(
-		filepath.Join("../../optimizer", fmt.Sprintf("%s.go", object.Name)),
-		[]byte(strings.Join(lines, "\n")),
-		os.ModePerm,
-	)
+	_, e = exec.Command("go", "fmt", "github.com/codingbeard/tfkg/layer").Output()
 	if e != nil {
 		panic(e)
 	}
 }
 
-func createInitializer(object objectJson) {
-	e := os.MkdirAll("../../layer/initializer", os.ModePerm)
-	if e != nil {
-		panic(e)
-	}
+type parameter struct {
+	ObjectName   string
+	Name         string
+	Default      interface{}
+	StringType   string
+	IsRequired   bool
+	IsAdditional bool
+}
 
-	var setters []string
-	var objectProperties []string
-	objectPropertyNames := make(map[string]bool)
-	for _, param := range getRequiredParams(object) {
-		objectPropertyNames[param[0]] = true
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
-	}
-	for _, param := range getOptionalParams(object) {
-		objectPropertyNames[param[0]] = true
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
-		setters = append(setters, getOptionString(object.Name, param[0], param[1]))
-	}
+func (p *parameter) getCamelCaseName() string {
+	str := p.Name
+	str = strings.ReplaceAll(str, "_", " ")
+	str = strings.Title(str)
+	str = strings.ReplaceAll(str, " ", "")
+	return strings.ToLower(string(str[0])) + str[1:]
+}
 
-	subConfig := object.Config["config"].(map[string]interface{})
-	for originalName, value := range subConfig {
-		name := snakeCaseToCamelCase(originalName)
-		if _, ok := objectPropertyNames[name]; ok {
-			continue
+func (p *parameter) getGolangType() string {
+	stringValue := ""
+	if strings.HasSuffix(p.Name, "constraint") {
+		stringValue = "constraint.Constraint"
+	} else if strings.HasSuffix(p.Name, "initializer") && p.ObjectName != "LRandomFourierFeatures" {
+		stringValue = "initializer.Initializer"
+	} else if strings.HasSuffix(p.Name, "regularizer") {
+		stringValue = "regularizer.Regularizer"
+	} else if strings.HasSuffix(p.Name, "activation") {
+		stringValue = "string"
+	} else {
+		if p.StringType != "" {
+			stringValue = p.StringType
+		} else {
+			stringValue = fmt.Sprintf("%T", p.Default)
 		}
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", snakeCaseToCamelCase(name), getGolangTypeFromValue(object.Name, originalName, value)))
+		if stringValue == "<nil>" {
+			stringValue = "interface{}"
+		}
+		if p.Name == "dtype" {
+			stringValue = "DataType"
+		}
+		if p.Name == "name" {
+			stringValue = "string"
+		}
+	}
+	return stringValue
+}
+
+func (p *parameter) getStringDefaultValue() string {
+	stringValue := fmt.Sprintf("%#v", p.Default)
+	if stringValue == "<nil>" {
+		stringValue = "nil"
+	}
+	if p.Name == "activation" && stringValue == "nil" {
+		stringValue = `"linear"`
+	} else if p.Name == "embeddings_initializer" && fmt.Sprint(p.Default) == "uniform" {
+		stringValue = "initializer.RandomUniform()"
+	} else if strings.HasSuffix(p.Name, "constraint") {
+		if stringValue != "nil" {
+			if config, ok := p.Default.(map[string]interface{}); ok {
+				stringValue = fmt.Sprintf("constraint.%s()", config["class_name"])
+			} else {
+				stringValue = fmt.Sprintf("constraint.%s()", strings.Title(snakeCaseToCamelCase(fmt.Sprint(p.Default))))
+			}
+		} else {
+			stringValue = "&constraint.NilConstraint{}"
+		}
+	} else if strings.HasSuffix(p.Name, "initializer") && p.ObjectName != "LRandomFourierFeatures" {
+		if stringValue != "nil" {
+			if config, ok := p.Default.(map[string]interface{}); ok {
+				stringValue = fmt.Sprintf("initializer.%s()", config["class_name"])
+			} else {
+				stringValue = fmt.Sprintf("initializer.%s()", strings.Title(snakeCaseToCamelCase(fmt.Sprint(p.Default))))
+			}
+		} else {
+			stringValue = "&initializer.NilInitializer{}"
+		}
+	} else if strings.HasSuffix(p.Name, "regularizer") {
+		if stringValue != "nil" {
+			if config, ok := p.Default.(map[string]interface{}); ok {
+				stringValue = fmt.Sprintf("regularizer.%s()", config["class_name"])
+			} else {
+				stringValue = fmt.Sprintf("regularizer.%s()", strings.Title(snakeCaseToCamelCase(fmt.Sprint(p.Default))))
+			}
+		} else {
+			stringValue = "&regularizer.NilRegularizer{}"
+		}
+	} else if p.Name == "dtype" && stringValue == "nil" {
+		stringValue = "Float32"
+	} else if p.Name == "dtype" {
+		stringValue = strings.Title(strings.ReplaceAll(stringValue, `"`, ``))
+	} else if p.Name == "trainable" {
+		stringValue = "true"
+	} else if p.Name == "name" {
+		stringValue = fmt.Sprintf("UniqueName(\"%s\")", strings.ReplaceAll(stringValue, `"`, ``))
 	}
 
-	var requiredParamSetters []string
-	for _, paramName := range getRequiredParamNames(object) {
-		requiredParamSetters = append(requiredParamSetters, fmt.Sprintf("%s: %s", paramName, paramName))
-	}
+	return stringValue
+}
 
-	var defaultParamSetters []string
-	for _, param := range getOptionalParamDefaults(object) {
-		defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("%s: %s,", param[0], param[1]))
-	}
+type fileGenerator struct {
+	Dir    string
+	Params []*parameter
+	object objectJson
+}
 
-	lines := []string{
-		"package initializer",
-		"",
-		fmt.Sprintf("type %s struct {", object.Name),
-		"\t" + strings.Join(objectProperties, "\n\t"),
-		"}",
-		"",
-		fmt.Sprintf("func New%s(%s) *%s {", object.Name, getRequiredParamsString(object), object.Name),
-		fmt.Sprintf(
-			"\treturn &%s{\n\t\t%s%s\t\n\t}",
-			object.Name,
-			strings.Join(requiredParamSetters, "\n\t\t"),
-			strings.Join(defaultParamSetters, "\n\t\t"),
-		),
-		"}",
-		"",
-		strings.Join(setters, "\n\n"),
-		"",
-		fmt.Sprintf("type jsonConfig%s struct {", object.Name),
-		"\tClassName string `json:\"class_name\"`",
-		"\tName string `json:\"name\"`",
-		"\tConfig map[string]interface{} `json:\"config\"`",
-		"}",
-		fmt.Sprintf(
-			"func (%s *%s) GetKerasLayerConfig() interface{} {",
-			strings.ToLower(string(object.Name[0])),
-			object.Name,
-		),
-		fmt.Sprintf("\tif %s == nil {", strings.ToLower(string(object.Name[0]))),
-		"\t\treturn nil",
-		"\t}",
-		fmt.Sprintf("\treturn jsonConfig%s{", object.Name),
-		fmt.Sprintf("\t\tClassName: \"%s\",", object.Config["class_name"]),
-		fmt.Sprintf("\t\tConfig: %s,", getConfigValue(object)),
-		"\t}",
-		"}",
+func newFileGenerator(object objectJson, dir string, additionalParams ...*parameter) *fileGenerator {
+	f := &fileGenerator{
+		Dir:    dir,
+		object: object,
 	}
+	f.loadParams()
+	for _, param := range additionalParams {
+		param.ObjectName = fmt.Sprintf("%s%s", strings.Title(string(object.Type[0])), object.Name)
+		param.IsAdditional = true
+		f.addParam(param)
+	}
+	sort.SliceStable(f.Params, func(i, j int) bool {
+		return f.Params[i].Name < f.Params[j].Name
+	})
+	return f
+}
 
-	e = ioutil.WriteFile(
-		filepath.Join("../../layer/initializer", fmt.Sprintf("%s.go", object.Name)),
-		[]byte(strings.Join(lines, "\n")),
-		os.ModePerm,
-	)
-	if e != nil {
-		panic(e)
+func (f *fileGenerator) loadParams() {
+	for _, param := range f.object.RequiredParams {
+		paramSliceInterface, ok := param.([]interface{})
+		if ok {
+			f.addParam(&parameter{
+				ObjectName: fmt.Sprintf("%s%s", strings.Title(string(f.object.Type[0])), f.object.Name),
+				Name:       paramSliceInterface[0].(string),
+				Default:    paramSliceInterface[1],
+				IsRequired: true,
+			})
+		}
+	}
+	for _, param := range f.object.OptionalParams {
+		paramSliceInterface, ok := param.([]interface{})
+		if ok {
+			f.addParam(&parameter{
+				ObjectName: fmt.Sprintf("%s%s", strings.Title(string(f.object.Type[0])), f.object.Name),
+				Name:       paramSliceInterface[0].(string),
+				Default:    paramSliceInterface[1],
+				IsRequired: false,
+			})
+		}
+	}
+	for key, defaultValue := range f.object.Config["config"].(map[string]interface{}) {
+		f.addParam(&parameter{
+			ObjectName: fmt.Sprintf("%s%s", strings.Title(string(f.object.Type[0])), f.object.Name),
+			Name:       key,
+			Default:    defaultValue,
+			IsRequired: false,
+		})
 	}
 }
 
-func createRegularizer(object objectJson) {
-	e := os.MkdirAll("../../layer/regularizer", os.ModePerm)
-	if e != nil {
-		panic(e)
-	}
-
-	var setters []string
-	var objectProperties []string
-	objectPropertyNames := make(map[string]bool)
-	for _, param := range getRequiredParams(object) {
-		objectPropertyNames[param[0]] = true
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
-	}
-	for _, param := range getOptionalParams(object) {
-		objectPropertyNames[param[0]] = true
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
-		setters = append(setters, getOptionString(object.Name, param[0], param[1]))
-	}
-
-	subConfig := object.Config["config"].(map[string]interface{})
-	for originalName, value := range subConfig {
-		name := snakeCaseToCamelCase(originalName)
-		if _, ok := objectPropertyNames[name]; ok {
-			continue
+func (f *fileGenerator) addParam(param *parameter) {
+	found := false
+	for _, p := range f.Params {
+		if p.Name == param.Name {
+			found = true
 		}
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", snakeCaseToCamelCase(name), getGolangTypeFromValue(object.Name, originalName, value)))
 	}
-
-	var requiredParamSetters []string
-	for _, paramName := range getRequiredParamNames(object) {
-		requiredParamSetters = append(requiredParamSetters, fmt.Sprintf("%s: %s", paramName, paramName))
-	}
-
-	var defaultParamSetters []string
-	for _, param := range getOptionalParamDefaults(object) {
-		defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("%s: %s,", param[0], param[1]))
-	}
-
-	lines := []string{
-		"package regularizer",
-		"",
-		fmt.Sprintf("type %s struct {", object.Name),
-		"\t" + strings.Join(objectProperties, "\n\t"),
-		"}",
-		"",
-		fmt.Sprintf("func New%s(%s) *%s {", object.Name, getRequiredParamsString(object), object.Name),
-		fmt.Sprintf(
-			"\treturn &%s{\n\t\t%s%s\t\n\t}",
-			object.Name,
-			strings.Join(requiredParamSetters, "\n\t\t"),
-			strings.Join(defaultParamSetters, "\n\t\t"),
-		),
-		"}",
-		"",
-		strings.Join(setters, "\n\n"),
-		"",
-		fmt.Sprintf("type jsonConfig%s struct {", object.Name),
-		"\tClassName string `json:\"class_name\"`",
-		"\tName string `json:\"name\"`",
-		"\tConfig map[string]interface{} `json:\"config\"`",
-		"}",
-		fmt.Sprintf(
-			"func (%s *%s) GetKerasLayerConfig() interface{} {",
-			strings.ToLower(string(object.Name[0])),
-			object.Name,
-		),
-		fmt.Sprintf("\tif %s == nil {", strings.ToLower(string(object.Name[0]))),
-		"\t\treturn nil",
-		"\t}",
-		fmt.Sprintf("\treturn jsonConfig%s{", object.Name),
-		fmt.Sprintf("\t\tClassName: \"%s\",", object.Config["class_name"]),
-		fmt.Sprintf("\t\tConfig: %s,", getConfigValue(object)),
-		"\t}",
-		"}",
-	}
-
-	e = ioutil.WriteFile(
-		filepath.Join("../../layer/regularizer", fmt.Sprintf("%s.go", object.Name)),
-		[]byte(strings.Join(lines, "\n")),
-		os.ModePerm,
-	)
-	if e != nil {
-		panic(e)
+	if !found {
+		f.Params = append(f.Params, param)
 	}
 }
 
-func createConstraint(object objectJson) {
-	e := os.MkdirAll("../../layer/constraint", os.ModePerm)
-	if e != nil {
-		panic(e)
-	}
-
-	var setters []string
-	var objectProperties []string
-	objectPropertyNames := make(map[string]bool)
-	for _, param := range getRequiredParams(object) {
-		objectPropertyNames[param[0]] = true
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
-	}
-	for _, param := range getOptionalParams(object) {
-		objectPropertyNames[param[0]] = true
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
-		setters = append(setters, getOptionString(object.Name, param[0], param[1]))
-	}
-
-	subConfig := object.Config["config"].(map[string]interface{})
-	for originalName, value := range subConfig {
-		name := snakeCaseToCamelCase(originalName)
-		if _, ok := objectPropertyNames[name]; ok {
-			continue
-		}
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", snakeCaseToCamelCase(name), getGolangTypeFromValue(object.Name, originalName, value)))
-	}
-
-	var requiredParamSetters []string
-	for _, paramName := range getRequiredParamNames(object) {
-		requiredParamSetters = append(requiredParamSetters, fmt.Sprintf("%s: %s", paramName, paramName))
-	}
-
-	var defaultParamSetters []string
-	for _, param := range getOptionalParamDefaults(object) {
-		defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("%s: %s,", param[0], param[1]))
-	}
-
+func (f *fileGenerator) getOptionString(param *parameter) string {
+	receiver := strings.ToLower(string(param.ObjectName[0]))
 	lines := []string{
-		"package constraint",
-		"",
-		fmt.Sprintf("type %s struct {", object.Name),
-		"\t" + strings.Join(objectProperties, "\n\t"),
-		"}",
-		"",
-		fmt.Sprintf("func New%s(%s) *%s {", object.Name, getRequiredParamsString(object), object.Name),
 		fmt.Sprintf(
-			"\treturn &%s{\n\t\t%s%s\t\n\t}",
-			object.Name,
-			strings.Join(requiredParamSetters, "\n\t\t"),
-			strings.Join(defaultParamSetters, "\n\t\t"),
+			"func (%s *%s) Set%s(%s %s) *%s {",
+			receiver,
+			param.ObjectName,
+			strings.Title(param.getCamelCaseName()),
+			param.getCamelCaseName(),
+			param.getGolangType(),
+			param.ObjectName,
+		),
+		fmt.Sprintf(
+			"\t %s.%s = %s",
+			receiver,
+			param.getCamelCaseName(),
+			param.getCamelCaseName(),
+		),
+		fmt.Sprintf(
+			"\treturn %s",
+			receiver,
 		),
 		"}",
-		"",
-		strings.Join(setters, "\n\n"),
-		"",
-		fmt.Sprintf("type jsonConfig%s struct {", object.Name),
-		"\tClassName string `json:\"class_name\"`",
-		"\tName string `json:\"name\"`",
-		"\tConfig map[string]interface{} `json:\"config\"`",
-		"}",
-		fmt.Sprintf(
-			"func (%s *%s) GetKerasLayerConfig() interface{} {",
-			strings.ToLower(string(object.Name[0])),
-			object.Name,
-		),
-		fmt.Sprintf("\tif %s == nil {", strings.ToLower(string(object.Name[0]))),
-		"\t\treturn nil",
-		"\t}",
-		fmt.Sprintf("\treturn jsonConfig%s{", object.Name),
-		fmt.Sprintf("\t\tClassName: \"%s\",", object.Config["class_name"]),
-		fmt.Sprintf("\t\tConfig: %s,", getConfigValue(object)),
-		"\t}",
-		"}",
 	}
-
-	e = ioutil.WriteFile(
-		filepath.Join("../../layer/constraint", fmt.Sprintf("%s.go", object.Name)),
-		[]byte(strings.Join(lines, "\n")),
-		os.ModePerm,
-	)
-	if e != nil {
-		panic(e)
-	}
+	return strings.Join(lines, "\n")
 }
 
-func createLayer(object objectJson) {
-	e := os.MkdirAll("../../layer", os.ModePerm)
+func (f *fileGenerator) generate() {
+	e := os.MkdirAll(f.Dir, os.ModePerm)
 	if e != nil {
 		panic(e)
 	}
 
-	var setters []string
+	reciever := strings.ToLower(string(f.object.Type[0]))
+	structName := fmt.Sprintf("%s%s", strings.Title(string(f.object.Type[0])), f.object.Name)
+	var options []string
 	var objectProperties []string
-	objectPropertyNames := make(map[string]bool)
-	for _, param := range getRequiredParams(object) {
-		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
-		objectPropertyNames[param[0]] = true
-	}
-	setters = append(setters, getOptionString(object.Name, "name", "string"))
-	setters = append(setters, getOptionString(object.Name, "dtype", "DataType"))
-	setters = append(setters, getOptionString(object.Name, "trainable", "bool"))
-	for _, param := range getOptionalParams(object) {
-		if param[0] != "dtype" && param[0] != "name" && param[0] != "trainable" {
-			objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param[0], param[1]))
-			objectPropertyNames[param[0]] = true
-		}
-		if param[0] != "name" && param[0] != "trainable" && param[0] != "dtype" {
-			setters = append(setters, getOptionString(object.Name, param[0], param[1]))
-		}
-	}
+	var paramSetters []string
+	var constructorParamsString string
 
-	subConfig := object.Config["config"].(map[string]interface{})
-	for originalName, value := range subConfig {
-		name := snakeCaseToCamelCase(originalName)
-		if _, ok := objectPropertyNames[name]; ok {
-			continue
-		}
-		if name != "dtype" && name != "name" && name != "trainable" {
-			objectProperties = append(objectProperties, fmt.Sprintf("%s %s", snakeCaseToCamelCase(name), getGolangTypeFromValue(object.Name, originalName, value)))
-		}
+	configLines := []string{
+		"map[string]interface{}{",
 	}
+	for _, param := range f.Params {
+		objectProperties = append(objectProperties, fmt.Sprintf("%s %s", param.getCamelCaseName(), param.getGolangType()))
+		if param.IsRequired {
+			constructorParamsString += fmt.Sprintf(
+				"%s %s, ",
+				param.getCamelCaseName(),
+				param.getGolangType(),
+			)
+			paramSetters = append(paramSetters, fmt.Sprintf("%s: %s,", param.getCamelCaseName(), param.getCamelCaseName()))
+		} else {
+			if param.Name != "inputs" {
+				options = append(options, f.getOptionString(param))
+			}
+			if !param.IsAdditional {
+				paramSetters = append(paramSetters, fmt.Sprintf("%s: %s,", param.getCamelCaseName(), param.getStringDefaultValue()))
+			}
+		}
 
-	var requiredParamSetters []string
-	objectParamSetterNames := make(map[string]bool)
-	for _, paramName := range getRequiredParamNames(object) {
-		if paramName == "trainable" {
-			continue
-		}
-		requiredParamSetters = append(requiredParamSetters, fmt.Sprintf("%s: %s,", paramName, paramName))
-		objectParamSetterNames[paramName] = true
-	}
-
-	var defaultParamSetters []string
-	for _, param := range getOptionalParamDefaults(object) {
-		if param[0] == "name" || param[0] == "trainable" {
-			continue
-		}
-		defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("%s: %s,", param[0], param[1]))
-		objectParamSetterNames[param[0]] = true
-	}
-	for originalName, value := range subConfig {
-		name := snakeCaseToCamelCase(originalName)
-		if _, ok := objectParamSetterNames[name]; ok {
-			continue
-		}
-		if name != "dtype" && name != "name" && name != "trainable" {
-			defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("%s: %s,", snakeCaseToCamelCase(name), getGolangStringFromValue(object.Name, originalName, value)))
+		if !param.IsAdditional {
+			getter := param.getCamelCaseName()
+			if param.Name == "dtype" {
+				getter = "dtype.String()"
+			}
+			if strings.HasSuffix(param.Name, "constraint") ||
+				(strings.HasSuffix(param.Name, "initializer") && structName != "LRandomFourierFeatures") ||
+				strings.HasSuffix(param.Name, "regularizer") {
+				getter += ".GetKerasLayerConfig()"
+			}
+			configLines = append(configLines, fmt.Sprintf(
+				"\t\"%s\": %s.%s,",
+				param.Name,
+				reciever,
+				getter,
+			))
 		}
 	}
-	defaultParamSetters = append(defaultParamSetters, "trainable: true,")
-	defaultParamSetters = append(defaultParamSetters, "inputs: inputs,")
-	defaultParamSetters = append(defaultParamSetters, fmt.Sprintf("name: UniqueName(\"%s\"),", strings.ToLower(object.Name)))
-
-	requiredParamSettersString := strings.Join(requiredParamSetters, "\n\t\t\t")
-	if len(requiredParamSetters) > 0 {
-		requiredParamSettersString += "\n\t\t\t"
-	}
-	reciever := strings.ToLower(string(object.Name[0]))
-	lines := []string{
-		fmt.Sprintf("type %s struct {", object.Name),
-		"\tname string",
-		"\tdtype DataType",
-		"\tinputs []Layer",
-		"\tshape tf.Shape",
-		"\ttrainable bool",
-		"\t" + strings.Join(objectProperties, "\n\t"),
-		"}",
-		"",
-		fmt.Sprintf(
-			"func New%s(%soptions ...%sOption) func(inputs ...Layer) Layer {",
-			object.Name,
-			getRequiredParamsString(object),
-			object.Name,
-		),
-		"\treturn func(inputs ...Layer) Layer {",
-		fmt.Sprintf(
-			"\t\t%s := &%s{\n\t\t\t%s%s\t\t\n\t\t}",
-			reciever,
-			object.Name,
-			requiredParamSettersString,
-			strings.Join(defaultParamSetters, "\n\t\t\t"),
-		),
-		"\t\tfor _, option := range options {",
-		fmt.Sprintf("\t\t\toption(%s)", reciever),
-		"\t\t}",
-		fmt.Sprintf("\t\treturn %s", reciever),
-		"\t}",
-		"}",
-		"",
-		fmt.Sprintf("type %sOption func (*%s)", object.Name, object.Name),
-		"",
-		strings.Join(setters, "\n\n"),
-		"",
-		fmt.Sprintf(
+	configLines = append(configLines, "}")
+	layerDefaultGetters := ""
+	if f.object.Type == "layer" {
+		layerDefaultGetters = fmt.Sprintf(
 			`
 func (%s *%s) GetShape() tf.Shape {
 	return %s.shape
@@ -537,9 +372,9 @@ func (%s *%s) GetDtype() DataType {
 	return %s.dtype
 }
 
-func (%s *%s) SetInput(inputs []Layer) {
+func (%s *%s) SetInputs(inputs ...Layer) Layer {
 	%s.inputs = inputs
-	%s.dtype = inputs[0].GetDtype()
+	return %s
 }
 
 func (%s *%s) GetInputs() []Layer {
@@ -551,35 +386,27 @@ func (%s *%s) GetName() string {
 }
 `,
 			reciever,
-			object.Name,
+			structName,
 			reciever,
 			reciever,
-			object.Name,
+			structName,
 			reciever,
 			reciever,
-			object.Name,
+			structName,
 			reciever,
 			reciever,
 			reciever,
-			object.Name,
+			structName,
 			reciever,
 			reciever,
-			object.Name,
+			structName,
 			reciever,
-		),
-		"",
-		fmt.Sprintf("type jsonConfig%s struct {", object.Name),
-		"\tClassName string `json:\"class_name\"`",
-		"\tName string `json:\"name\"`",
-		"\tConfig map[string]interface{} `json:\"config\"`",
-		"\tInboundNodes [][][]interface{} `json:\"inbound_nodes\"`",
-		"}",
-		fmt.Sprintf(
-			"func (%s *%s) GetKerasLayerConfig() interface{} {",
-			strings.ToLower(string(object.Name[0])),
-			object.Name,
-		),
-		fmt.Sprintf(`	inboundNodes := [][][]interface{}{
+		)
+	}
+
+	inboundNodes := ""
+	if f.object.Type == "layer" {
+		inboundNodes = fmt.Sprintf(`	inboundNodes := [][][]interface{}{
 		{},
 	}
 	for _, input := range %s.inputs {
@@ -589,28 +416,63 @@ func (%s *%s) GetName() string {
 			0,
 			map[string]bool{},
 		})
-	}`, reciever),
-		fmt.Sprintf("\treturn jsonConfig%s{", object.Name),
-		fmt.Sprintf("\t\tClassName: \"%s\",", object.Config["class_name"]),
+	}`, reciever)
+	}
+	inboundNodesSetter := ""
+	configInboundNodesDef := ""
+	if f.object.Type == "layer" {
+		inboundNodesSetter = "\t\tInboundNodes: inboundNodes,"
+		configInboundNodesDef = "\tInboundNodes [][][]interface{} `json:\"inbound_nodes\"`"
+	}
+	lines := []string{
+		fmt.Sprintf("type %s struct {", structName),
+		"\t" + strings.Join(objectProperties, "\n\t"),
+		"}",
+		"",
+		fmt.Sprintf("func %s(%s) *%s {", f.object.Name, constructorParamsString, structName),
+		fmt.Sprintf(
+			"\treturn &%s{\n\t\t%s\t\n\t}",
+			structName,
+			strings.Join(paramSetters, "\n\t\t\t"),
+		),
+		"}",
+		"",
+		strings.Join(options, "\n\n"),
+		"",
+		layerDefaultGetters,
+		"",
+		fmt.Sprintf("type jsonConfig%s struct {", structName),
+		"\tClassName string `json:\"class_name\"`",
+		"\tName string `json:\"name\"`",
+		"\tConfig map[string]interface{} `json:\"config\"`",
+		configInboundNodesDef,
+		"}",
+		fmt.Sprintf(
+			"func (%s *%s) GetKerasLayerConfig() interface{} {",
+			reciever,
+			structName,
+		),
+		inboundNodes,
+		fmt.Sprintf("\treturn jsonConfig%s{", structName),
+		fmt.Sprintf("\t\tClassName: \"%s\",", f.object.Config["class_name"]),
 		fmt.Sprintf("\t\tName: %s.name,", reciever),
-		fmt.Sprintf("\t\tConfig: %s,", getConfigValue(object)),
-		"\t\tInboundNodes: inboundNodes,",
+		fmt.Sprintf("\t\tConfig: %s,", strings.Join(configLines, "\n")),
+		inboundNodesSetter,
 		"\t}",
 		"}",
 		"",
-		fmt.Sprintf("func (%s *%s) GetCustomLayerDefinition() string {", reciever, object.Name),
+		fmt.Sprintf("func (%s *%s) GetCustomLayerDefinition() string {", reciever, structName),
 		"\treturn ``",
 		"}",
 		"",
 	}
 
 	importedLines := []string{
-		"package layer",
+		"package " + f.object.Type,
 		"",
-		"import tf \"github.com/galeone/tensorflow/tensorflow/go\"",
 	}
 
-	constraintAdded, initializerAdded, regularizerAdded := false, false, false
+	constraintAdded, initializerAdded, regularizerAdded, tfAdded := false, false, false, false
 
 	for _, line := range lines {
 		if strings.Contains(line, "constraint.") {
@@ -631,6 +493,12 @@ func (%s *%s) GetName() string {
 				regularizerAdded = true
 			}
 		}
+		if strings.Contains(line, "tf.") {
+			if !tfAdded {
+				importedLines = append(importedLines, "import tf \"github.com/galeone/tensorflow/tensorflow/go\"")
+				tfAdded = true
+			}
+		}
 	}
 	importedLines = append(importedLines, "")
 
@@ -639,7 +507,7 @@ func (%s *%s) GetName() string {
 	}
 
 	e = ioutil.WriteFile(
-		filepath.Join("../../layer", fmt.Sprintf("%s.go", object.Name)),
+		filepath.Join(f.Dir, fmt.Sprintf("%s.go", f.object.Name)),
 		[]byte(strings.Join(importedLines, "\n")),
 		os.ModePerm,
 	)
@@ -648,229 +516,9 @@ func (%s *%s) GetName() string {
 	}
 }
 
-func getConfigValue(object objectJson) string {
-	lines := []string{
-		"map[string]interface{}{",
-	}
-	reciever := strings.ToLower(string(object.Name[0]))
-
-	subConfig := object.Config["config"].(map[string]interface{})
-	var sortedConfigKeys []string
-	for name := range subConfig {
-		sortedConfigKeys = append(sortedConfigKeys, name)
-	}
-	sort.Strings(sortedConfigKeys)
-	for _, name := range sortedConfigKeys {
-		getter := snakeCaseToCamelCase(name)
-		if name == "dtype" {
-			getter = "dtype.String()"
-		}
-		if strings.HasSuffix(name, "constraint") || (strings.HasSuffix(name, "initializer") && object.Name != "RandomFourierFeatures") || strings.HasSuffix(name, "regularizer") {
-			getter += ".GetKerasLayerConfig()"
-		}
-		lines = append(lines, fmt.Sprintf(
-			"\t\"%s\": %s.%s,",
-			name,
-			reciever,
-			getter,
-		))
-	}
-
-	lines = append(lines, "}")
-
-	return strings.Join(lines, "\n\t\t")
-}
-
-func getOptionString(objectName string, name string, typeString string) string {
-	lines := []string{
-		fmt.Sprintf(
-			"func %sWith%s(%s %s) func(%s *%s) {",
-			objectName,
-			strings.Title(name),
-			name,
-			typeString,
-			strings.ToLower(string(objectName[0])),
-			objectName,
-		),
-		fmt.Sprintf(
-			"\t return func(%s *%s) {",
-			strings.ToLower(string(objectName[0])),
-			objectName,
-		),
-		fmt.Sprintf("\t\t%s.%s = %s", strings.ToLower(string(objectName[0])), name, name),
-		"\t}",
-		"}",
-	}
-	return strings.Join(lines, "\n")
-}
-
-func getRequiredParamsString(object objectJson) string {
-	var params []string
-
-	for _, paramInterface := range object.RequiredParams {
-		paramSliceInterface, ok := paramInterface.([]interface{})
-		if ok && len(paramSliceInterface) == 2 {
-			params = append(params, fmt.Sprintf(
-				"%s %s",
-				snakeCaseToCamelCase(paramSliceInterface[0].(string)),
-				getGolangTypeFromValue(object.Name, paramSliceInterface[0].(string), paramSliceInterface[1]),
-			))
-		}
-	}
-
-	if len(params) > 0 {
-		return fmt.Sprintf("%s", strings.Join(params, ", ")) + ", "
-	} else {
-		return ""
-	}
-}
-
-func getRequiredParams(object objectJson) [][]string {
-	var params [][]string
-
-	for _, paramInterface := range object.RequiredParams {
-		paramSliceInterface, ok := paramInterface.([]interface{})
-		if ok {
-			params = append(params, []string{
-				snakeCaseToCamelCase(paramSliceInterface[0].(string)),
-				getGolangTypeFromValue(object.Name, paramSliceInterface[0].(string), paramSliceInterface[1]),
-			})
-		} else {
-			fmt.Println(fmt.Sprintf("%T", paramInterface))
-			os.Exit(1)
-		}
-	}
-
-	return params
-}
-
-func getOptionalParams(object objectJson) [][]string {
-	var params [][]string
-
-	for _, paramInterface := range object.OptionalParams {
-		paramSliceInterface, ok := paramInterface.([]interface{})
-		if ok {
-			params = append(params, []string{
-				snakeCaseToCamelCase(paramSliceInterface[0].(string)),
-				getGolangTypeFromValue(object.Name, paramSliceInterface[0].(string), paramSliceInterface[1]),
-			})
-		} else {
-			fmt.Println(fmt.Sprintf("%T", paramInterface))
-			os.Exit(1)
-		}
-	}
-
-	return params
-}
-
-func getOptionalParamDefaults(object objectJson) [][]string {
-	var params [][]string
-
-	for _, paramInterface := range object.OptionalParams {
-		paramSliceInterface, ok := paramInterface.([]interface{})
-		if ok {
-			params = append(params, []string{
-				snakeCaseToCamelCase(paramSliceInterface[0].(string)),
-				getGolangStringFromValue(object.Name, paramSliceInterface[0].(string), paramSliceInterface[1]),
-			})
-		} else {
-			fmt.Println(fmt.Sprintf("%T", paramInterface))
-			os.Exit(1)
-		}
-	}
-
-	return params
-}
-
-func getRequiredParamNames(object objectJson) []string {
-	var params []string
-
-	for _, paramInterface := range object.RequiredParams {
-		paramSliceInterface, ok := paramInterface.([]interface{})
-		if ok && len(paramSliceInterface) == 2 {
-			params = append(params, snakeCaseToCamelCase(paramSliceInterface[0].(string)))
-		}
-	}
-
-	return params
-}
-
 func snakeCaseToCamelCase(str string) string {
 	str = strings.ReplaceAll(str, "_", " ")
 	str = strings.Title(str)
 	str = strings.ReplaceAll(str, " ", "")
 	return strings.ToLower(string(str[0])) + str[1:]
-}
-
-func getGolangTypeFromValue(objectName string, paramName string, value interface{}) string {
-	stringValue := ""
-	if strings.HasSuffix(paramName, "constraint") {
-		stringValue = "constraint.Constraint"
-	} else if strings.HasSuffix(paramName, "initializer") && objectName != "RandomFourierFeatures" {
-		stringValue = "initializer.Initializer"
-	} else if strings.HasSuffix(paramName, "regularizer") {
-		stringValue = "regularizer.Regularizer"
-	} else if strings.HasSuffix(paramName, "activation") {
-		stringValue = "string"
-	} else {
-		stringValue = fmt.Sprintf("%T", value)
-		if stringValue == "<nil>" {
-			stringValue = "interface{}"
-		}
-		if paramName == "dtype" {
-			stringValue = "DataType"
-		}
-		if paramName == "name" {
-			stringValue = "string"
-		}
-	}
-	return stringValue
-}
-
-func getGolangStringFromValue(objectName string, paramName string, value interface{}) string {
-	stringValue := fmt.Sprintf("%#v", value)
-	if stringValue == "<nil>" {
-		stringValue = "nil"
-	}
-	if paramName == "activation" && stringValue == "nil" {
-		stringValue = `"linear"`
-	} else if paramName == "embeddings_initializer" && fmt.Sprint(value) == "uniform" {
-		stringValue = "&initializer.RandomUniform{}"
-	} else if strings.HasSuffix(paramName, "constraint") {
-		if stringValue != "nil" {
-			if config, ok := value.(map[string]interface{}); ok {
-				stringValue = fmt.Sprintf("&constraint.%s{}", config["class_name"])
-			} else {
-				stringValue = fmt.Sprintf("&constraint.%s{}", strings.Title(snakeCaseToCamelCase(fmt.Sprint(value))))
-			}
-		} else {
-			stringValue = "&constraint.NilConstraint{}"
-		}
-	} else if strings.HasSuffix(paramName, "initializer") && objectName != "RandomFourierFeatures" {
-		if stringValue != "nil" {
-			if config, ok := value.(map[string]interface{}); ok {
-				stringValue = fmt.Sprintf("&initializer.%s{}", config["class_name"])
-			} else {
-				stringValue = fmt.Sprintf("&initializer.%s{}", strings.Title(snakeCaseToCamelCase(fmt.Sprint(value))))
-			}
-		} else {
-			stringValue = "&initializer.NilInitializer{}"
-		}
-	} else if strings.HasSuffix(paramName, "regularizer") {
-		if stringValue != "nil" {
-			if config, ok := value.(map[string]interface{}); ok {
-				stringValue = fmt.Sprintf("&regularizer.%s{}", config["class_name"])
-			} else {
-				stringValue = fmt.Sprintf("&regularizer.%s{}", strings.Title(snakeCaseToCamelCase(fmt.Sprint(value))))
-			}
-		} else {
-			stringValue = "&regularizer.NilRegularizer{}"
-		}
-	} else if paramName == "dtype" && stringValue == "nil" {
-		stringValue = "Float32"
-	} else if paramName == "trainable" {
-		stringValue = "true"
-	}
-
-	return stringValue
 }

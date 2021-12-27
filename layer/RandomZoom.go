@@ -2,123 +2,112 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type RandomZoom struct {
-	name          string
+type LRandomZoom struct {
 	dtype         DataType
+	fillMode      string
+	fillValue     float64
+	heightFactor  float64
 	inputs        []Layer
+	interpolation string
+	name          string
+	seed          interface{}
 	shape         tf.Shape
 	trainable     bool
-	heightFactor  float64
 	widthFactor   interface{}
-	fillMode      string
-	interpolation string
-	seed          interface{}
-	fillValue     float64
 }
 
-func NewRandomZoom(heightFactor float64, options ...RandomZoomOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &RandomZoom{
-			heightFactor:  heightFactor,
-			widthFactor:   nil,
-			fillMode:      "reflect",
-			interpolation: "bilinear",
-			seed:          nil,
-			fillValue:     0,
-			trainable:     true,
-			inputs:        inputs,
-			name:          UniqueName("randomzoom"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func RandomZoom(heightFactor float64) *LRandomZoom {
+	return &LRandomZoom{
+		dtype:         Float32,
+		fillMode:      "reflect",
+		fillValue:     0,
+		heightFactor:  heightFactor,
+		interpolation: "bilinear",
+		name:          UniqueName("random_zoom"),
+		seed:          nil,
+		trainable:     true,
+		widthFactor:   nil,
 	}
 }
 
-type RandomZoomOption func(*RandomZoom)
-
-func RandomZoomWithName(name string) func(r *RandomZoom) {
-	return func(r *RandomZoom) {
-		r.name = name
-	}
+func (l *LRandomZoom) SetDtype(dtype DataType) *LRandomZoom {
+	l.dtype = dtype
+	return l
 }
 
-func RandomZoomWithDtype(dtype DataType) func(r *RandomZoom) {
-	return func(r *RandomZoom) {
-		r.dtype = dtype
-	}
+func (l *LRandomZoom) SetFillMode(fillMode string) *LRandomZoom {
+	l.fillMode = fillMode
+	return l
 }
 
-func RandomZoomWithTrainable(trainable bool) func(r *RandomZoom) {
-	return func(r *RandomZoom) {
-		r.trainable = trainable
-	}
+func (l *LRandomZoom) SetFillValue(fillValue float64) *LRandomZoom {
+	l.fillValue = fillValue
+	return l
 }
 
-func RandomZoomWithWidthFactor(widthFactor interface{}) func(r *RandomZoom) {
-	return func(r *RandomZoom) {
-		r.widthFactor = widthFactor
-	}
+func (l *LRandomZoom) SetInterpolation(interpolation string) *LRandomZoom {
+	l.interpolation = interpolation
+	return l
 }
 
-func RandomZoomWithFillMode(fillMode string) func(r *RandomZoom) {
-	return func(r *RandomZoom) {
-		r.fillMode = fillMode
-	}
+func (l *LRandomZoom) SetName(name string) *LRandomZoom {
+	l.name = name
+	return l
 }
 
-func RandomZoomWithInterpolation(interpolation string) func(r *RandomZoom) {
-	return func(r *RandomZoom) {
-		r.interpolation = interpolation
-	}
+func (l *LRandomZoom) SetSeed(seed interface{}) *LRandomZoom {
+	l.seed = seed
+	return l
 }
 
-func RandomZoomWithSeed(seed interface{}) func(r *RandomZoom) {
-	return func(r *RandomZoom) {
-		r.seed = seed
-	}
+func (l *LRandomZoom) SetShape(shape tf.Shape) *LRandomZoom {
+	l.shape = shape
+	return l
 }
 
-func RandomZoomWithFillValue(fillValue float64) func(r *RandomZoom) {
-	return func(r *RandomZoom) {
-		r.fillValue = fillValue
-	}
+func (l *LRandomZoom) SetTrainable(trainable bool) *LRandomZoom {
+	l.trainable = trainable
+	return l
 }
 
-func (r *RandomZoom) GetShape() tf.Shape {
-	return r.shape
+func (l *LRandomZoom) SetWidthFactor(widthFactor interface{}) *LRandomZoom {
+	l.widthFactor = widthFactor
+	return l
 }
 
-func (r *RandomZoom) GetDtype() DataType {
-	return r.dtype
+func (l *LRandomZoom) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *RandomZoom) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LRandomZoom) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *RandomZoom) GetInputs() []Layer {
-	return r.inputs
+func (l *LRandomZoom) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *RandomZoom) GetName() string {
-	return r.name
+func (l *LRandomZoom) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigRandomZoom struct {
+func (l *LRandomZoom) GetName() string {
+	return l.name
+}
+
+type jsonConfigLRandomZoom struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *RandomZoom) GetKerasLayerConfig() interface{} {
+func (l *LRandomZoom) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -126,24 +115,24 @@ func (r *RandomZoom) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigRandomZoom{
+	return jsonConfigLRandomZoom{
 		ClassName: "RandomZoom",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":         r.dtype.String(),
-			"fill_mode":     r.fillMode,
-			"fill_value":    r.fillValue,
-			"height_factor": r.heightFactor,
-			"interpolation": r.interpolation,
-			"name":          r.name,
-			"seed":          r.seed,
-			"trainable":     r.trainable,
-			"width_factor":  r.widthFactor,
+			"dtype":         l.dtype.String(),
+			"fill_mode":     l.fillMode,
+			"fill_value":    l.fillValue,
+			"height_factor": l.heightFactor,
+			"interpolation": l.interpolation,
+			"name":          l.name,
+			"seed":          l.seed,
+			"trainable":     l.trainable,
+			"width_factor":  l.widthFactor,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *RandomZoom) GetCustomLayerDefinition() string {
+func (l *LRandomZoom) GetCustomLayerDefinition() string {
 	return ``
 }

@@ -1,62 +1,67 @@
 package initializer
 
-type VarianceScaling struct {
-	scale        float64
-	mode         string
+type IVarianceScaling struct {
 	distribution string
+	mode         string
+	name         string
+	scale        float64
 	seed         interface{}
 }
 
-func NewVarianceScaling() *VarianceScaling {
-	return &VarianceScaling{
-		scale:        1,
-		mode:         "fan_in",
+func VarianceScaling() *IVarianceScaling {
+	return &IVarianceScaling{
 		distribution: "truncated_normal",
+		mode:         "fan_in",
+		scale:        1,
 		seed:         nil,
 	}
 }
 
-func VarianceScalingWithScale(scale float64) func(v *VarianceScaling) {
-	return func(v *VarianceScaling) {
-		v.scale = scale
-	}
+func (i *IVarianceScaling) SetDistribution(distribution string) *IVarianceScaling {
+	i.distribution = distribution
+	return i
 }
 
-func VarianceScalingWithMode(mode string) func(v *VarianceScaling) {
-	return func(v *VarianceScaling) {
-		v.mode = mode
-	}
+func (i *IVarianceScaling) SetMode(mode string) *IVarianceScaling {
+	i.mode = mode
+	return i
 }
 
-func VarianceScalingWithDistribution(distribution string) func(v *VarianceScaling) {
-	return func(v *VarianceScaling) {
-		v.distribution = distribution
-	}
+func (i *IVarianceScaling) SetName(name string) *IVarianceScaling {
+	i.name = name
+	return i
 }
 
-func VarianceScalingWithSeed(seed interface{}) func(v *VarianceScaling) {
-	return func(v *VarianceScaling) {
-		v.seed = seed
-	}
+func (i *IVarianceScaling) SetScale(scale float64) *IVarianceScaling {
+	i.scale = scale
+	return i
 }
 
-type jsonConfigVarianceScaling struct {
+func (i *IVarianceScaling) SetSeed(seed interface{}) *IVarianceScaling {
+	i.seed = seed
+	return i
+}
+
+type jsonConfigIVarianceScaling struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (v *VarianceScaling) GetKerasLayerConfig() interface{} {
-	if v == nil {
-		return nil
-	}
-	return jsonConfigVarianceScaling{
+func (i *IVarianceScaling) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigIVarianceScaling{
 		ClassName: "VarianceScaling",
+		Name:      i.name,
 		Config: map[string]interface{}{
-			"distribution": v.distribution,
-			"mode":         v.mode,
-			"scale":        v.scale,
-			"seed":         v.seed,
+			"distribution": i.distribution,
+			"mode":         i.mode,
+			"scale":        i.scale,
+			"seed":         i.seed,
 		},
 	}
+}
+
+func (i *IVarianceScaling) GetCustomLayerDefinition() string {
+	return ``
 }

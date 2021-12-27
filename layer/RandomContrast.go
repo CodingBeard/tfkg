@@ -2,91 +2,84 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type RandomContrast struct {
-	name      string
+type LRandomContrast struct {
 	dtype     DataType
+	factor    float64
 	inputs    []Layer
+	name      string
+	seed      interface{}
 	shape     tf.Shape
 	trainable bool
-	factor    float64
-	seed      interface{}
 }
 
-func NewRandomContrast(factor float64, options ...RandomContrastOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &RandomContrast{
-			factor:    factor,
-			seed:      nil,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("randomcontrast"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func RandomContrast(factor float64) *LRandomContrast {
+	return &LRandomContrast{
+		dtype:     Float32,
+		factor:    factor,
+		name:      UniqueName("random_contrast"),
+		seed:      nil,
+		trainable: true,
 	}
 }
 
-type RandomContrastOption func(*RandomContrast)
-
-func RandomContrastWithName(name string) func(r *RandomContrast) {
-	return func(r *RandomContrast) {
-		r.name = name
-	}
+func (l *LRandomContrast) SetDtype(dtype DataType) *LRandomContrast {
+	l.dtype = dtype
+	return l
 }
 
-func RandomContrastWithDtype(dtype DataType) func(r *RandomContrast) {
-	return func(r *RandomContrast) {
-		r.dtype = dtype
-	}
+func (l *LRandomContrast) SetName(name string) *LRandomContrast {
+	l.name = name
+	return l
 }
 
-func RandomContrastWithTrainable(trainable bool) func(r *RandomContrast) {
-	return func(r *RandomContrast) {
-		r.trainable = trainable
-	}
+func (l *LRandomContrast) SetSeed(seed interface{}) *LRandomContrast {
+	l.seed = seed
+	return l
 }
 
-func RandomContrastWithSeed(seed interface{}) func(r *RandomContrast) {
-	return func(r *RandomContrast) {
-		r.seed = seed
-	}
+func (l *LRandomContrast) SetShape(shape tf.Shape) *LRandomContrast {
+	l.shape = shape
+	return l
 }
 
-func (r *RandomContrast) GetShape() tf.Shape {
-	return r.shape
+func (l *LRandomContrast) SetTrainable(trainable bool) *LRandomContrast {
+	l.trainable = trainable
+	return l
 }
 
-func (r *RandomContrast) GetDtype() DataType {
-	return r.dtype
+func (l *LRandomContrast) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *RandomContrast) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LRandomContrast) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *RandomContrast) GetInputs() []Layer {
-	return r.inputs
+func (l *LRandomContrast) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *RandomContrast) GetName() string {
-	return r.name
+func (l *LRandomContrast) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigRandomContrast struct {
+func (l *LRandomContrast) GetName() string {
+	return l.name
+}
+
+type jsonConfigLRandomContrast struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *RandomContrast) GetKerasLayerConfig() interface{} {
+func (l *LRandomContrast) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -94,20 +87,20 @@ func (r *RandomContrast) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigRandomContrast{
+	return jsonConfigLRandomContrast{
 		ClassName: "RandomContrast",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     r.dtype.String(),
-			"factor":    r.factor,
-			"name":      r.name,
-			"seed":      r.seed,
-			"trainable": r.trainable,
+			"dtype":     l.dtype.String(),
+			"factor":    l.factor,
+			"name":      l.name,
+			"seed":      l.seed,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *RandomContrast) GetCustomLayerDefinition() string {
+func (l *LRandomContrast) GetCustomLayerDefinition() string {
 	return ``
 }

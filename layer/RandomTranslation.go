@@ -2,117 +2,107 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type RandomTranslation struct {
-	name          string
+type LRandomTranslation struct {
 	dtype         DataType
+	fillMode      string
+	fillValue     float64
+	heightFactor  float64
 	inputs        []Layer
+	interpolation string
+	name          string
+	seed          interface{}
 	shape         tf.Shape
 	trainable     bool
-	heightFactor  float64
 	widthFactor   float64
-	fillMode      string
-	interpolation string
-	seed          interface{}
-	fillValue     float64
 }
 
-func NewRandomTranslation(heightFactor float64, widthFactor float64, options ...RandomTranslationOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &RandomTranslation{
-			heightFactor:  heightFactor,
-			widthFactor:   widthFactor,
-			fillMode:      "reflect",
-			interpolation: "bilinear",
-			seed:          nil,
-			fillValue:     0,
-			trainable:     true,
-			inputs:        inputs,
-			name:          UniqueName("randomtranslation"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func RandomTranslation(heightFactor float64, widthFactor float64) *LRandomTranslation {
+	return &LRandomTranslation{
+		dtype:         Float32,
+		fillMode:      "reflect",
+		fillValue:     0,
+		heightFactor:  heightFactor,
+		interpolation: "bilinear",
+		name:          UniqueName("random_translation"),
+		seed:          nil,
+		trainable:     true,
+		widthFactor:   widthFactor,
 	}
 }
 
-type RandomTranslationOption func(*RandomTranslation)
-
-func RandomTranslationWithName(name string) func(r *RandomTranslation) {
-	return func(r *RandomTranslation) {
-		r.name = name
-	}
+func (l *LRandomTranslation) SetDtype(dtype DataType) *LRandomTranslation {
+	l.dtype = dtype
+	return l
 }
 
-func RandomTranslationWithDtype(dtype DataType) func(r *RandomTranslation) {
-	return func(r *RandomTranslation) {
-		r.dtype = dtype
-	}
+func (l *LRandomTranslation) SetFillMode(fillMode string) *LRandomTranslation {
+	l.fillMode = fillMode
+	return l
 }
 
-func RandomTranslationWithTrainable(trainable bool) func(r *RandomTranslation) {
-	return func(r *RandomTranslation) {
-		r.trainable = trainable
-	}
+func (l *LRandomTranslation) SetFillValue(fillValue float64) *LRandomTranslation {
+	l.fillValue = fillValue
+	return l
 }
 
-func RandomTranslationWithFillMode(fillMode string) func(r *RandomTranslation) {
-	return func(r *RandomTranslation) {
-		r.fillMode = fillMode
-	}
+func (l *LRandomTranslation) SetInterpolation(interpolation string) *LRandomTranslation {
+	l.interpolation = interpolation
+	return l
 }
 
-func RandomTranslationWithInterpolation(interpolation string) func(r *RandomTranslation) {
-	return func(r *RandomTranslation) {
-		r.interpolation = interpolation
-	}
+func (l *LRandomTranslation) SetName(name string) *LRandomTranslation {
+	l.name = name
+	return l
 }
 
-func RandomTranslationWithSeed(seed interface{}) func(r *RandomTranslation) {
-	return func(r *RandomTranslation) {
-		r.seed = seed
-	}
+func (l *LRandomTranslation) SetSeed(seed interface{}) *LRandomTranslation {
+	l.seed = seed
+	return l
 }
 
-func RandomTranslationWithFillValue(fillValue float64) func(r *RandomTranslation) {
-	return func(r *RandomTranslation) {
-		r.fillValue = fillValue
-	}
+func (l *LRandomTranslation) SetShape(shape tf.Shape) *LRandomTranslation {
+	l.shape = shape
+	return l
 }
 
-func (r *RandomTranslation) GetShape() tf.Shape {
-	return r.shape
+func (l *LRandomTranslation) SetTrainable(trainable bool) *LRandomTranslation {
+	l.trainable = trainable
+	return l
 }
 
-func (r *RandomTranslation) GetDtype() DataType {
-	return r.dtype
+func (l *LRandomTranslation) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *RandomTranslation) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LRandomTranslation) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *RandomTranslation) GetInputs() []Layer {
-	return r.inputs
+func (l *LRandomTranslation) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *RandomTranslation) GetName() string {
-	return r.name
+func (l *LRandomTranslation) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigRandomTranslation struct {
+func (l *LRandomTranslation) GetName() string {
+	return l.name
+}
+
+type jsonConfigLRandomTranslation struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *RandomTranslation) GetKerasLayerConfig() interface{} {
+func (l *LRandomTranslation) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -120,24 +110,24 @@ func (r *RandomTranslation) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigRandomTranslation{
+	return jsonConfigLRandomTranslation{
 		ClassName: "RandomTranslation",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":         r.dtype.String(),
-			"fill_mode":     r.fillMode,
-			"fill_value":    r.fillValue,
-			"height_factor": r.heightFactor,
-			"interpolation": r.interpolation,
-			"name":          r.name,
-			"seed":          r.seed,
-			"trainable":     r.trainable,
-			"width_factor":  r.widthFactor,
+			"dtype":         l.dtype.String(),
+			"fill_mode":     l.fillMode,
+			"fill_value":    l.fillValue,
+			"height_factor": l.heightFactor,
+			"interpolation": l.interpolation,
+			"name":          l.name,
+			"seed":          l.seed,
+			"trainable":     l.trainable,
+			"width_factor":  l.widthFactor,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *RandomTranslation) GetCustomLayerDefinition() string {
+func (l *LRandomTranslation) GetCustomLayerDefinition() string {
 	return ``
 }

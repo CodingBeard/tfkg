@@ -1,53 +1,59 @@
 package initializer
 
-type TruncatedNormal struct {
+type ITruncatedNormal struct {
 	mean   float64
-	stddev float64
+	name   string
 	seed   interface{}
+	stddev float64
 }
 
-func NewTruncatedNormal() *TruncatedNormal {
-	return &TruncatedNormal{
+func TruncatedNormal() *ITruncatedNormal {
+	return &ITruncatedNormal{
 		mean:   0,
-		stddev: 0.05,
 		seed:   nil,
+		stddev: 0.05,
 	}
 }
 
-func TruncatedNormalWithMean(mean float64) func(t *TruncatedNormal) {
-	return func(t *TruncatedNormal) {
-		t.mean = mean
-	}
+func (i *ITruncatedNormal) SetMean(mean float64) *ITruncatedNormal {
+	i.mean = mean
+	return i
 }
 
-func TruncatedNormalWithStddev(stddev float64) func(t *TruncatedNormal) {
-	return func(t *TruncatedNormal) {
-		t.stddev = stddev
-	}
+func (i *ITruncatedNormal) SetName(name string) *ITruncatedNormal {
+	i.name = name
+	return i
 }
 
-func TruncatedNormalWithSeed(seed interface{}) func(t *TruncatedNormal) {
-	return func(t *TruncatedNormal) {
-		t.seed = seed
-	}
+func (i *ITruncatedNormal) SetSeed(seed interface{}) *ITruncatedNormal {
+	i.seed = seed
+	return i
 }
 
-type jsonConfigTruncatedNormal struct {
+func (i *ITruncatedNormal) SetStddev(stddev float64) *ITruncatedNormal {
+	i.stddev = stddev
+	return i
+}
+
+type jsonConfigITruncatedNormal struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (t *TruncatedNormal) GetKerasLayerConfig() interface{} {
-	if t == nil {
-		return nil
-	}
-	return jsonConfigTruncatedNormal{
+func (i *ITruncatedNormal) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigITruncatedNormal{
 		ClassName: "TruncatedNormal",
+		Name:      i.name,
 		Config: map[string]interface{}{
-			"mean":   t.mean,
-			"seed":   t.seed,
-			"stddev": t.stddev,
+			"mean":   i.mean,
+			"seed":   i.seed,
+			"stddev": i.stddev,
 		},
 	}
+}
+
+func (i *ITruncatedNormal) GetCustomLayerDefinition() string {
+	return ``
 }

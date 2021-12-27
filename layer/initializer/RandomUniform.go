@@ -1,53 +1,59 @@
 package initializer
 
-type RandomUniform struct {
-	minval float64
+type IRandomUniform struct {
 	maxval float64
+	minval float64
+	name   string
 	seed   interface{}
 }
 
-func NewRandomUniform() *RandomUniform {
-	return &RandomUniform{
-		minval: -0.05,
+func RandomUniform() *IRandomUniform {
+	return &IRandomUniform{
 		maxval: 0.05,
+		minval: -0.05,
 		seed:   nil,
 	}
 }
 
-func RandomUniformWithMinval(minval float64) func(r *RandomUniform) {
-	return func(r *RandomUniform) {
-		r.minval = minval
-	}
+func (i *IRandomUniform) SetMaxval(maxval float64) *IRandomUniform {
+	i.maxval = maxval
+	return i
 }
 
-func RandomUniformWithMaxval(maxval float64) func(r *RandomUniform) {
-	return func(r *RandomUniform) {
-		r.maxval = maxval
-	}
+func (i *IRandomUniform) SetMinval(minval float64) *IRandomUniform {
+	i.minval = minval
+	return i
 }
 
-func RandomUniformWithSeed(seed interface{}) func(r *RandomUniform) {
-	return func(r *RandomUniform) {
-		r.seed = seed
-	}
+func (i *IRandomUniform) SetName(name string) *IRandomUniform {
+	i.name = name
+	return i
 }
 
-type jsonConfigRandomUniform struct {
+func (i *IRandomUniform) SetSeed(seed interface{}) *IRandomUniform {
+	i.seed = seed
+	return i
+}
+
+type jsonConfigIRandomUniform struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (r *RandomUniform) GetKerasLayerConfig() interface{} {
-	if r == nil {
-		return nil
-	}
-	return jsonConfigRandomUniform{
+func (i *IRandomUniform) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigIRandomUniform{
 		ClassName: "RandomUniform",
+		Name:      i.name,
 		Config: map[string]interface{}{
-			"maxval": r.maxval,
-			"minval": r.minval,
-			"seed":   r.seed,
+			"maxval": i.maxval,
+			"minval": i.minval,
+			"seed":   i.seed,
 		},
 	}
+}
+
+func (i *IRandomUniform) GetCustomLayerDefinition() string {
+	return ``
 }

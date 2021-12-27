@@ -2,93 +2,96 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type AdditiveAttention struct {
-	name      string
+type LAdditiveAttention struct {
+	causal    bool
+	dropout   float64
 	dtype     DataType
 	inputs    []Layer
+	name      string
 	shape     tf.Shape
 	trainable bool
 	useScale  bool
-	causal    bool
-	dropout   float64
 }
 
-func NewAdditiveAttention(options ...AdditiveAttentionOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		a := &AdditiveAttention{
-			useScale:  true,
-			causal:    false,
-			dropout:   0,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("additiveattention"),
-		}
-		for _, option := range options {
-			option(a)
-		}
-		return a
+func AdditiveAttention() *LAdditiveAttention {
+	return &LAdditiveAttention{
+		causal:    false,
+		dropout:   0,
+		dtype:     Float32,
+		name:      UniqueName("additive_attention"),
+		trainable: true,
+		useScale:  true,
 	}
 }
 
-type AdditiveAttentionOption func(*AdditiveAttention)
-
-func AdditiveAttentionWithName(name string) func(a *AdditiveAttention) {
-	return func(a *AdditiveAttention) {
-		a.name = name
-	}
+func (l *LAdditiveAttention) SetCausal(causal bool) *LAdditiveAttention {
+	l.causal = causal
+	return l
 }
 
-func AdditiveAttentionWithDtype(dtype DataType) func(a *AdditiveAttention) {
-	return func(a *AdditiveAttention) {
-		a.dtype = dtype
-	}
+func (l *LAdditiveAttention) SetDropout(dropout float64) *LAdditiveAttention {
+	l.dropout = dropout
+	return l
 }
 
-func AdditiveAttentionWithTrainable(trainable bool) func(a *AdditiveAttention) {
-	return func(a *AdditiveAttention) {
-		a.trainable = trainable
-	}
+func (l *LAdditiveAttention) SetDtype(dtype DataType) *LAdditiveAttention {
+	l.dtype = dtype
+	return l
 }
 
-func AdditiveAttentionWithUseScale(useScale bool) func(a *AdditiveAttention) {
-	return func(a *AdditiveAttention) {
-		a.useScale = useScale
-	}
+func (l *LAdditiveAttention) SetName(name string) *LAdditiveAttention {
+	l.name = name
+	return l
 }
 
-func (a *AdditiveAttention) GetShape() tf.Shape {
-	return a.shape
+func (l *LAdditiveAttention) SetShape(shape tf.Shape) *LAdditiveAttention {
+	l.shape = shape
+	return l
 }
 
-func (a *AdditiveAttention) GetDtype() DataType {
-	return a.dtype
+func (l *LAdditiveAttention) SetTrainable(trainable bool) *LAdditiveAttention {
+	l.trainable = trainable
+	return l
 }
 
-func (a *AdditiveAttention) SetInput(inputs []Layer) {
-	a.inputs = inputs
-	a.dtype = inputs[0].GetDtype()
+func (l *LAdditiveAttention) SetUseScale(useScale bool) *LAdditiveAttention {
+	l.useScale = useScale
+	return l
 }
 
-func (a *AdditiveAttention) GetInputs() []Layer {
-	return a.inputs
+func (l *LAdditiveAttention) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (a *AdditiveAttention) GetName() string {
-	return a.name
+func (l *LAdditiveAttention) GetDtype() DataType {
+	return l.dtype
 }
 
-type jsonConfigAdditiveAttention struct {
+func (l *LAdditiveAttention) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
+}
+
+func (l *LAdditiveAttention) GetInputs() []Layer {
+	return l.inputs
+}
+
+func (l *LAdditiveAttention) GetName() string {
+	return l.name
+}
+
+type jsonConfigLAdditiveAttention struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (a *AdditiveAttention) GetKerasLayerConfig() interface{} {
+func (l *LAdditiveAttention) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range a.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -96,21 +99,21 @@ func (a *AdditiveAttention) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigAdditiveAttention{
+	return jsonConfigLAdditiveAttention{
 		ClassName: "AdditiveAttention",
-		Name:      a.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"causal":    a.causal,
-			"dropout":   a.dropout,
-			"dtype":     a.dtype.String(),
-			"name":      a.name,
-			"trainable": a.trainable,
-			"use_scale": a.useScale,
+			"causal":    l.causal,
+			"dropout":   l.dropout,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"trainable": l.trainable,
+			"use_scale": l.useScale,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (a *AdditiveAttention) GetCustomLayerDefinition() string {
+func (l *LAdditiveAttention) GetCustomLayerDefinition() string {
 	return ``
 }

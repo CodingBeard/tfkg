@@ -1,6 +1,7 @@
 package metric
 
 import (
+	"math"
 	"sync"
 )
 
@@ -106,8 +107,8 @@ func (m *SparseCategoricalTprAtFpr) ComputeFinal() Value {
 		closestConfOffset = 0
 		newDiff := false
 		for confOffst, fp := range numFps {
-			diff := m.Fpr - (fp / m.negCount)
-			if diff <= closest && diff >= 0 {
+			diff := math.Abs(m.Fpr - (fp / m.negCount))
+			if diff <= closest {
 				closest = diff
 				closestConfOffset = confOffst
 				closestConfidence = confidences[closestConfOffset]
@@ -132,6 +133,11 @@ func (m *SparseCategoricalTprAtFpr) ComputeFinal() Value {
 }
 
 func (m *SparseCategoricalTprAtFpr) getTpr(confidence float64) Value {
+	if confidence == 0 {
+		return Value{
+			Name: m.Name,
+		}
+	}
 	m.FinalConfidence = confidence
 	numTp := float64(0)
 	numFp := float64(0)
@@ -273,8 +279,8 @@ func (m *BinaryTprAtFpr) ComputeFinal() Value {
 		closestConfOffset = 0
 		newDiff := false
 		for confOffst, fp := range numFps {
-			diff := m.Fpr - (fp / m.negCount)
-			if diff <= closest && diff >= 0 {
+			diff := math.Abs(m.Fpr - (fp / m.negCount))
+			if diff <= closest {
 				closest = diff
 				closestConfOffset = confOffst
 				closestConfidence = confidences[closestConfOffset]
@@ -299,6 +305,11 @@ func (m *BinaryTprAtFpr) ComputeFinal() Value {
 }
 
 func (m *BinaryTprAtFpr) getTpr(confidence float64) Value {
+	if confidence == 0 {
+		return Value{
+			Name: m.Name,
+		}
+	}
 	m.FinalConfidence = confidence
 	numTp := float64(0)
 	numFp := float64(0)

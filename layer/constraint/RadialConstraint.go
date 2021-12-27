@@ -1,24 +1,33 @@
 package constraint
 
-type RadialConstraint struct {
+type CRadialConstraint struct {
+	name string
 }
 
-func NewRadialConstraint() *RadialConstraint {
-	return &RadialConstraint{}
+func RadialConstraint() *CRadialConstraint {
+	return &CRadialConstraint{}
 }
 
-type jsonConfigRadialConstraint struct {
+func (c *CRadialConstraint) SetName(name string) *CRadialConstraint {
+	c.name = name
+	return c
+}
+
+type jsonConfigCRadialConstraint struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (r *RadialConstraint) GetKerasLayerConfig() interface{} {
-	if r == nil {
-		return nil
-	}
-	return jsonConfigRadialConstraint{
+func (c *CRadialConstraint) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigCRadialConstraint{
 		ClassName: "RadialConstraint",
+		Name:      c.name,
 		Config:    map[string]interface{}{},
 	}
+}
+
+func (c *CRadialConstraint) GetCustomLayerDefinition() string {
+	return ``
 }

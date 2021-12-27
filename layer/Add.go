@@ -2,81 +2,75 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Add struct {
-	name      string
+type LAdd struct {
 	dtype     DataType
 	inputs    []Layer
+	name      string
 	shape     tf.Shape
 	trainable bool
 }
 
-func NewAdd(options ...AddOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		a := &Add{
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("add"),
-		}
-		for _, option := range options {
-			option(a)
-		}
-		return a
+func Add() *LAdd {
+	return &LAdd{
+		dtype:     Float32,
+		name:      UniqueName("add"),
+		trainable: true,
 	}
 }
 
-type AddOption func(*Add)
-
-func AddWithName(name string) func(a *Add) {
-	return func(a *Add) {
-		a.name = name
-	}
+func (l *LAdd) SetDtype(dtype DataType) *LAdd {
+	l.dtype = dtype
+	return l
 }
 
-func AddWithDtype(dtype DataType) func(a *Add) {
-	return func(a *Add) {
-		a.dtype = dtype
-	}
+func (l *LAdd) SetName(name string) *LAdd {
+	l.name = name
+	return l
 }
 
-func AddWithTrainable(trainable bool) func(a *Add) {
-	return func(a *Add) {
-		a.trainable = trainable
-	}
+func (l *LAdd) SetShape(shape tf.Shape) *LAdd {
+	l.shape = shape
+	return l
 }
 
-func (a *Add) GetShape() tf.Shape {
-	return a.shape
+func (l *LAdd) SetTrainable(trainable bool) *LAdd {
+	l.trainable = trainable
+	return l
 }
 
-func (a *Add) GetDtype() DataType {
-	return a.dtype
+func (l *LAdd) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (a *Add) SetInput(inputs []Layer) {
-	a.inputs = inputs
-	a.dtype = inputs[0].GetDtype()
+func (l *LAdd) GetDtype() DataType {
+	return l.dtype
 }
 
-func (a *Add) GetInputs() []Layer {
-	return a.inputs
+func (l *LAdd) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (a *Add) GetName() string {
-	return a.name
+func (l *LAdd) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigAdd struct {
+func (l *LAdd) GetName() string {
+	return l.name
+}
+
+type jsonConfigLAdd struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (a *Add) GetKerasLayerConfig() interface{} {
+func (l *LAdd) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range a.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -84,18 +78,18 @@ func (a *Add) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigAdd{
+	return jsonConfigLAdd{
 		ClassName: "Add",
-		Name:      a.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     a.dtype.String(),
-			"name":      a.name,
-			"trainable": a.trainable,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (a *Add) GetCustomLayerDefinition() string {
+func (l *LAdd) GetCustomLayerDefinition() string {
 	return ``
 }

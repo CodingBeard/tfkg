@@ -2,99 +2,91 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type RandomHeight struct {
-	name          string
+type LRandomHeight struct {
 	dtype         DataType
+	factor        float64
 	inputs        []Layer
+	interpolation string
+	name          string
+	seed          interface{}
 	shape         tf.Shape
 	trainable     bool
-	factor        float64
-	interpolation string
-	seed          interface{}
 }
 
-func NewRandomHeight(factor float64, options ...RandomHeightOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &RandomHeight{
-			factor:        factor,
-			interpolation: "bilinear",
-			seed:          nil,
-			trainable:     true,
-			inputs:        inputs,
-			name:          UniqueName("randomheight"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func RandomHeight(factor float64) *LRandomHeight {
+	return &LRandomHeight{
+		dtype:         Float32,
+		factor:        factor,
+		interpolation: "bilinear",
+		name:          UniqueName("random_height"),
+		seed:          nil,
+		trainable:     true,
 	}
 }
 
-type RandomHeightOption func(*RandomHeight)
-
-func RandomHeightWithName(name string) func(r *RandomHeight) {
-	return func(r *RandomHeight) {
-		r.name = name
-	}
+func (l *LRandomHeight) SetDtype(dtype DataType) *LRandomHeight {
+	l.dtype = dtype
+	return l
 }
 
-func RandomHeightWithDtype(dtype DataType) func(r *RandomHeight) {
-	return func(r *RandomHeight) {
-		r.dtype = dtype
-	}
+func (l *LRandomHeight) SetInterpolation(interpolation string) *LRandomHeight {
+	l.interpolation = interpolation
+	return l
 }
 
-func RandomHeightWithTrainable(trainable bool) func(r *RandomHeight) {
-	return func(r *RandomHeight) {
-		r.trainable = trainable
-	}
+func (l *LRandomHeight) SetName(name string) *LRandomHeight {
+	l.name = name
+	return l
 }
 
-func RandomHeightWithInterpolation(interpolation string) func(r *RandomHeight) {
-	return func(r *RandomHeight) {
-		r.interpolation = interpolation
-	}
+func (l *LRandomHeight) SetSeed(seed interface{}) *LRandomHeight {
+	l.seed = seed
+	return l
 }
 
-func RandomHeightWithSeed(seed interface{}) func(r *RandomHeight) {
-	return func(r *RandomHeight) {
-		r.seed = seed
-	}
+func (l *LRandomHeight) SetShape(shape tf.Shape) *LRandomHeight {
+	l.shape = shape
+	return l
 }
 
-func (r *RandomHeight) GetShape() tf.Shape {
-	return r.shape
+func (l *LRandomHeight) SetTrainable(trainable bool) *LRandomHeight {
+	l.trainable = trainable
+	return l
 }
 
-func (r *RandomHeight) GetDtype() DataType {
-	return r.dtype
+func (l *LRandomHeight) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *RandomHeight) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LRandomHeight) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *RandomHeight) GetInputs() []Layer {
-	return r.inputs
+func (l *LRandomHeight) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *RandomHeight) GetName() string {
-	return r.name
+func (l *LRandomHeight) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigRandomHeight struct {
+func (l *LRandomHeight) GetName() string {
+	return l.name
+}
+
+type jsonConfigLRandomHeight struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *RandomHeight) GetKerasLayerConfig() interface{} {
+func (l *LRandomHeight) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -102,21 +94,21 @@ func (r *RandomHeight) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigRandomHeight{
+	return jsonConfigLRandomHeight{
 		ClassName: "RandomHeight",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":         r.dtype.String(),
-			"factor":        r.factor,
-			"interpolation": r.interpolation,
-			"name":          r.name,
-			"seed":          r.seed,
-			"trainable":     r.trainable,
+			"dtype":         l.dtype.String(),
+			"factor":        l.factor,
+			"interpolation": l.interpolation,
+			"name":          l.name,
+			"seed":          l.seed,
+			"trainable":     l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *RandomHeight) GetCustomLayerDefinition() string {
+func (l *LRandomHeight) GetCustomLayerDefinition() string {
 	return ``
 }

@@ -2,81 +2,75 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Average struct {
-	name      string
+type LAverage struct {
 	dtype     DataType
 	inputs    []Layer
+	name      string
 	shape     tf.Shape
 	trainable bool
 }
 
-func NewAverage(options ...AverageOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		a := &Average{
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("average"),
-		}
-		for _, option := range options {
-			option(a)
-		}
-		return a
+func Average() *LAverage {
+	return &LAverage{
+		dtype:     Float32,
+		name:      UniqueName("average"),
+		trainable: true,
 	}
 }
 
-type AverageOption func(*Average)
-
-func AverageWithName(name string) func(a *Average) {
-	return func(a *Average) {
-		a.name = name
-	}
+func (l *LAverage) SetDtype(dtype DataType) *LAverage {
+	l.dtype = dtype
+	return l
 }
 
-func AverageWithDtype(dtype DataType) func(a *Average) {
-	return func(a *Average) {
-		a.dtype = dtype
-	}
+func (l *LAverage) SetName(name string) *LAverage {
+	l.name = name
+	return l
 }
 
-func AverageWithTrainable(trainable bool) func(a *Average) {
-	return func(a *Average) {
-		a.trainable = trainable
-	}
+func (l *LAverage) SetShape(shape tf.Shape) *LAverage {
+	l.shape = shape
+	return l
 }
 
-func (a *Average) GetShape() tf.Shape {
-	return a.shape
+func (l *LAverage) SetTrainable(trainable bool) *LAverage {
+	l.trainable = trainable
+	return l
 }
 
-func (a *Average) GetDtype() DataType {
-	return a.dtype
+func (l *LAverage) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (a *Average) SetInput(inputs []Layer) {
-	a.inputs = inputs
-	a.dtype = inputs[0].GetDtype()
+func (l *LAverage) GetDtype() DataType {
+	return l.dtype
 }
 
-func (a *Average) GetInputs() []Layer {
-	return a.inputs
+func (l *LAverage) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (a *Average) GetName() string {
-	return a.name
+func (l *LAverage) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigAverage struct {
+func (l *LAverage) GetName() string {
+	return l.name
+}
+
+type jsonConfigLAverage struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (a *Average) GetKerasLayerConfig() interface{} {
+func (l *LAverage) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range a.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -84,18 +78,18 @@ func (a *Average) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigAverage{
+	return jsonConfigLAverage{
 		ClassName: "Average",
-		Name:      a.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     a.dtype.String(),
-			"name":      a.name,
-			"trainable": a.trainable,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (a *Average) GetCustomLayerDefinition() string {
+func (l *LAverage) GetCustomLayerDefinition() string {
 	return ``
 }

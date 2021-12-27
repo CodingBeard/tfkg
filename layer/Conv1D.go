@@ -1,201 +1,181 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Conv1D struct {
-	name                string
-	dtype               DataType
-	inputs              []Layer
-	shape               tf.Shape
-	trainable           bool
-	filters             float64
-	kernelSize          float64
-	strides             float64
-	padding             string
+type LConv1D struct {
+	activation          string
+	activityRegularizer regularizer.Regularizer
+	biasConstraint      constraint.Constraint
+	biasInitializer     initializer.Initializer
+	biasRegularizer     regularizer.Regularizer
 	dataFormat          string
 	dilationRate        float64
+	dtype               DataType
+	filters             float64
 	groups              float64
-	activation          string
-	useBias             bool
-	kernelInitializer   initializer.Initializer
-	biasInitializer     initializer.Initializer
-	kernelRegularizer   regularizer.Regularizer
-	biasRegularizer     regularizer.Regularizer
-	activityRegularizer regularizer.Regularizer
+	inputs              []Layer
 	kernelConstraint    constraint.Constraint
-	biasConstraint      constraint.Constraint
+	kernelInitializer   initializer.Initializer
+	kernelRegularizer   regularizer.Regularizer
+	kernelSize          float64
+	name                string
+	padding             string
+	shape               tf.Shape
+	strides             float64
+	trainable           bool
+	useBias             bool
 }
 
-func NewConv1D(filters float64, kernelSize float64, options ...Conv1DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		c := &Conv1D{
-			filters:             filters,
-			kernelSize:          kernelSize,
-			strides:             1,
-			padding:             "valid",
-			dataFormat:          "channels_last",
-			dilationRate:        1,
-			groups:              1,
-			activation:          "linear",
-			useBias:             true,
-			kernelInitializer:   &initializer.GlorotUniform{},
-			biasInitializer:     &initializer.Zeros{},
-			kernelRegularizer:   &regularizer.NilRegularizer{},
-			biasRegularizer:     &regularizer.NilRegularizer{},
-			activityRegularizer: &regularizer.NilRegularizer{},
-			kernelConstraint:    &constraint.NilConstraint{},
-			biasConstraint:      &constraint.NilConstraint{},
-			trainable:           true,
-			inputs:              inputs,
-			name:                UniqueName("conv1d"),
-		}
-		for _, option := range options {
-			option(c)
-		}
-		return c
+func Conv1D(filters float64, kernelSize float64) *LConv1D {
+	return &LConv1D{
+		activation:          "linear",
+		activityRegularizer: &regularizer.NilRegularizer{},
+		biasConstraint:      &constraint.NilConstraint{},
+		biasInitializer:     initializer.Zeros(),
+		biasRegularizer:     &regularizer.NilRegularizer{},
+		dataFormat:          "channels_last",
+		dilationRate:        1,
+		dtype:               Float32,
+		filters:             filters,
+		groups:              1,
+		kernelConstraint:    &constraint.NilConstraint{},
+		kernelInitializer:   initializer.GlorotUniform(),
+		kernelRegularizer:   &regularizer.NilRegularizer{},
+		kernelSize:          kernelSize,
+		name:                UniqueName("conv1d"),
+		padding:             "valid",
+		strides:             1,
+		trainable:           true,
+		useBias:             true,
 	}
 }
 
-type Conv1DOption func(*Conv1D)
-
-func Conv1DWithName(name string) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.name = name
-	}
+func (l *LConv1D) SetActivation(activation string) *LConv1D {
+	l.activation = activation
+	return l
 }
 
-func Conv1DWithDtype(dtype DataType) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.dtype = dtype
-	}
+func (l *LConv1D) SetActivityRegularizer(activityRegularizer regularizer.Regularizer) *LConv1D {
+	l.activityRegularizer = activityRegularizer
+	return l
 }
 
-func Conv1DWithTrainable(trainable bool) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.trainable = trainable
-	}
+func (l *LConv1D) SetBiasConstraint(biasConstraint constraint.Constraint) *LConv1D {
+	l.biasConstraint = biasConstraint
+	return l
 }
 
-func Conv1DWithStrides(strides float64) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.strides = strides
-	}
+func (l *LConv1D) SetBiasInitializer(biasInitializer initializer.Initializer) *LConv1D {
+	l.biasInitializer = biasInitializer
+	return l
 }
 
-func Conv1DWithPadding(padding string) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.padding = padding
-	}
+func (l *LConv1D) SetBiasRegularizer(biasRegularizer regularizer.Regularizer) *LConv1D {
+	l.biasRegularizer = biasRegularizer
+	return l
 }
 
-func Conv1DWithDataFormat(dataFormat string) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.dataFormat = dataFormat
-	}
+func (l *LConv1D) SetDataFormat(dataFormat string) *LConv1D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func Conv1DWithDilationRate(dilationRate float64) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.dilationRate = dilationRate
-	}
+func (l *LConv1D) SetDilationRate(dilationRate float64) *LConv1D {
+	l.dilationRate = dilationRate
+	return l
 }
 
-func Conv1DWithGroups(groups float64) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.groups = groups
-	}
+func (l *LConv1D) SetDtype(dtype DataType) *LConv1D {
+	l.dtype = dtype
+	return l
 }
 
-func Conv1DWithActivation(activation string) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.activation = activation
-	}
+func (l *LConv1D) SetGroups(groups float64) *LConv1D {
+	l.groups = groups
+	return l
 }
 
-func Conv1DWithUseBias(useBias bool) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.useBias = useBias
-	}
+func (l *LConv1D) SetKernelConstraint(kernelConstraint constraint.Constraint) *LConv1D {
+	l.kernelConstraint = kernelConstraint
+	return l
 }
 
-func Conv1DWithKernelInitializer(kernelInitializer initializer.Initializer) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.kernelInitializer = kernelInitializer
-	}
+func (l *LConv1D) SetKernelInitializer(kernelInitializer initializer.Initializer) *LConv1D {
+	l.kernelInitializer = kernelInitializer
+	return l
 }
 
-func Conv1DWithBiasInitializer(biasInitializer initializer.Initializer) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.biasInitializer = biasInitializer
-	}
+func (l *LConv1D) SetKernelRegularizer(kernelRegularizer regularizer.Regularizer) *LConv1D {
+	l.kernelRegularizer = kernelRegularizer
+	return l
 }
 
-func Conv1DWithKernelRegularizer(kernelRegularizer regularizer.Regularizer) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.kernelRegularizer = kernelRegularizer
-	}
+func (l *LConv1D) SetName(name string) *LConv1D {
+	l.name = name
+	return l
 }
 
-func Conv1DWithBiasRegularizer(biasRegularizer regularizer.Regularizer) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.biasRegularizer = biasRegularizer
-	}
+func (l *LConv1D) SetPadding(padding string) *LConv1D {
+	l.padding = padding
+	return l
 }
 
-func Conv1DWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.activityRegularizer = activityRegularizer
-	}
+func (l *LConv1D) SetShape(shape tf.Shape) *LConv1D {
+	l.shape = shape
+	return l
 }
 
-func Conv1DWithKernelConstraint(kernelConstraint constraint.Constraint) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.kernelConstraint = kernelConstraint
-	}
+func (l *LConv1D) SetStrides(strides float64) *LConv1D {
+	l.strides = strides
+	return l
 }
 
-func Conv1DWithBiasConstraint(biasConstraint constraint.Constraint) func(c *Conv1D) {
-	return func(c *Conv1D) {
-		c.biasConstraint = biasConstraint
-	}
+func (l *LConv1D) SetTrainable(trainable bool) *LConv1D {
+	l.trainable = trainable
+	return l
 }
 
-func (c *Conv1D) GetShape() tf.Shape {
-	return c.shape
+func (l *LConv1D) SetUseBias(useBias bool) *LConv1D {
+	l.useBias = useBias
+	return l
 }
 
-func (c *Conv1D) GetDtype() DataType {
-	return c.dtype
+func (l *LConv1D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (c *Conv1D) SetInput(inputs []Layer) {
-	c.inputs = inputs
-	c.dtype = inputs[0].GetDtype()
+func (l *LConv1D) GetDtype() DataType {
+	return l.dtype
 }
 
-func (c *Conv1D) GetInputs() []Layer {
-	return c.inputs
+func (l *LConv1D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (c *Conv1D) GetName() string {
-	return c.name
+func (l *LConv1D) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigConv1D struct {
+func (l *LConv1D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLConv1D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (c *Conv1D) GetKerasLayerConfig() interface{} {
+func (l *LConv1D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range c.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -203,34 +183,34 @@ func (c *Conv1D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigConv1D{
+	return jsonConfigLConv1D{
 		ClassName: "Conv1D",
-		Name:      c.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"activation":           c.activation,
-			"activity_regularizer": c.activityRegularizer.GetKerasLayerConfig(),
-			"bias_constraint":      c.biasConstraint.GetKerasLayerConfig(),
-			"bias_initializer":     c.biasInitializer.GetKerasLayerConfig(),
-			"bias_regularizer":     c.biasRegularizer.GetKerasLayerConfig(),
-			"data_format":          c.dataFormat,
-			"dilation_rate":        c.dilationRate,
-			"dtype":                c.dtype.String(),
-			"filters":              c.filters,
-			"groups":               c.groups,
-			"kernel_constraint":    c.kernelConstraint.GetKerasLayerConfig(),
-			"kernel_initializer":   c.kernelInitializer.GetKerasLayerConfig(),
-			"kernel_regularizer":   c.kernelRegularizer.GetKerasLayerConfig(),
-			"kernel_size":          c.kernelSize,
-			"name":                 c.name,
-			"padding":              c.padding,
-			"strides":              c.strides,
-			"trainable":            c.trainable,
-			"use_bias":             c.useBias,
+			"activation":           l.activation,
+			"activity_regularizer": l.activityRegularizer.GetKerasLayerConfig(),
+			"bias_constraint":      l.biasConstraint.GetKerasLayerConfig(),
+			"bias_initializer":     l.biasInitializer.GetKerasLayerConfig(),
+			"bias_regularizer":     l.biasRegularizer.GetKerasLayerConfig(),
+			"data_format":          l.dataFormat,
+			"dilation_rate":        l.dilationRate,
+			"dtype":                l.dtype.String(),
+			"filters":              l.filters,
+			"groups":               l.groups,
+			"kernel_constraint":    l.kernelConstraint.GetKerasLayerConfig(),
+			"kernel_initializer":   l.kernelInitializer.GetKerasLayerConfig(),
+			"kernel_regularizer":   l.kernelRegularizer.GetKerasLayerConfig(),
+			"kernel_size":          l.kernelSize,
+			"name":                 l.name,
+			"padding":              l.padding,
+			"strides":              l.strides,
+			"trainable":            l.trainable,
+			"use_bias":             l.useBias,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (c *Conv1D) GetCustomLayerDefinition() string {
+func (l *LConv1D) GetCustomLayerDefinition() string {
 	return ``
 }

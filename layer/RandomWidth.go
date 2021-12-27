@@ -2,99 +2,91 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type RandomWidth struct {
-	name          string
+type LRandomWidth struct {
 	dtype         DataType
+	factor        float64
 	inputs        []Layer
+	interpolation string
+	name          string
+	seed          interface{}
 	shape         tf.Shape
 	trainable     bool
-	factor        float64
-	interpolation string
-	seed          interface{}
 }
 
-func NewRandomWidth(factor float64, options ...RandomWidthOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &RandomWidth{
-			factor:        factor,
-			interpolation: "bilinear",
-			seed:          nil,
-			trainable:     true,
-			inputs:        inputs,
-			name:          UniqueName("randomwidth"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func RandomWidth(factor float64) *LRandomWidth {
+	return &LRandomWidth{
+		dtype:         Float32,
+		factor:        factor,
+		interpolation: "bilinear",
+		name:          UniqueName("random_width"),
+		seed:          nil,
+		trainable:     true,
 	}
 }
 
-type RandomWidthOption func(*RandomWidth)
-
-func RandomWidthWithName(name string) func(r *RandomWidth) {
-	return func(r *RandomWidth) {
-		r.name = name
-	}
+func (l *LRandomWidth) SetDtype(dtype DataType) *LRandomWidth {
+	l.dtype = dtype
+	return l
 }
 
-func RandomWidthWithDtype(dtype DataType) func(r *RandomWidth) {
-	return func(r *RandomWidth) {
-		r.dtype = dtype
-	}
+func (l *LRandomWidth) SetInterpolation(interpolation string) *LRandomWidth {
+	l.interpolation = interpolation
+	return l
 }
 
-func RandomWidthWithTrainable(trainable bool) func(r *RandomWidth) {
-	return func(r *RandomWidth) {
-		r.trainable = trainable
-	}
+func (l *LRandomWidth) SetName(name string) *LRandomWidth {
+	l.name = name
+	return l
 }
 
-func RandomWidthWithInterpolation(interpolation string) func(r *RandomWidth) {
-	return func(r *RandomWidth) {
-		r.interpolation = interpolation
-	}
+func (l *LRandomWidth) SetSeed(seed interface{}) *LRandomWidth {
+	l.seed = seed
+	return l
 }
 
-func RandomWidthWithSeed(seed interface{}) func(r *RandomWidth) {
-	return func(r *RandomWidth) {
-		r.seed = seed
-	}
+func (l *LRandomWidth) SetShape(shape tf.Shape) *LRandomWidth {
+	l.shape = shape
+	return l
 }
 
-func (r *RandomWidth) GetShape() tf.Shape {
-	return r.shape
+func (l *LRandomWidth) SetTrainable(trainable bool) *LRandomWidth {
+	l.trainable = trainable
+	return l
 }
 
-func (r *RandomWidth) GetDtype() DataType {
-	return r.dtype
+func (l *LRandomWidth) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *RandomWidth) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LRandomWidth) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *RandomWidth) GetInputs() []Layer {
-	return r.inputs
+func (l *LRandomWidth) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *RandomWidth) GetName() string {
-	return r.name
+func (l *LRandomWidth) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigRandomWidth struct {
+func (l *LRandomWidth) GetName() string {
+	return l.name
+}
+
+type jsonConfigLRandomWidth struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *RandomWidth) GetKerasLayerConfig() interface{} {
+func (l *LRandomWidth) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -102,21 +94,21 @@ func (r *RandomWidth) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigRandomWidth{
+	return jsonConfigLRandomWidth{
 		ClassName: "RandomWidth",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":         r.dtype.String(),
-			"factor":        r.factor,
-			"interpolation": r.interpolation,
-			"name":          r.name,
-			"seed":          r.seed,
-			"trainable":     r.trainable,
+			"dtype":         l.dtype.String(),
+			"factor":        l.factor,
+			"interpolation": l.interpolation,
+			"name":          l.name,
+			"seed":          l.seed,
+			"trainable":     l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *RandomWidth) GetCustomLayerDefinition() string {
+func (l *LRandomWidth) GetCustomLayerDefinition() string {
 	return ``
 }

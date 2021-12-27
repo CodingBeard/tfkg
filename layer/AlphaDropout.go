@@ -2,99 +2,91 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type AlphaDropout struct {
-	name       string
+type LAlphaDropout struct {
 	dtype      DataType
 	inputs     []Layer
+	name       string
+	noiseShape interface{}
+	rate       float64
+	seed       interface{}
 	shape      tf.Shape
 	trainable  bool
-	rate       float64
-	noiseShape interface{}
-	seed       interface{}
 }
 
-func NewAlphaDropout(rate float64, options ...AlphaDropoutOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		a := &AlphaDropout{
-			rate:       rate,
-			noiseShape: nil,
-			seed:       nil,
-			trainable:  true,
-			inputs:     inputs,
-			name:       UniqueName("alphadropout"),
-		}
-		for _, option := range options {
-			option(a)
-		}
-		return a
+func AlphaDropout(rate float64) *LAlphaDropout {
+	return &LAlphaDropout{
+		dtype:      Float32,
+		name:       UniqueName("alpha_dropout"),
+		noiseShape: nil,
+		rate:       rate,
+		seed:       nil,
+		trainable:  true,
 	}
 }
 
-type AlphaDropoutOption func(*AlphaDropout)
-
-func AlphaDropoutWithName(name string) func(a *AlphaDropout) {
-	return func(a *AlphaDropout) {
-		a.name = name
-	}
+func (l *LAlphaDropout) SetDtype(dtype DataType) *LAlphaDropout {
+	l.dtype = dtype
+	return l
 }
 
-func AlphaDropoutWithDtype(dtype DataType) func(a *AlphaDropout) {
-	return func(a *AlphaDropout) {
-		a.dtype = dtype
-	}
+func (l *LAlphaDropout) SetName(name string) *LAlphaDropout {
+	l.name = name
+	return l
 }
 
-func AlphaDropoutWithTrainable(trainable bool) func(a *AlphaDropout) {
-	return func(a *AlphaDropout) {
-		a.trainable = trainable
-	}
+func (l *LAlphaDropout) SetNoiseShape(noiseShape interface{}) *LAlphaDropout {
+	l.noiseShape = noiseShape
+	return l
 }
 
-func AlphaDropoutWithNoiseShape(noiseShape interface{}) func(a *AlphaDropout) {
-	return func(a *AlphaDropout) {
-		a.noiseShape = noiseShape
-	}
+func (l *LAlphaDropout) SetSeed(seed interface{}) *LAlphaDropout {
+	l.seed = seed
+	return l
 }
 
-func AlphaDropoutWithSeed(seed interface{}) func(a *AlphaDropout) {
-	return func(a *AlphaDropout) {
-		a.seed = seed
-	}
+func (l *LAlphaDropout) SetShape(shape tf.Shape) *LAlphaDropout {
+	l.shape = shape
+	return l
 }
 
-func (a *AlphaDropout) GetShape() tf.Shape {
-	return a.shape
+func (l *LAlphaDropout) SetTrainable(trainable bool) *LAlphaDropout {
+	l.trainable = trainable
+	return l
 }
 
-func (a *AlphaDropout) GetDtype() DataType {
-	return a.dtype
+func (l *LAlphaDropout) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (a *AlphaDropout) SetInput(inputs []Layer) {
-	a.inputs = inputs
-	a.dtype = inputs[0].GetDtype()
+func (l *LAlphaDropout) GetDtype() DataType {
+	return l.dtype
 }
 
-func (a *AlphaDropout) GetInputs() []Layer {
-	return a.inputs
+func (l *LAlphaDropout) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (a *AlphaDropout) GetName() string {
-	return a.name
+func (l *LAlphaDropout) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigAlphaDropout struct {
+func (l *LAlphaDropout) GetName() string {
+	return l.name
+}
+
+type jsonConfigLAlphaDropout struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (a *AlphaDropout) GetKerasLayerConfig() interface{} {
+func (l *LAlphaDropout) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range a.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -102,19 +94,21 @@ func (a *AlphaDropout) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigAlphaDropout{
+	return jsonConfigLAlphaDropout{
 		ClassName: "AlphaDropout",
-		Name:      a.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     a.dtype.String(),
-			"name":      a.name,
-			"rate":      a.rate,
-			"trainable": a.trainable,
+			"dtype":       l.dtype.String(),
+			"name":        l.name,
+			"noise_shape": l.noiseShape,
+			"rate":        l.rate,
+			"seed":        l.seed,
+			"trainable":   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (a *AlphaDropout) GetCustomLayerDefinition() string {
+func (l *LAlphaDropout) GetCustomLayerDefinition() string {
 	return ``
 }

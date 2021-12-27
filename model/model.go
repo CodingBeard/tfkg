@@ -44,14 +44,14 @@ func NewSequentialModel(
 	logger *cblog.Logger,
 	errorHandler *cberrors.ErrorsContainer,
 	input layer.Layer,
-	layers ...func(inputs ...layer.Layer) layer.Layer,
+	layers ...layer.Layer,
 ) *TfkgModel {
 	layersWithInputs := []layer.Layer{
 		input,
 	}
 	lastLayer := input
-	for _, layerFunc := range layers {
-		l := layerFunc(lastLayer)
+	for _, l := range layers {
+		l.SetInputs(lastLayer)
 		layersWithInputs = append(layersWithInputs, l)
 		lastLayer = l
 	}
@@ -304,8 +304,8 @@ func (m *TfkgModel) Fit(
 
 			batch++
 		}
-		for _, met := range config.Metrics {
-			met.Reset()
+		for i := range config.Metrics {
+			config.Metrics[i].Reset()
 		}
 		if config.Validation {
 			valSig := m.model.Signatures["evaluate"]
@@ -411,6 +411,9 @@ func (m *TfkgModel) Fit(
 				)
 
 				batch++
+			}
+			for i := range config.Metrics {
+				config.Metrics[i].Reset()
 			}
 		}
 	}
@@ -850,7 +853,7 @@ func (m *TfkgModel) generateKerasDefinitionJson() (string, error) {
 	var outputLayerConfigs [][]interface{}
 	var layerConfigs []interface{}
 	for i, l := range m.layers {
-		if _, ok := l.(*layer.Input); ok {
+		if _, ok := l.(*layer.LInput); ok {
 			inputLayerConfigs = append(inputLayerConfigs, []interface{}{
 				l.GetName(),
 				0,

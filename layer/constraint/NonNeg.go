@@ -1,24 +1,33 @@
 package constraint
 
-type NonNeg struct {
+type CNonNeg struct {
+	name string
 }
 
-func NewNonNeg() *NonNeg {
-	return &NonNeg{}
+func NonNeg() *CNonNeg {
+	return &CNonNeg{}
 }
 
-type jsonConfigNonNeg struct {
+func (c *CNonNeg) SetName(name string) *CNonNeg {
+	c.name = name
+	return c
+}
+
+type jsonConfigCNonNeg struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (n *NonNeg) GetKerasLayerConfig() interface{} {
-	if n == nil {
-		return nil
-	}
-	return jsonConfigNonNeg{
+func (c *CNonNeg) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigCNonNeg{
 		ClassName: "NonNeg",
+		Name:      c.name,
 		Config:    map[string]interface{}{},
 	}
+}
+
+func (c *CNonNeg) GetCustomLayerDefinition() string {
+	return ``
 }

@@ -2,89 +2,82 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Flatten struct {
-	name       string
+type LFlatten struct {
+	dataFormat interface{}
 	dtype      DataType
 	inputs     []Layer
+	name       string
 	shape      tf.Shape
 	trainable  bool
-	dataFormat interface{}
 }
 
-func NewFlatten(options ...FlattenOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		f := &Flatten{
-			dataFormat: nil,
-			trainable:  true,
-			inputs:     inputs,
-			name:       UniqueName("flatten"),
-		}
-		for _, option := range options {
-			option(f)
-		}
-		return f
+func Flatten() *LFlatten {
+	return &LFlatten{
+		dataFormat: nil,
+		dtype:      Float32,
+		name:       UniqueName("flatten"),
+		trainable:  true,
 	}
 }
 
-type FlattenOption func(*Flatten)
-
-func FlattenWithName(name string) func(f *Flatten) {
-	return func(f *Flatten) {
-		f.name = name
-	}
+func (l *LFlatten) SetDataFormat(dataFormat interface{}) *LFlatten {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func FlattenWithDtype(dtype DataType) func(f *Flatten) {
-	return func(f *Flatten) {
-		f.dtype = dtype
-	}
+func (l *LFlatten) SetDtype(dtype DataType) *LFlatten {
+	l.dtype = dtype
+	return l
 }
 
-func FlattenWithTrainable(trainable bool) func(f *Flatten) {
-	return func(f *Flatten) {
-		f.trainable = trainable
-	}
+func (l *LFlatten) SetName(name string) *LFlatten {
+	l.name = name
+	return l
 }
 
-func FlattenWithDataFormat(dataFormat interface{}) func(f *Flatten) {
-	return func(f *Flatten) {
-		f.dataFormat = dataFormat
-	}
+func (l *LFlatten) SetShape(shape tf.Shape) *LFlatten {
+	l.shape = shape
+	return l
 }
 
-func (f *Flatten) GetShape() tf.Shape {
-	return f.shape
+func (l *LFlatten) SetTrainable(trainable bool) *LFlatten {
+	l.trainable = trainable
+	return l
 }
 
-func (f *Flatten) GetDtype() DataType {
-	return f.dtype
+func (l *LFlatten) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (f *Flatten) SetInput(inputs []Layer) {
-	f.inputs = inputs
-	f.dtype = inputs[0].GetDtype()
+func (l *LFlatten) GetDtype() DataType {
+	return l.dtype
 }
 
-func (f *Flatten) GetInputs() []Layer {
-	return f.inputs
+func (l *LFlatten) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (f *Flatten) GetName() string {
-	return f.name
+func (l *LFlatten) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigFlatten struct {
+func (l *LFlatten) GetName() string {
+	return l.name
+}
+
+type jsonConfigLFlatten struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (f *Flatten) GetKerasLayerConfig() interface{} {
+func (l *LFlatten) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range f.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -92,19 +85,19 @@ func (f *Flatten) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigFlatten{
+	return jsonConfigLFlatten{
 		ClassName: "Flatten",
-		Name:      f.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"data_format": f.dataFormat,
-			"dtype":       f.dtype.String(),
-			"name":        f.name,
-			"trainable":   f.trainable,
+			"data_format": l.dataFormat,
+			"dtype":       l.dtype.String(),
+			"name":        l.name,
+			"trainable":   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (f *Flatten) GetCustomLayerDefinition() string {
+func (l *LFlatten) GetCustomLayerDefinition() string {
 	return ``
 }

@@ -2,89 +2,82 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type UpSampling1D struct {
-	name      string
+type LUpSampling1D struct {
 	dtype     DataType
 	inputs    []Layer
+	name      string
 	shape     tf.Shape
-	trainable bool
 	size      float64
+	trainable bool
 }
 
-func NewUpSampling1D(options ...UpSampling1DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		u := &UpSampling1D{
-			size:      2,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("upsampling1d"),
-		}
-		for _, option := range options {
-			option(u)
-		}
-		return u
+func UpSampling1D() *LUpSampling1D {
+	return &LUpSampling1D{
+		dtype:     Float32,
+		name:      UniqueName("up_sampling1d"),
+		size:      2,
+		trainable: true,
 	}
 }
 
-type UpSampling1DOption func(*UpSampling1D)
-
-func UpSampling1DWithName(name string) func(u *UpSampling1D) {
-	return func(u *UpSampling1D) {
-		u.name = name
-	}
+func (l *LUpSampling1D) SetDtype(dtype DataType) *LUpSampling1D {
+	l.dtype = dtype
+	return l
 }
 
-func UpSampling1DWithDtype(dtype DataType) func(u *UpSampling1D) {
-	return func(u *UpSampling1D) {
-		u.dtype = dtype
-	}
+func (l *LUpSampling1D) SetName(name string) *LUpSampling1D {
+	l.name = name
+	return l
 }
 
-func UpSampling1DWithTrainable(trainable bool) func(u *UpSampling1D) {
-	return func(u *UpSampling1D) {
-		u.trainable = trainable
-	}
+func (l *LUpSampling1D) SetShape(shape tf.Shape) *LUpSampling1D {
+	l.shape = shape
+	return l
 }
 
-func UpSampling1DWithSize(size float64) func(u *UpSampling1D) {
-	return func(u *UpSampling1D) {
-		u.size = size
-	}
+func (l *LUpSampling1D) SetSize(size float64) *LUpSampling1D {
+	l.size = size
+	return l
 }
 
-func (u *UpSampling1D) GetShape() tf.Shape {
-	return u.shape
+func (l *LUpSampling1D) SetTrainable(trainable bool) *LUpSampling1D {
+	l.trainable = trainable
+	return l
 }
 
-func (u *UpSampling1D) GetDtype() DataType {
-	return u.dtype
+func (l *LUpSampling1D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (u *UpSampling1D) SetInput(inputs []Layer) {
-	u.inputs = inputs
-	u.dtype = inputs[0].GetDtype()
+func (l *LUpSampling1D) GetDtype() DataType {
+	return l.dtype
 }
 
-func (u *UpSampling1D) GetInputs() []Layer {
-	return u.inputs
+func (l *LUpSampling1D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (u *UpSampling1D) GetName() string {
-	return u.name
+func (l *LUpSampling1D) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigUpSampling1D struct {
+func (l *LUpSampling1D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLUpSampling1D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (u *UpSampling1D) GetKerasLayerConfig() interface{} {
+func (l *LUpSampling1D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range u.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -92,19 +85,19 @@ func (u *UpSampling1D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigUpSampling1D{
+	return jsonConfigLUpSampling1D{
 		ClassName: "UpSampling1D",
-		Name:      u.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     u.dtype.String(),
-			"name":      u.name,
-			"size":      u.size,
-			"trainable": u.trainable,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"size":      l.size,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (u *UpSampling1D) GetCustomLayerDefinition() string {
+func (l *LUpSampling1D) GetCustomLayerDefinition() string {
 	return ``
 }

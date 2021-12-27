@@ -2,91 +2,84 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Rescaling struct {
-	name      string
+type LRescaling struct {
 	dtype     DataType
 	inputs    []Layer
+	name      string
+	offset    float64
+	scale     float64
 	shape     tf.Shape
 	trainable bool
-	scale     float64
-	offset    float64
 }
 
-func NewRescaling(scale float64, options ...RescalingOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &Rescaling{
-			scale:     scale,
-			offset:    0,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("rescaling"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func Rescaling(scale float64) *LRescaling {
+	return &LRescaling{
+		dtype:     Float32,
+		name:      UniqueName("rescaling"),
+		offset:    0,
+		scale:     scale,
+		trainable: true,
 	}
 }
 
-type RescalingOption func(*Rescaling)
-
-func RescalingWithName(name string) func(r *Rescaling) {
-	return func(r *Rescaling) {
-		r.name = name
-	}
+func (l *LRescaling) SetDtype(dtype DataType) *LRescaling {
+	l.dtype = dtype
+	return l
 }
 
-func RescalingWithDtype(dtype DataType) func(r *Rescaling) {
-	return func(r *Rescaling) {
-		r.dtype = dtype
-	}
+func (l *LRescaling) SetName(name string) *LRescaling {
+	l.name = name
+	return l
 }
 
-func RescalingWithTrainable(trainable bool) func(r *Rescaling) {
-	return func(r *Rescaling) {
-		r.trainable = trainable
-	}
+func (l *LRescaling) SetOffset(offset float64) *LRescaling {
+	l.offset = offset
+	return l
 }
 
-func RescalingWithOffset(offset float64) func(r *Rescaling) {
-	return func(r *Rescaling) {
-		r.offset = offset
-	}
+func (l *LRescaling) SetShape(shape tf.Shape) *LRescaling {
+	l.shape = shape
+	return l
 }
 
-func (r *Rescaling) GetShape() tf.Shape {
-	return r.shape
+func (l *LRescaling) SetTrainable(trainable bool) *LRescaling {
+	l.trainable = trainable
+	return l
 }
 
-func (r *Rescaling) GetDtype() DataType {
-	return r.dtype
+func (l *LRescaling) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *Rescaling) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LRescaling) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *Rescaling) GetInputs() []Layer {
-	return r.inputs
+func (l *LRescaling) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *Rescaling) GetName() string {
-	return r.name
+func (l *LRescaling) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigRescaling struct {
+func (l *LRescaling) GetName() string {
+	return l.name
+}
+
+type jsonConfigLRescaling struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *Rescaling) GetKerasLayerConfig() interface{} {
+func (l *LRescaling) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -94,20 +87,20 @@ func (r *Rescaling) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigRescaling{
+	return jsonConfigLRescaling{
 		ClassName: "Rescaling",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     r.dtype.String(),
-			"name":      r.name,
-			"offset":    r.offset,
-			"scale":     r.scale,
-			"trainable": r.trainable,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"offset":    l.offset,
+			"scale":     l.scale,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *Rescaling) GetCustomLayerDefinition() string {
+func (l *LRescaling) GetCustomLayerDefinition() string {
 	return ``
 }

@@ -1,161 +1,145 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type LayerNormalization struct {
-	name             string
+type LLayerNormalization struct {
+	axis             float64
+	betaConstraint   constraint.Constraint
+	betaInitializer  initializer.Initializer
+	betaRegularizer  regularizer.Regularizer
+	center           bool
 	dtype            DataType
+	epsilon          float64
+	gammaConstraint  constraint.Constraint
+	gammaInitializer initializer.Initializer
+	gammaRegularizer regularizer.Regularizer
 	inputs           []Layer
+	name             string
+	scale            bool
 	shape            tf.Shape
 	trainable        bool
-	axis             float64
-	epsilon          float64
-	center           bool
-	scale            bool
-	betaInitializer  initializer.Initializer
-	gammaInitializer initializer.Initializer
-	betaRegularizer  regularizer.Regularizer
-	gammaRegularizer regularizer.Regularizer
-	betaConstraint   constraint.Constraint
-	gammaConstraint  constraint.Constraint
 }
 
-func NewLayerNormalization(options ...LayerNormalizationOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		l := &LayerNormalization{
-			axis:             -1,
-			epsilon:          0.001,
-			center:           true,
-			scale:            true,
-			betaInitializer:  &initializer.Zeros{},
-			gammaInitializer: &initializer.Ones{},
-			betaRegularizer:  &regularizer.NilRegularizer{},
-			gammaRegularizer: &regularizer.NilRegularizer{},
-			betaConstraint:   &constraint.NilConstraint{},
-			gammaConstraint:  &constraint.NilConstraint{},
-			trainable:        true,
-			inputs:           inputs,
-			name:             UniqueName("layernormalization"),
-		}
-		for _, option := range options {
-			option(l)
-		}
-		return l
+func LayerNormalization() *LLayerNormalization {
+	return &LLayerNormalization{
+		axis:             -1,
+		betaConstraint:   &constraint.NilConstraint{},
+		betaInitializer:  initializer.Zeros(),
+		betaRegularizer:  &regularizer.NilRegularizer{},
+		center:           true,
+		dtype:            Float32,
+		epsilon:          0.001,
+		gammaConstraint:  &constraint.NilConstraint{},
+		gammaInitializer: initializer.Ones(),
+		gammaRegularizer: &regularizer.NilRegularizer{},
+		name:             UniqueName("layer_normalization"),
+		scale:            true,
+		trainable:        true,
 	}
 }
 
-type LayerNormalizationOption func(*LayerNormalization)
-
-func LayerNormalizationWithName(name string) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.name = name
-	}
+func (l *LLayerNormalization) SetAxis(axis float64) *LLayerNormalization {
+	l.axis = axis
+	return l
 }
 
-func LayerNormalizationWithDtype(dtype DataType) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.dtype = dtype
-	}
+func (l *LLayerNormalization) SetBetaConstraint(betaConstraint constraint.Constraint) *LLayerNormalization {
+	l.betaConstraint = betaConstraint
+	return l
 }
 
-func LayerNormalizationWithTrainable(trainable bool) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.trainable = trainable
-	}
+func (l *LLayerNormalization) SetBetaInitializer(betaInitializer initializer.Initializer) *LLayerNormalization {
+	l.betaInitializer = betaInitializer
+	return l
 }
 
-func LayerNormalizationWithAxis(axis float64) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.axis = axis
-	}
+func (l *LLayerNormalization) SetBetaRegularizer(betaRegularizer regularizer.Regularizer) *LLayerNormalization {
+	l.betaRegularizer = betaRegularizer
+	return l
 }
 
-func LayerNormalizationWithEpsilon(epsilon float64) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.epsilon = epsilon
-	}
+func (l *LLayerNormalization) SetCenter(center bool) *LLayerNormalization {
+	l.center = center
+	return l
 }
 
-func LayerNormalizationWithCenter(center bool) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.center = center
-	}
+func (l *LLayerNormalization) SetDtype(dtype DataType) *LLayerNormalization {
+	l.dtype = dtype
+	return l
 }
 
-func LayerNormalizationWithScale(scale bool) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.scale = scale
-	}
+func (l *LLayerNormalization) SetEpsilon(epsilon float64) *LLayerNormalization {
+	l.epsilon = epsilon
+	return l
 }
 
-func LayerNormalizationWithBetaInitializer(betaInitializer initializer.Initializer) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.betaInitializer = betaInitializer
-	}
+func (l *LLayerNormalization) SetGammaConstraint(gammaConstraint constraint.Constraint) *LLayerNormalization {
+	l.gammaConstraint = gammaConstraint
+	return l
 }
 
-func LayerNormalizationWithGammaInitializer(gammaInitializer initializer.Initializer) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.gammaInitializer = gammaInitializer
-	}
+func (l *LLayerNormalization) SetGammaInitializer(gammaInitializer initializer.Initializer) *LLayerNormalization {
+	l.gammaInitializer = gammaInitializer
+	return l
 }
 
-func LayerNormalizationWithBetaRegularizer(betaRegularizer regularizer.Regularizer) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.betaRegularizer = betaRegularizer
-	}
+func (l *LLayerNormalization) SetGammaRegularizer(gammaRegularizer regularizer.Regularizer) *LLayerNormalization {
+	l.gammaRegularizer = gammaRegularizer
+	return l
 }
 
-func LayerNormalizationWithGammaRegularizer(gammaRegularizer regularizer.Regularizer) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.gammaRegularizer = gammaRegularizer
-	}
+func (l *LLayerNormalization) SetName(name string) *LLayerNormalization {
+	l.name = name
+	return l
 }
 
-func LayerNormalizationWithBetaConstraint(betaConstraint constraint.Constraint) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.betaConstraint = betaConstraint
-	}
+func (l *LLayerNormalization) SetScale(scale bool) *LLayerNormalization {
+	l.scale = scale
+	return l
 }
 
-func LayerNormalizationWithGammaConstraint(gammaConstraint constraint.Constraint) func(l *LayerNormalization) {
-	return func(l *LayerNormalization) {
-		l.gammaConstraint = gammaConstraint
-	}
+func (l *LLayerNormalization) SetShape(shape tf.Shape) *LLayerNormalization {
+	l.shape = shape
+	return l
 }
 
-func (l *LayerNormalization) GetShape() tf.Shape {
+func (l *LLayerNormalization) SetTrainable(trainable bool) *LLayerNormalization {
+	l.trainable = trainable
+	return l
+}
+
+func (l *LLayerNormalization) GetShape() tf.Shape {
 	return l.shape
 }
 
-func (l *LayerNormalization) GetDtype() DataType {
+func (l *LLayerNormalization) GetDtype() DataType {
 	return l.dtype
 }
 
-func (l *LayerNormalization) SetInput(inputs []Layer) {
+func (l *LLayerNormalization) SetInputs(inputs ...Layer) Layer {
 	l.inputs = inputs
-	l.dtype = inputs[0].GetDtype()
+	return l
 }
 
-func (l *LayerNormalization) GetInputs() []Layer {
+func (l *LLayerNormalization) GetInputs() []Layer {
 	return l.inputs
 }
 
-func (l *LayerNormalization) GetName() string {
+func (l *LLayerNormalization) GetName() string {
 	return l.name
 }
 
-type jsonConfigLayerNormalization struct {
+type jsonConfigLLayerNormalization struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (l *LayerNormalization) GetKerasLayerConfig() interface{} {
+func (l *LLayerNormalization) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
@@ -167,7 +151,7 @@ func (l *LayerNormalization) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigLayerNormalization{
+	return jsonConfigLLayerNormalization{
 		ClassName: "LayerNormalization",
 		Name:      l.name,
 		Config: map[string]interface{}{
@@ -189,6 +173,6 @@ func (l *LayerNormalization) GetKerasLayerConfig() interface{} {
 	}
 }
 
-func (l *LayerNormalization) GetCustomLayerDefinition() string {
+func (l *LLayerNormalization) GetCustomLayerDefinition() string {
 	return ``
 }

@@ -1,73 +1,77 @@
 package optimizer
 
-type Nadam struct {
-	learningRate float64
+type ONadam struct {
 	beta1        float64
 	beta2        float64
-	epsilon      float64
-	name         string
 	decay        float64
+	epsilon      float64
+	learningRate float64
+	name         string
 }
 
-func NewNadam() *Nadam {
-	return &Nadam{
-		learningRate: 0.001,
+func Nadam() *ONadam {
+	return &ONadam{
 		beta1:        0.9,
 		beta2:        0.999,
+		decay:        0.004,
 		epsilon:      1e-07,
-		name:         "Nadam",
+		learningRate: 0.001,
+		name:         UniqueName("Nadam"),
 	}
 }
 
-func NadamWithLearningRate(learningRate float64) func(n *Nadam) {
-	return func(n *Nadam) {
-		n.learningRate = learningRate
-	}
+func (o *ONadam) SetBeta1(beta1 float64) *ONadam {
+	o.beta1 = beta1
+	return o
 }
 
-func NadamWithBeta1(beta1 float64) func(n *Nadam) {
-	return func(n *Nadam) {
-		n.beta1 = beta1
-	}
+func (o *ONadam) SetBeta2(beta2 float64) *ONadam {
+	o.beta2 = beta2
+	return o
 }
 
-func NadamWithBeta2(beta2 float64) func(n *Nadam) {
-	return func(n *Nadam) {
-		n.beta2 = beta2
-	}
+func (o *ONadam) SetDecay(decay float64) *ONadam {
+	o.decay = decay
+	return o
 }
 
-func NadamWithEpsilon(epsilon float64) func(n *Nadam) {
-	return func(n *Nadam) {
-		n.epsilon = epsilon
-	}
+func (o *ONadam) SetEpsilon(epsilon float64) *ONadam {
+	o.epsilon = epsilon
+	return o
 }
 
-func NadamWithName(name string) func(n *Nadam) {
-	return func(n *Nadam) {
-		n.name = name
-	}
+func (o *ONadam) SetLearningRate(learningRate float64) *ONadam {
+	o.learningRate = learningRate
+	return o
 }
 
-type jsonConfigNadam struct {
+func (o *ONadam) SetName(name string) *ONadam {
+	o.name = name
+	return o
+}
+
+type jsonConfigONadam struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (n *Nadam) GetKerasLayerConfig() interface{} {
-	if n == nil {
-		return nil
-	}
-	return jsonConfigNadam{
+func (o *ONadam) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigONadam{
 		ClassName: "Nadam",
+		Name:      o.name,
 		Config: map[string]interface{}{
-			"beta_1":        n.beta1,
-			"beta_2":        n.beta2,
-			"decay":         n.decay,
-			"epsilon":       n.epsilon,
-			"learning_rate": n.learningRate,
-			"name":          n.name,
+			"beta_1":        o.beta1,
+			"beta_2":        o.beta2,
+			"decay":         o.decay,
+			"epsilon":       o.epsilon,
+			"learning_rate": o.learningRate,
+			"name":          o.name,
 		},
 	}
+}
+
+func (o *ONadam) GetCustomLayerDefinition() string {
+	return ``
 }

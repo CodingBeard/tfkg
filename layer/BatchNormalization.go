@@ -1,189 +1,170 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type BatchNormalization struct {
-	name                      string
-	dtype                     DataType
-	inputs                    []Layer
-	shape                     tf.Shape
-	trainable                 bool
+type LBatchNormalization struct {
 	axis                      float64
-	momentum                  float64
-	epsilon                   float64
-	center                    bool
-	scale                     bool
+	betaConstraint            constraint.Constraint
 	betaInitializer           initializer.Initializer
+	betaRegularizer           regularizer.Regularizer
+	center                    bool
+	dtype                     DataType
+	epsilon                   float64
+	gammaConstraint           constraint.Constraint
 	gammaInitializer          initializer.Initializer
+	gammaRegularizer          regularizer.Regularizer
+	inputs                    []Layer
+	momentum                  float64
 	movingMeanInitializer     initializer.Initializer
 	movingVarianceInitializer initializer.Initializer
-	betaRegularizer           regularizer.Regularizer
-	gammaRegularizer          regularizer.Regularizer
-	betaConstraint            constraint.Constraint
-	gammaConstraint           constraint.Constraint
+	name                      string
+	scale                     bool
+	shape                     tf.Shape
+	trainable                 bool
 }
 
-func NewBatchNormalization(options ...BatchNormalizationOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		b := &BatchNormalization{
-			axis:                      -1,
-			momentum:                  0.99,
-			epsilon:                   0.001,
-			center:                    true,
-			scale:                     true,
-			betaInitializer:           &initializer.Zeros{},
-			gammaInitializer:          &initializer.Ones{},
-			movingMeanInitializer:     &initializer.Zeros{},
-			movingVarianceInitializer: &initializer.Ones{},
-			betaRegularizer:           &regularizer.NilRegularizer{},
-			gammaRegularizer:          &regularizer.NilRegularizer{},
-			betaConstraint:            &constraint.NilConstraint{},
-			gammaConstraint:           &constraint.NilConstraint{},
-			trainable:                 true,
-			inputs:                    inputs,
-			name:                      UniqueName("batchnormalization"),
-		}
-		for _, option := range options {
-			option(b)
-		}
-		return b
+func BatchNormalization() *LBatchNormalization {
+	return &LBatchNormalization{
+		axis:                      -1,
+		betaConstraint:            &constraint.NilConstraint{},
+		betaInitializer:           initializer.Zeros(),
+		betaRegularizer:           &regularizer.NilRegularizer{},
+		center:                    true,
+		dtype:                     Float32,
+		epsilon:                   0.001,
+		gammaConstraint:           &constraint.NilConstraint{},
+		gammaInitializer:          initializer.Ones(),
+		gammaRegularizer:          &regularizer.NilRegularizer{},
+		momentum:                  0.99,
+		movingMeanInitializer:     initializer.Zeros(),
+		movingVarianceInitializer: initializer.Ones(),
+		name:                      UniqueName("batch_normalization"),
+		scale:                     true,
+		trainable:                 true,
 	}
 }
 
-type BatchNormalizationOption func(*BatchNormalization)
-
-func BatchNormalizationWithName(name string) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.name = name
-	}
+func (l *LBatchNormalization) SetAxis(axis float64) *LBatchNormalization {
+	l.axis = axis
+	return l
 }
 
-func BatchNormalizationWithDtype(dtype DataType) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.dtype = dtype
-	}
+func (l *LBatchNormalization) SetBetaConstraint(betaConstraint constraint.Constraint) *LBatchNormalization {
+	l.betaConstraint = betaConstraint
+	return l
 }
 
-func BatchNormalizationWithTrainable(trainable bool) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.trainable = trainable
-	}
+func (l *LBatchNormalization) SetBetaInitializer(betaInitializer initializer.Initializer) *LBatchNormalization {
+	l.betaInitializer = betaInitializer
+	return l
 }
 
-func BatchNormalizationWithAxis(axis float64) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.axis = axis
-	}
+func (l *LBatchNormalization) SetBetaRegularizer(betaRegularizer regularizer.Regularizer) *LBatchNormalization {
+	l.betaRegularizer = betaRegularizer
+	return l
 }
 
-func BatchNormalizationWithMomentum(momentum float64) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.momentum = momentum
-	}
+func (l *LBatchNormalization) SetCenter(center bool) *LBatchNormalization {
+	l.center = center
+	return l
 }
 
-func BatchNormalizationWithEpsilon(epsilon float64) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.epsilon = epsilon
-	}
+func (l *LBatchNormalization) SetDtype(dtype DataType) *LBatchNormalization {
+	l.dtype = dtype
+	return l
 }
 
-func BatchNormalizationWithCenter(center bool) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.center = center
-	}
+func (l *LBatchNormalization) SetEpsilon(epsilon float64) *LBatchNormalization {
+	l.epsilon = epsilon
+	return l
 }
 
-func BatchNormalizationWithScale(scale bool) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.scale = scale
-	}
+func (l *LBatchNormalization) SetGammaConstraint(gammaConstraint constraint.Constraint) *LBatchNormalization {
+	l.gammaConstraint = gammaConstraint
+	return l
 }
 
-func BatchNormalizationWithBetaInitializer(betaInitializer initializer.Initializer) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.betaInitializer = betaInitializer
-	}
+func (l *LBatchNormalization) SetGammaInitializer(gammaInitializer initializer.Initializer) *LBatchNormalization {
+	l.gammaInitializer = gammaInitializer
+	return l
 }
 
-func BatchNormalizationWithGammaInitializer(gammaInitializer initializer.Initializer) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.gammaInitializer = gammaInitializer
-	}
+func (l *LBatchNormalization) SetGammaRegularizer(gammaRegularizer regularizer.Regularizer) *LBatchNormalization {
+	l.gammaRegularizer = gammaRegularizer
+	return l
 }
 
-func BatchNormalizationWithMovingMeanInitializer(movingMeanInitializer initializer.Initializer) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.movingMeanInitializer = movingMeanInitializer
-	}
+func (l *LBatchNormalization) SetMomentum(momentum float64) *LBatchNormalization {
+	l.momentum = momentum
+	return l
 }
 
-func BatchNormalizationWithMovingVarianceInitializer(movingVarianceInitializer initializer.Initializer) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.movingVarianceInitializer = movingVarianceInitializer
-	}
+func (l *LBatchNormalization) SetMovingMeanInitializer(movingMeanInitializer initializer.Initializer) *LBatchNormalization {
+	l.movingMeanInitializer = movingMeanInitializer
+	return l
 }
 
-func BatchNormalizationWithBetaRegularizer(betaRegularizer regularizer.Regularizer) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.betaRegularizer = betaRegularizer
-	}
+func (l *LBatchNormalization) SetMovingVarianceInitializer(movingVarianceInitializer initializer.Initializer) *LBatchNormalization {
+	l.movingVarianceInitializer = movingVarianceInitializer
+	return l
 }
 
-func BatchNormalizationWithGammaRegularizer(gammaRegularizer regularizer.Regularizer) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.gammaRegularizer = gammaRegularizer
-	}
+func (l *LBatchNormalization) SetName(name string) *LBatchNormalization {
+	l.name = name
+	return l
 }
 
-func BatchNormalizationWithBetaConstraint(betaConstraint constraint.Constraint) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.betaConstraint = betaConstraint
-	}
+func (l *LBatchNormalization) SetScale(scale bool) *LBatchNormalization {
+	l.scale = scale
+	return l
 }
 
-func BatchNormalizationWithGammaConstraint(gammaConstraint constraint.Constraint) func(b *BatchNormalization) {
-	return func(b *BatchNormalization) {
-		b.gammaConstraint = gammaConstraint
-	}
+func (l *LBatchNormalization) SetShape(shape tf.Shape) *LBatchNormalization {
+	l.shape = shape
+	return l
 }
 
-func (b *BatchNormalization) GetShape() tf.Shape {
-	return b.shape
+func (l *LBatchNormalization) SetTrainable(trainable bool) *LBatchNormalization {
+	l.trainable = trainable
+	return l
 }
 
-func (b *BatchNormalization) GetDtype() DataType {
-	return b.dtype
+func (l *LBatchNormalization) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (b *BatchNormalization) SetInput(inputs []Layer) {
-	b.inputs = inputs
-	b.dtype = inputs[0].GetDtype()
+func (l *LBatchNormalization) GetDtype() DataType {
+	return l.dtype
 }
 
-func (b *BatchNormalization) GetInputs() []Layer {
-	return b.inputs
+func (l *LBatchNormalization) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (b *BatchNormalization) GetName() string {
-	return b.name
+func (l *LBatchNormalization) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigBatchNormalization struct {
+func (l *LBatchNormalization) GetName() string {
+	return l.name
+}
+
+type jsonConfigLBatchNormalization struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (b *BatchNormalization) GetKerasLayerConfig() interface{} {
+func (l *LBatchNormalization) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range b.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -191,31 +172,31 @@ func (b *BatchNormalization) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigBatchNormalization{
+	return jsonConfigLBatchNormalization{
 		ClassName: "BatchNormalization",
-		Name:      b.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"axis":                        b.axis,
-			"beta_constraint":             b.betaConstraint.GetKerasLayerConfig(),
-			"beta_initializer":            b.betaInitializer.GetKerasLayerConfig(),
-			"beta_regularizer":            b.betaRegularizer.GetKerasLayerConfig(),
-			"center":                      b.center,
-			"dtype":                       b.dtype.String(),
-			"epsilon":                     b.epsilon,
-			"gamma_constraint":            b.gammaConstraint.GetKerasLayerConfig(),
-			"gamma_initializer":           b.gammaInitializer.GetKerasLayerConfig(),
-			"gamma_regularizer":           b.gammaRegularizer.GetKerasLayerConfig(),
-			"momentum":                    b.momentum,
-			"moving_mean_initializer":     b.movingMeanInitializer.GetKerasLayerConfig(),
-			"moving_variance_initializer": b.movingVarianceInitializer.GetKerasLayerConfig(),
-			"name":                        b.name,
-			"scale":                       b.scale,
-			"trainable":                   b.trainable,
+			"axis":                        l.axis,
+			"beta_constraint":             l.betaConstraint.GetKerasLayerConfig(),
+			"beta_initializer":            l.betaInitializer.GetKerasLayerConfig(),
+			"beta_regularizer":            l.betaRegularizer.GetKerasLayerConfig(),
+			"center":                      l.center,
+			"dtype":                       l.dtype.String(),
+			"epsilon":                     l.epsilon,
+			"gamma_constraint":            l.gammaConstraint.GetKerasLayerConfig(),
+			"gamma_initializer":           l.gammaInitializer.GetKerasLayerConfig(),
+			"gamma_regularizer":           l.gammaRegularizer.GetKerasLayerConfig(),
+			"momentum":                    l.momentum,
+			"moving_mean_initializer":     l.movingMeanInitializer.GetKerasLayerConfig(),
+			"moving_variance_initializer": l.movingVarianceInitializer.GetKerasLayerConfig(),
+			"name":                        l.name,
+			"scale":                       l.scale,
+			"trainable":                   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (b *BatchNormalization) GetCustomLayerDefinition() string {
+func (l *LBatchNormalization) GetCustomLayerDefinition() string {
 	return ``
 }

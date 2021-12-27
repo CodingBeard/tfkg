@@ -2,153 +2,138 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type IntegerLookup struct {
-	name           string
+type LIntegerLookup struct {
 	dtype          DataType
 	inputs         []Layer
-	shape          tf.Shape
-	trainable      bool
-	maxTokens      interface{}
-	numOovIndices  float64
-	maskToken      interface{}
-	oovToken       float64
-	vocabulary     interface{}
 	invert         bool
+	maskToken      interface{}
+	maxTokens      interface{}
+	name           string
+	numOovIndices  float64
+	oovToken       float64
 	outputMode     string
-	sparse         bool
 	padToMaxTokens bool
+	shape          tf.Shape
+	sparse         bool
+	trainable      bool
+	vocabulary     interface{}
 }
 
-func NewIntegerLookup(options ...IntegerLookupOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		i := &IntegerLookup{
-			maxTokens:      nil,
-			numOovIndices:  1,
-			maskToken:      nil,
-			oovToken:       -1,
-			vocabulary:     nil,
-			invert:         false,
-			outputMode:     "int",
-			sparse:         false,
-			padToMaxTokens: false,
-			trainable:      true,
-			inputs:         inputs,
-			name:           UniqueName("integerlookup"),
-		}
-		for _, option := range options {
-			option(i)
-		}
-		return i
+func IntegerLookup() *LIntegerLookup {
+	return &LIntegerLookup{
+		dtype:          Int64,
+		invert:         false,
+		maskToken:      nil,
+		maxTokens:      nil,
+		name:           UniqueName("integer_lookup"),
+		numOovIndices:  1,
+		oovToken:       -1,
+		outputMode:     "int",
+		padToMaxTokens: false,
+		sparse:         false,
+		trainable:      true,
+		vocabulary:     nil,
 	}
 }
 
-type IntegerLookupOption func(*IntegerLookup)
-
-func IntegerLookupWithName(name string) func(i *IntegerLookup) {
-	return func(i *IntegerLookup) {
-		i.name = name
-	}
+func (l *LIntegerLookup) SetDtype(dtype DataType) *LIntegerLookup {
+	l.dtype = dtype
+	return l
 }
 
-func IntegerLookupWithDtype(dtype DataType) func(i *IntegerLookup) {
-	return func(i *IntegerLookup) {
-		i.dtype = dtype
-	}
+func (l *LIntegerLookup) SetInvert(invert bool) *LIntegerLookup {
+	l.invert = invert
+	return l
 }
 
-func IntegerLookupWithTrainable(trainable bool) func(i *IntegerLookup) {
-	return func(i *IntegerLookup) {
-		i.trainable = trainable
-	}
+func (l *LIntegerLookup) SetMaskToken(maskToken interface{}) *LIntegerLookup {
+	l.maskToken = maskToken
+	return l
 }
 
-func IntegerLookupWithMaxTokens(maxTokens interface{}) func(i *IntegerLookup) {
-	return func(i *IntegerLookup) {
-		i.maxTokens = maxTokens
-	}
+func (l *LIntegerLookup) SetMaxTokens(maxTokens interface{}) *LIntegerLookup {
+	l.maxTokens = maxTokens
+	return l
 }
 
-func IntegerLookupWithNumOovIndices(numOovIndices float64) func(i *IntegerLookup) {
-	return func(i *IntegerLookup) {
-		i.numOovIndices = numOovIndices
-	}
+func (l *LIntegerLookup) SetName(name string) *LIntegerLookup {
+	l.name = name
+	return l
 }
 
-func IntegerLookupWithMaskToken(maskToken interface{}) func(i *IntegerLookup) {
-	return func(i *IntegerLookup) {
-		i.maskToken = maskToken
-	}
+func (l *LIntegerLookup) SetNumOovIndices(numOovIndices float64) *LIntegerLookup {
+	l.numOovIndices = numOovIndices
+	return l
 }
 
-func IntegerLookupWithOovToken(oovToken float64) func(i *IntegerLookup) {
-	return func(i *IntegerLookup) {
-		i.oovToken = oovToken
-	}
+func (l *LIntegerLookup) SetOovToken(oovToken float64) *LIntegerLookup {
+	l.oovToken = oovToken
+	return l
 }
 
-func IntegerLookupWithVocabulary(vocabulary interface{}) func(i *IntegerLookup) {
-	return func(i *IntegerLookup) {
-		i.vocabulary = vocabulary
-	}
+func (l *LIntegerLookup) SetOutputMode(outputMode string) *LIntegerLookup {
+	l.outputMode = outputMode
+	return l
 }
 
-func IntegerLookupWithInvert(invert bool) func(i *IntegerLookup) {
-	return func(i *IntegerLookup) {
-		i.invert = invert
-	}
+func (l *LIntegerLookup) SetPadToMaxTokens(padToMaxTokens bool) *LIntegerLookup {
+	l.padToMaxTokens = padToMaxTokens
+	return l
 }
 
-func IntegerLookupWithOutputMode(outputMode string) func(i *IntegerLookup) {
-	return func(i *IntegerLookup) {
-		i.outputMode = outputMode
-	}
+func (l *LIntegerLookup) SetShape(shape tf.Shape) *LIntegerLookup {
+	l.shape = shape
+	return l
 }
 
-func IntegerLookupWithSparse(sparse bool) func(i *IntegerLookup) {
-	return func(i *IntegerLookup) {
-		i.sparse = sparse
-	}
+func (l *LIntegerLookup) SetSparse(sparse bool) *LIntegerLookup {
+	l.sparse = sparse
+	return l
 }
 
-func IntegerLookupWithPadToMaxTokens(padToMaxTokens bool) func(i *IntegerLookup) {
-	return func(i *IntegerLookup) {
-		i.padToMaxTokens = padToMaxTokens
-	}
+func (l *LIntegerLookup) SetTrainable(trainable bool) *LIntegerLookup {
+	l.trainable = trainable
+	return l
 }
 
-func (i *IntegerLookup) GetShape() tf.Shape {
-	return i.shape
+func (l *LIntegerLookup) SetVocabulary(vocabulary interface{}) *LIntegerLookup {
+	l.vocabulary = vocabulary
+	return l
 }
 
-func (i *IntegerLookup) GetDtype() DataType {
-	return i.dtype
+func (l *LIntegerLookup) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (i *IntegerLookup) SetInput(inputs []Layer) {
-	i.inputs = inputs
-	i.dtype = inputs[0].GetDtype()
+func (l *LIntegerLookup) GetDtype() DataType {
+	return l.dtype
 }
 
-func (i *IntegerLookup) GetInputs() []Layer {
-	return i.inputs
+func (l *LIntegerLookup) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (i *IntegerLookup) GetName() string {
-	return i.name
+func (l *LIntegerLookup) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigIntegerLookup struct {
+func (l *LIntegerLookup) GetName() string {
+	return l.name
+}
+
+type jsonConfigLIntegerLookup struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (i *IntegerLookup) GetKerasLayerConfig() interface{} {
+func (l *LIntegerLookup) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range i.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -156,26 +141,27 @@ func (i *IntegerLookup) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigIntegerLookup{
+	return jsonConfigLIntegerLookup{
 		ClassName: "IntegerLookup",
-		Name:      i.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":             i.dtype.String(),
-			"invert":            i.invert,
-			"mask_token":        i.maskToken,
-			"max_tokens":        i.maxTokens,
-			"name":              i.name,
-			"num_oov_indices":   i.numOovIndices,
-			"oov_token":         i.oovToken,
-			"output_mode":       i.outputMode,
-			"pad_to_max_tokens": i.padToMaxTokens,
-			"trainable":         i.trainable,
-			"vocabulary":        i.vocabulary,
+			"dtype":             l.dtype.String(),
+			"invert":            l.invert,
+			"mask_token":        l.maskToken,
+			"max_tokens":        l.maxTokens,
+			"name":              l.name,
+			"num_oov_indices":   l.numOovIndices,
+			"oov_token":         l.oovToken,
+			"output_mode":       l.outputMode,
+			"pad_to_max_tokens": l.padToMaxTokens,
+			"sparse":            l.sparse,
+			"trainable":         l.trainable,
+			"vocabulary":        l.vocabulary,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (i *IntegerLookup) GetCustomLayerDefinition() string {
+func (l *LIntegerLookup) GetCustomLayerDefinition() string {
 	return ``
 }

@@ -2,83 +2,77 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Reshape struct {
-	name        string
+type LReshape struct {
 	dtype       DataType
 	inputs      []Layer
+	name        string
 	shape       tf.Shape
-	trainable   bool
 	targetShape []interface{}
+	trainable   bool
 }
 
-func NewReshape(targetShape []interface{}, options ...ReshapeOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &Reshape{
-			targetShape: targetShape,
-			trainable:   true,
-			inputs:      inputs,
-			name:        UniqueName("reshape"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func Reshape(targetShape []interface{}) *LReshape {
+	return &LReshape{
+		dtype:       Float32,
+		name:        UniqueName("reshape"),
+		targetShape: targetShape,
+		trainable:   true,
 	}
 }
 
-type ReshapeOption func(*Reshape)
-
-func ReshapeWithName(name string) func(r *Reshape) {
-	return func(r *Reshape) {
-		r.name = name
-	}
+func (l *LReshape) SetDtype(dtype DataType) *LReshape {
+	l.dtype = dtype
+	return l
 }
 
-func ReshapeWithDtype(dtype DataType) func(r *Reshape) {
-	return func(r *Reshape) {
-		r.dtype = dtype
-	}
+func (l *LReshape) SetName(name string) *LReshape {
+	l.name = name
+	return l
 }
 
-func ReshapeWithTrainable(trainable bool) func(r *Reshape) {
-	return func(r *Reshape) {
-		r.trainable = trainable
-	}
+func (l *LReshape) SetShape(shape tf.Shape) *LReshape {
+	l.shape = shape
+	return l
 }
 
-func (r *Reshape) GetShape() tf.Shape {
-	return r.shape
+func (l *LReshape) SetTrainable(trainable bool) *LReshape {
+	l.trainable = trainable
+	return l
 }
 
-func (r *Reshape) GetDtype() DataType {
-	return r.dtype
+func (l *LReshape) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *Reshape) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LReshape) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *Reshape) GetInputs() []Layer {
-	return r.inputs
+func (l *LReshape) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *Reshape) GetName() string {
-	return r.name
+func (l *LReshape) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigReshape struct {
+func (l *LReshape) GetName() string {
+	return l.name
+}
+
+type jsonConfigLReshape struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *Reshape) GetKerasLayerConfig() interface{} {
+func (l *LReshape) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -86,19 +80,19 @@ func (r *Reshape) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigReshape{
+	return jsonConfigLReshape{
 		ClassName: "Reshape",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":        r.dtype.String(),
-			"name":         r.name,
-			"target_shape": r.targetShape,
-			"trainable":    r.trainable,
+			"dtype":        l.dtype.String(),
+			"name":         l.name,
+			"target_shape": l.targetShape,
+			"trainable":    l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *Reshape) GetCustomLayerDefinition() string {
+func (l *LReshape) GetCustomLayerDefinition() string {
 	return ``
 }

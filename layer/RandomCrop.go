@@ -2,93 +2,86 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type RandomCrop struct {
-	name      string
+type LRandomCrop struct {
 	dtype     DataType
+	height    float64
 	inputs    []Layer
+	name      string
+	seed      interface{}
 	shape     tf.Shape
 	trainable bool
-	height    float64
 	width     float64
-	seed      interface{}
 }
 
-func NewRandomCrop(height float64, width float64, options ...RandomCropOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &RandomCrop{
-			height:    height,
-			width:     width,
-			seed:      nil,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("randomcrop"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func RandomCrop(height float64, width float64) *LRandomCrop {
+	return &LRandomCrop{
+		dtype:     Float32,
+		height:    height,
+		name:      UniqueName("random_crop"),
+		seed:      nil,
+		trainable: true,
+		width:     width,
 	}
 }
 
-type RandomCropOption func(*RandomCrop)
-
-func RandomCropWithName(name string) func(r *RandomCrop) {
-	return func(r *RandomCrop) {
-		r.name = name
-	}
+func (l *LRandomCrop) SetDtype(dtype DataType) *LRandomCrop {
+	l.dtype = dtype
+	return l
 }
 
-func RandomCropWithDtype(dtype DataType) func(r *RandomCrop) {
-	return func(r *RandomCrop) {
-		r.dtype = dtype
-	}
+func (l *LRandomCrop) SetName(name string) *LRandomCrop {
+	l.name = name
+	return l
 }
 
-func RandomCropWithTrainable(trainable bool) func(r *RandomCrop) {
-	return func(r *RandomCrop) {
-		r.trainable = trainable
-	}
+func (l *LRandomCrop) SetSeed(seed interface{}) *LRandomCrop {
+	l.seed = seed
+	return l
 }
 
-func RandomCropWithSeed(seed interface{}) func(r *RandomCrop) {
-	return func(r *RandomCrop) {
-		r.seed = seed
-	}
+func (l *LRandomCrop) SetShape(shape tf.Shape) *LRandomCrop {
+	l.shape = shape
+	return l
 }
 
-func (r *RandomCrop) GetShape() tf.Shape {
-	return r.shape
+func (l *LRandomCrop) SetTrainable(trainable bool) *LRandomCrop {
+	l.trainable = trainable
+	return l
 }
 
-func (r *RandomCrop) GetDtype() DataType {
-	return r.dtype
+func (l *LRandomCrop) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *RandomCrop) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LRandomCrop) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *RandomCrop) GetInputs() []Layer {
-	return r.inputs
+func (l *LRandomCrop) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *RandomCrop) GetName() string {
-	return r.name
+func (l *LRandomCrop) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigRandomCrop struct {
+func (l *LRandomCrop) GetName() string {
+	return l.name
+}
+
+type jsonConfigLRandomCrop struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *RandomCrop) GetKerasLayerConfig() interface{} {
+func (l *LRandomCrop) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -96,21 +89,21 @@ func (r *RandomCrop) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigRandomCrop{
+	return jsonConfigLRandomCrop{
 		ClassName: "RandomCrop",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     r.dtype.String(),
-			"height":    r.height,
-			"name":      r.name,
-			"seed":      r.seed,
-			"trainable": r.trainable,
-			"width":     r.width,
+			"dtype":     l.dtype.String(),
+			"height":    l.height,
+			"name":      l.name,
+			"seed":      l.seed,
+			"trainable": l.trainable,
+			"width":     l.width,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *RandomCrop) GetCustomLayerDefinition() string {
+func (l *LRandomCrop) GetCustomLayerDefinition() string {
 	return ``
 }

@@ -1,64 +1,69 @@
 package optimizer
 
-type Adagrad struct {
-	learningRate            float64
-	initialAccumulatorValue float64
-	epsilon                 float64
-	name                    string
+type OAdagrad struct {
 	decay                   float64
+	epsilon                 float64
+	initialAccumulatorValue float64
+	learningRate            float64
+	name                    string
 }
 
-func NewAdagrad() *Adagrad {
-	return &Adagrad{
-		learningRate:            0.001,
-		initialAccumulatorValue: 0.1,
+func Adagrad() *OAdagrad {
+	return &OAdagrad{
+		decay:                   0,
 		epsilon:                 1e-07,
-		name:                    "Adagrad",
+		initialAccumulatorValue: 0.1,
+		learningRate:            0.001,
+		name:                    UniqueName("Adagrad"),
 	}
 }
 
-func AdagradWithLearningRate(learningRate float64) func(a *Adagrad) {
-	return func(a *Adagrad) {
-		a.learningRate = learningRate
-	}
+func (o *OAdagrad) SetDecay(decay float64) *OAdagrad {
+	o.decay = decay
+	return o
 }
 
-func AdagradWithInitialAccumulatorValue(initialAccumulatorValue float64) func(a *Adagrad) {
-	return func(a *Adagrad) {
-		a.initialAccumulatorValue = initialAccumulatorValue
-	}
+func (o *OAdagrad) SetEpsilon(epsilon float64) *OAdagrad {
+	o.epsilon = epsilon
+	return o
 }
 
-func AdagradWithEpsilon(epsilon float64) func(a *Adagrad) {
-	return func(a *Adagrad) {
-		a.epsilon = epsilon
-	}
+func (o *OAdagrad) SetInitialAccumulatorValue(initialAccumulatorValue float64) *OAdagrad {
+	o.initialAccumulatorValue = initialAccumulatorValue
+	return o
 }
 
-func AdagradWithName(name string) func(a *Adagrad) {
-	return func(a *Adagrad) {
-		a.name = name
-	}
+func (o *OAdagrad) SetLearningRate(learningRate float64) *OAdagrad {
+	o.learningRate = learningRate
+	return o
 }
 
-type jsonConfigAdagrad struct {
+func (o *OAdagrad) SetName(name string) *OAdagrad {
+	o.name = name
+	return o
+}
+
+type jsonConfigOAdagrad struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (a *Adagrad) GetKerasLayerConfig() interface{} {
-	if a == nil {
-		return nil
-	}
-	return jsonConfigAdagrad{
+func (o *OAdagrad) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigOAdagrad{
 		ClassName: "Adagrad",
+		Name:      o.name,
 		Config: map[string]interface{}{
-			"decay":                     a.decay,
-			"epsilon":                   a.epsilon,
-			"initial_accumulator_value": a.initialAccumulatorValue,
-			"learning_rate":             a.learningRate,
-			"name":                      a.name,
+			"decay":                     o.decay,
+			"epsilon":                   o.epsilon,
+			"initial_accumulator_value": o.initialAccumulatorValue,
+			"learning_rate":             o.learningRate,
+			"name":                      o.name,
 		},
 	}
+}
+
+func (o *OAdagrad) GetCustomLayerDefinition() string {
+	return ``
 }

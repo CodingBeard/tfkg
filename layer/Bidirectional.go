@@ -2,107 +2,98 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Bidirectional struct {
-	name          string
+type LBidirectional struct {
+	backwardLayer interface{}
 	dtype         DataType
 	inputs        []Layer
-	shape         tf.Shape
-	trainable     bool
 	layer         interface{}
 	mergeMode     string
+	name          string
+	shape         tf.Shape
+	trainable     bool
 	weights       interface{}
-	backwardLayer interface{}
 }
 
-func NewBidirectional(layer interface{}, options ...BidirectionalOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		b := &Bidirectional{
-			layer:         layer,
-			mergeMode:     "concat",
-			weights:       nil,
-			backwardLayer: nil,
-			trainable:     true,
-			inputs:        inputs,
-			name:          UniqueName("bidirectional"),
-		}
-		for _, option := range options {
-			option(b)
-		}
-		return b
+func Bidirectional(layer interface{}) *LBidirectional {
+	return &LBidirectional{
+		backwardLayer: nil,
+		dtype:         Float32,
+		layer:         layer,
+		mergeMode:     "concat",
+		name:          UniqueName("bidirectional"),
+		trainable:     true,
+		weights:       nil,
 	}
 }
 
-type BidirectionalOption func(*Bidirectional)
-
-func BidirectionalWithName(name string) func(b *Bidirectional) {
-	return func(b *Bidirectional) {
-		b.name = name
-	}
+func (l *LBidirectional) SetBackwardLayer(backwardLayer interface{}) *LBidirectional {
+	l.backwardLayer = backwardLayer
+	return l
 }
 
-func BidirectionalWithDtype(dtype DataType) func(b *Bidirectional) {
-	return func(b *Bidirectional) {
-		b.dtype = dtype
-	}
+func (l *LBidirectional) SetDtype(dtype DataType) *LBidirectional {
+	l.dtype = dtype
+	return l
 }
 
-func BidirectionalWithTrainable(trainable bool) func(b *Bidirectional) {
-	return func(b *Bidirectional) {
-		b.trainable = trainable
-	}
+func (l *LBidirectional) SetMergeMode(mergeMode string) *LBidirectional {
+	l.mergeMode = mergeMode
+	return l
 }
 
-func BidirectionalWithMergeMode(mergeMode string) func(b *Bidirectional) {
-	return func(b *Bidirectional) {
-		b.mergeMode = mergeMode
-	}
+func (l *LBidirectional) SetName(name string) *LBidirectional {
+	l.name = name
+	return l
 }
 
-func BidirectionalWithWeights(weights interface{}) func(b *Bidirectional) {
-	return func(b *Bidirectional) {
-		b.weights = weights
-	}
+func (l *LBidirectional) SetShape(shape tf.Shape) *LBidirectional {
+	l.shape = shape
+	return l
 }
 
-func BidirectionalWithBackwardLayer(backwardLayer interface{}) func(b *Bidirectional) {
-	return func(b *Bidirectional) {
-		b.backwardLayer = backwardLayer
-	}
+func (l *LBidirectional) SetTrainable(trainable bool) *LBidirectional {
+	l.trainable = trainable
+	return l
 }
 
-func (b *Bidirectional) GetShape() tf.Shape {
-	return b.shape
+func (l *LBidirectional) SetWeights(weights interface{}) *LBidirectional {
+	l.weights = weights
+	return l
 }
 
-func (b *Bidirectional) GetDtype() DataType {
-	return b.dtype
+func (l *LBidirectional) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (b *Bidirectional) SetInput(inputs []Layer) {
-	b.inputs = inputs
-	b.dtype = inputs[0].GetDtype()
+func (l *LBidirectional) GetDtype() DataType {
+	return l.dtype
 }
 
-func (b *Bidirectional) GetInputs() []Layer {
-	return b.inputs
+func (l *LBidirectional) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (b *Bidirectional) GetName() string {
-	return b.name
+func (l *LBidirectional) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigBidirectional struct {
+func (l *LBidirectional) GetName() string {
+	return l.name
+}
+
+type jsonConfigLBidirectional struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (b *Bidirectional) GetKerasLayerConfig() interface{} {
+func (l *LBidirectional) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range b.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -110,20 +101,22 @@ func (b *Bidirectional) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigBidirectional{
+	return jsonConfigLBidirectional{
 		ClassName: "Bidirectional",
-		Name:      b.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":      b.dtype.String(),
-			"layer":      b.layer,
-			"merge_mode": b.mergeMode,
-			"name":       b.name,
-			"trainable":  b.trainable,
+			"backward_layer": l.backwardLayer,
+			"dtype":          l.dtype.String(),
+			"layer":          l.layer,
+			"merge_mode":     l.mergeMode,
+			"name":           l.name,
+			"trainable":      l.trainable,
+			"weights":        l.weights,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (b *Bidirectional) GetCustomLayerDefinition() string {
+func (l *LBidirectional) GetCustomLayerDefinition() string {
 	return ``
 }

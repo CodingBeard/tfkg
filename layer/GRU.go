@@ -1,265 +1,242 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type GRU struct {
-	name                 string
-	dtype                DataType
-	inputs               []Layer
-	shape                tf.Shape
-	trainable            bool
-	units                float64
+type LGRU struct {
 	activation           string
-	recurrentActivation  string
-	useBias              bool
-	kernelInitializer    initializer.Initializer
-	recurrentInitializer initializer.Initializer
-	biasInitializer      initializer.Initializer
-	kernelRegularizer    regularizer.Regularizer
-	recurrentRegularizer regularizer.Regularizer
-	biasRegularizer      regularizer.Regularizer
 	activityRegularizer  regularizer.Regularizer
-	kernelConstraint     constraint.Constraint
-	recurrentConstraint  constraint.Constraint
 	biasConstraint       constraint.Constraint
+	biasInitializer      initializer.Initializer
+	biasRegularizer      regularizer.Regularizer
 	dropout              float64
+	dtype                DataType
+	goBackwards          bool
+	implementation       float64
+	inputs               []Layer
+	kernelConstraint     constraint.Constraint
+	kernelInitializer    initializer.Initializer
+	kernelRegularizer    regularizer.Regularizer
+	name                 string
+	recurrentActivation  string
+	recurrentConstraint  constraint.Constraint
 	recurrentDropout     float64
+	recurrentInitializer initializer.Initializer
+	recurrentRegularizer regularizer.Regularizer
+	resetAfter           bool
 	returnSequences      bool
 	returnState          bool
-	goBackwards          bool
+	shape                tf.Shape
 	stateful             bool
-	unroll               bool
 	timeMajor            bool
-	resetAfter           bool
-	implementation       float64
+	trainable            bool
+	units                float64
+	unroll               bool
+	useBias              bool
 }
 
-func NewGRU(units float64, options ...GRUOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		g := &GRU{
-			units:                units,
-			activation:           "tanh",
-			recurrentActivation:  "sigmoid",
-			useBias:              true,
-			kernelInitializer:    &initializer.GlorotUniform{},
-			recurrentInitializer: &initializer.Orthogonal{},
-			biasInitializer:      &initializer.Zeros{},
-			kernelRegularizer:    &regularizer.NilRegularizer{},
-			recurrentRegularizer: &regularizer.NilRegularizer{},
-			biasRegularizer:      &regularizer.NilRegularizer{},
-			activityRegularizer:  &regularizer.NilRegularizer{},
-			kernelConstraint:     &constraint.NilConstraint{},
-			recurrentConstraint:  &constraint.NilConstraint{},
-			biasConstraint:       &constraint.NilConstraint{},
-			dropout:              0,
-			recurrentDropout:     0,
-			returnSequences:      false,
-			returnState:          false,
-			goBackwards:          false,
-			stateful:             false,
-			unroll:               false,
-			timeMajor:            false,
-			resetAfter:           true,
-			implementation:       2,
-			trainable:            true,
-			inputs:               inputs,
-			name:                 UniqueName("gru"),
-		}
-		for _, option := range options {
-			option(g)
-		}
-		return g
+func GRU(units float64) *LGRU {
+	return &LGRU{
+		activation:           "tanh",
+		activityRegularizer:  &regularizer.NilRegularizer{},
+		biasConstraint:       &constraint.NilConstraint{},
+		biasInitializer:      initializer.Zeros(),
+		biasRegularizer:      &regularizer.NilRegularizer{},
+		dropout:              0,
+		dtype:                Float32,
+		goBackwards:          false,
+		implementation:       2,
+		kernelConstraint:     &constraint.NilConstraint{},
+		kernelInitializer:    initializer.GlorotUniform(),
+		kernelRegularizer:    &regularizer.NilRegularizer{},
+		name:                 UniqueName("gru"),
+		recurrentActivation:  "sigmoid",
+		recurrentConstraint:  &constraint.NilConstraint{},
+		recurrentDropout:     0,
+		recurrentInitializer: initializer.Orthogonal(),
+		recurrentRegularizer: &regularizer.NilRegularizer{},
+		resetAfter:           true,
+		returnSequences:      false,
+		returnState:          false,
+		stateful:             false,
+		timeMajor:            false,
+		trainable:            true,
+		units:                units,
+		unroll:               false,
+		useBias:              true,
 	}
 }
 
-type GRUOption func(*GRU)
-
-func GRUWithName(name string) func(g *GRU) {
-	return func(g *GRU) {
-		g.name = name
-	}
+func (l *LGRU) SetActivation(activation string) *LGRU {
+	l.activation = activation
+	return l
 }
 
-func GRUWithDtype(dtype DataType) func(g *GRU) {
-	return func(g *GRU) {
-		g.dtype = dtype
-	}
+func (l *LGRU) SetActivityRegularizer(activityRegularizer regularizer.Regularizer) *LGRU {
+	l.activityRegularizer = activityRegularizer
+	return l
 }
 
-func GRUWithTrainable(trainable bool) func(g *GRU) {
-	return func(g *GRU) {
-		g.trainable = trainable
-	}
+func (l *LGRU) SetBiasConstraint(biasConstraint constraint.Constraint) *LGRU {
+	l.biasConstraint = biasConstraint
+	return l
 }
 
-func GRUWithActivation(activation string) func(g *GRU) {
-	return func(g *GRU) {
-		g.activation = activation
-	}
+func (l *LGRU) SetBiasInitializer(biasInitializer initializer.Initializer) *LGRU {
+	l.biasInitializer = biasInitializer
+	return l
 }
 
-func GRUWithRecurrentActivation(recurrentActivation string) func(g *GRU) {
-	return func(g *GRU) {
-		g.recurrentActivation = recurrentActivation
-	}
+func (l *LGRU) SetBiasRegularizer(biasRegularizer regularizer.Regularizer) *LGRU {
+	l.biasRegularizer = biasRegularizer
+	return l
 }
 
-func GRUWithUseBias(useBias bool) func(g *GRU) {
-	return func(g *GRU) {
-		g.useBias = useBias
-	}
+func (l *LGRU) SetDropout(dropout float64) *LGRU {
+	l.dropout = dropout
+	return l
 }
 
-func GRUWithKernelInitializer(kernelInitializer initializer.Initializer) func(g *GRU) {
-	return func(g *GRU) {
-		g.kernelInitializer = kernelInitializer
-	}
+func (l *LGRU) SetDtype(dtype DataType) *LGRU {
+	l.dtype = dtype
+	return l
 }
 
-func GRUWithRecurrentInitializer(recurrentInitializer initializer.Initializer) func(g *GRU) {
-	return func(g *GRU) {
-		g.recurrentInitializer = recurrentInitializer
-	}
+func (l *LGRU) SetGoBackwards(goBackwards bool) *LGRU {
+	l.goBackwards = goBackwards
+	return l
 }
 
-func GRUWithBiasInitializer(biasInitializer initializer.Initializer) func(g *GRU) {
-	return func(g *GRU) {
-		g.biasInitializer = biasInitializer
-	}
+func (l *LGRU) SetImplementation(implementation float64) *LGRU {
+	l.implementation = implementation
+	return l
 }
 
-func GRUWithKernelRegularizer(kernelRegularizer regularizer.Regularizer) func(g *GRU) {
-	return func(g *GRU) {
-		g.kernelRegularizer = kernelRegularizer
-	}
+func (l *LGRU) SetKernelConstraint(kernelConstraint constraint.Constraint) *LGRU {
+	l.kernelConstraint = kernelConstraint
+	return l
 }
 
-func GRUWithRecurrentRegularizer(recurrentRegularizer regularizer.Regularizer) func(g *GRU) {
-	return func(g *GRU) {
-		g.recurrentRegularizer = recurrentRegularizer
-	}
+func (l *LGRU) SetKernelInitializer(kernelInitializer initializer.Initializer) *LGRU {
+	l.kernelInitializer = kernelInitializer
+	return l
 }
 
-func GRUWithBiasRegularizer(biasRegularizer regularizer.Regularizer) func(g *GRU) {
-	return func(g *GRU) {
-		g.biasRegularizer = biasRegularizer
-	}
+func (l *LGRU) SetKernelRegularizer(kernelRegularizer regularizer.Regularizer) *LGRU {
+	l.kernelRegularizer = kernelRegularizer
+	return l
 }
 
-func GRUWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(g *GRU) {
-	return func(g *GRU) {
-		g.activityRegularizer = activityRegularizer
-	}
+func (l *LGRU) SetName(name string) *LGRU {
+	l.name = name
+	return l
 }
 
-func GRUWithKernelConstraint(kernelConstraint constraint.Constraint) func(g *GRU) {
-	return func(g *GRU) {
-		g.kernelConstraint = kernelConstraint
-	}
+func (l *LGRU) SetRecurrentActivation(recurrentActivation string) *LGRU {
+	l.recurrentActivation = recurrentActivation
+	return l
 }
 
-func GRUWithRecurrentConstraint(recurrentConstraint constraint.Constraint) func(g *GRU) {
-	return func(g *GRU) {
-		g.recurrentConstraint = recurrentConstraint
-	}
+func (l *LGRU) SetRecurrentConstraint(recurrentConstraint constraint.Constraint) *LGRU {
+	l.recurrentConstraint = recurrentConstraint
+	return l
 }
 
-func GRUWithBiasConstraint(biasConstraint constraint.Constraint) func(g *GRU) {
-	return func(g *GRU) {
-		g.biasConstraint = biasConstraint
-	}
+func (l *LGRU) SetRecurrentDropout(recurrentDropout float64) *LGRU {
+	l.recurrentDropout = recurrentDropout
+	return l
 }
 
-func GRUWithDropout(dropout float64) func(g *GRU) {
-	return func(g *GRU) {
-		g.dropout = dropout
-	}
+func (l *LGRU) SetRecurrentInitializer(recurrentInitializer initializer.Initializer) *LGRU {
+	l.recurrentInitializer = recurrentInitializer
+	return l
 }
 
-func GRUWithRecurrentDropout(recurrentDropout float64) func(g *GRU) {
-	return func(g *GRU) {
-		g.recurrentDropout = recurrentDropout
-	}
+func (l *LGRU) SetRecurrentRegularizer(recurrentRegularizer regularizer.Regularizer) *LGRU {
+	l.recurrentRegularizer = recurrentRegularizer
+	return l
 }
 
-func GRUWithReturnSequences(returnSequences bool) func(g *GRU) {
-	return func(g *GRU) {
-		g.returnSequences = returnSequences
-	}
+func (l *LGRU) SetResetAfter(resetAfter bool) *LGRU {
+	l.resetAfter = resetAfter
+	return l
 }
 
-func GRUWithReturnState(returnState bool) func(g *GRU) {
-	return func(g *GRU) {
-		g.returnState = returnState
-	}
+func (l *LGRU) SetReturnSequences(returnSequences bool) *LGRU {
+	l.returnSequences = returnSequences
+	return l
 }
 
-func GRUWithGoBackwards(goBackwards bool) func(g *GRU) {
-	return func(g *GRU) {
-		g.goBackwards = goBackwards
-	}
+func (l *LGRU) SetReturnState(returnState bool) *LGRU {
+	l.returnState = returnState
+	return l
 }
 
-func GRUWithStateful(stateful bool) func(g *GRU) {
-	return func(g *GRU) {
-		g.stateful = stateful
-	}
+func (l *LGRU) SetShape(shape tf.Shape) *LGRU {
+	l.shape = shape
+	return l
 }
 
-func GRUWithUnroll(unroll bool) func(g *GRU) {
-	return func(g *GRU) {
-		g.unroll = unroll
-	}
+func (l *LGRU) SetStateful(stateful bool) *LGRU {
+	l.stateful = stateful
+	return l
 }
 
-func GRUWithTimeMajor(timeMajor bool) func(g *GRU) {
-	return func(g *GRU) {
-		g.timeMajor = timeMajor
-	}
+func (l *LGRU) SetTimeMajor(timeMajor bool) *LGRU {
+	l.timeMajor = timeMajor
+	return l
 }
 
-func GRUWithResetAfter(resetAfter bool) func(g *GRU) {
-	return func(g *GRU) {
-		g.resetAfter = resetAfter
-	}
+func (l *LGRU) SetTrainable(trainable bool) *LGRU {
+	l.trainable = trainable
+	return l
 }
 
-func (g *GRU) GetShape() tf.Shape {
-	return g.shape
+func (l *LGRU) SetUnroll(unroll bool) *LGRU {
+	l.unroll = unroll
+	return l
 }
 
-func (g *GRU) GetDtype() DataType {
-	return g.dtype
+func (l *LGRU) SetUseBias(useBias bool) *LGRU {
+	l.useBias = useBias
+	return l
 }
 
-func (g *GRU) SetInput(inputs []Layer) {
-	g.inputs = inputs
-	g.dtype = inputs[0].GetDtype()
+func (l *LGRU) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (g *GRU) GetInputs() []Layer {
-	return g.inputs
+func (l *LGRU) GetDtype() DataType {
+	return l.dtype
 }
 
-func (g *GRU) GetName() string {
-	return g.name
+func (l *LGRU) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-type jsonConfigGRU struct {
+func (l *LGRU) GetInputs() []Layer {
+	return l.inputs
+}
+
+func (l *LGRU) GetName() string {
+	return l.name
+}
+
+type jsonConfigLGRU struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (g *GRU) GetKerasLayerConfig() interface{} {
+func (l *LGRU) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range g.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -267,42 +244,42 @@ func (g *GRU) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigGRU{
+	return jsonConfigLGRU{
 		ClassName: "GRU",
-		Name:      g.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"activation":            g.activation,
-			"activity_regularizer":  g.activityRegularizer.GetKerasLayerConfig(),
-			"bias_constraint":       g.biasConstraint.GetKerasLayerConfig(),
-			"bias_initializer":      g.biasInitializer.GetKerasLayerConfig(),
-			"bias_regularizer":      g.biasRegularizer.GetKerasLayerConfig(),
-			"dropout":               g.dropout,
-			"dtype":                 g.dtype.String(),
-			"go_backwards":          g.goBackwards,
-			"implementation":        g.implementation,
-			"kernel_constraint":     g.kernelConstraint.GetKerasLayerConfig(),
-			"kernel_initializer":    g.kernelInitializer.GetKerasLayerConfig(),
-			"kernel_regularizer":    g.kernelRegularizer.GetKerasLayerConfig(),
-			"name":                  g.name,
-			"recurrent_activation":  g.recurrentActivation,
-			"recurrent_constraint":  g.recurrentConstraint.GetKerasLayerConfig(),
-			"recurrent_dropout":     g.recurrentDropout,
-			"recurrent_initializer": g.recurrentInitializer.GetKerasLayerConfig(),
-			"recurrent_regularizer": g.recurrentRegularizer.GetKerasLayerConfig(),
-			"reset_after":           g.resetAfter,
-			"return_sequences":      g.returnSequences,
-			"return_state":          g.returnState,
-			"stateful":              g.stateful,
-			"time_major":            g.timeMajor,
-			"trainable":             g.trainable,
-			"units":                 g.units,
-			"unroll":                g.unroll,
-			"use_bias":              g.useBias,
+			"activation":            l.activation,
+			"activity_regularizer":  l.activityRegularizer.GetKerasLayerConfig(),
+			"bias_constraint":       l.biasConstraint.GetKerasLayerConfig(),
+			"bias_initializer":      l.biasInitializer.GetKerasLayerConfig(),
+			"bias_regularizer":      l.biasRegularizer.GetKerasLayerConfig(),
+			"dropout":               l.dropout,
+			"dtype":                 l.dtype.String(),
+			"go_backwards":          l.goBackwards,
+			"implementation":        l.implementation,
+			"kernel_constraint":     l.kernelConstraint.GetKerasLayerConfig(),
+			"kernel_initializer":    l.kernelInitializer.GetKerasLayerConfig(),
+			"kernel_regularizer":    l.kernelRegularizer.GetKerasLayerConfig(),
+			"name":                  l.name,
+			"recurrent_activation":  l.recurrentActivation,
+			"recurrent_constraint":  l.recurrentConstraint.GetKerasLayerConfig(),
+			"recurrent_dropout":     l.recurrentDropout,
+			"recurrent_initializer": l.recurrentInitializer.GetKerasLayerConfig(),
+			"recurrent_regularizer": l.recurrentRegularizer.GetKerasLayerConfig(),
+			"reset_after":           l.resetAfter,
+			"return_sequences":      l.returnSequences,
+			"return_state":          l.returnState,
+			"stateful":              l.stateful,
+			"time_major":            l.timeMajor,
+			"trainable":             l.trainable,
+			"units":                 l.units,
+			"unroll":                l.unroll,
+			"use_bias":              l.useBias,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (g *GRU) GetCustomLayerDefinition() string {
+func (l *LGRU) GetCustomLayerDefinition() string {
 	return ``
 }

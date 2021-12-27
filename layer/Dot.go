@@ -2,91 +2,84 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Dot struct {
-	name      string
+type LDot struct {
+	axes      float64
 	dtype     DataType
 	inputs    []Layer
+	name      string
+	normalize bool
 	shape     tf.Shape
 	trainable bool
-	axes      float64
-	normalize bool
 }
 
-func NewDot(axes float64, options ...DotOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		d := &Dot{
-			axes:      axes,
-			normalize: false,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("dot"),
-		}
-		for _, option := range options {
-			option(d)
-		}
-		return d
+func Dot(axes float64) *LDot {
+	return &LDot{
+		axes:      axes,
+		dtype:     Float32,
+		name:      UniqueName("dot"),
+		normalize: false,
+		trainable: true,
 	}
 }
 
-type DotOption func(*Dot)
-
-func DotWithName(name string) func(d *Dot) {
-	return func(d *Dot) {
-		d.name = name
-	}
+func (l *LDot) SetDtype(dtype DataType) *LDot {
+	l.dtype = dtype
+	return l
 }
 
-func DotWithDtype(dtype DataType) func(d *Dot) {
-	return func(d *Dot) {
-		d.dtype = dtype
-	}
+func (l *LDot) SetName(name string) *LDot {
+	l.name = name
+	return l
 }
 
-func DotWithTrainable(trainable bool) func(d *Dot) {
-	return func(d *Dot) {
-		d.trainable = trainable
-	}
+func (l *LDot) SetNormalize(normalize bool) *LDot {
+	l.normalize = normalize
+	return l
 }
 
-func DotWithNormalize(normalize bool) func(d *Dot) {
-	return func(d *Dot) {
-		d.normalize = normalize
-	}
+func (l *LDot) SetShape(shape tf.Shape) *LDot {
+	l.shape = shape
+	return l
 }
 
-func (d *Dot) GetShape() tf.Shape {
-	return d.shape
+func (l *LDot) SetTrainable(trainable bool) *LDot {
+	l.trainable = trainable
+	return l
 }
 
-func (d *Dot) GetDtype() DataType {
-	return d.dtype
+func (l *LDot) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (d *Dot) SetInput(inputs []Layer) {
-	d.inputs = inputs
-	d.dtype = inputs[0].GetDtype()
+func (l *LDot) GetDtype() DataType {
+	return l.dtype
 }
 
-func (d *Dot) GetInputs() []Layer {
-	return d.inputs
+func (l *LDot) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (d *Dot) GetName() string {
-	return d.name
+func (l *LDot) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigDot struct {
+func (l *LDot) GetName() string {
+	return l.name
+}
+
+type jsonConfigLDot struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (d *Dot) GetKerasLayerConfig() interface{} {
+func (l *LDot) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range d.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -94,20 +87,20 @@ func (d *Dot) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigDot{
+	return jsonConfigLDot{
 		ClassName: "Dot",
-		Name:      d.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"axes":      d.axes,
-			"dtype":     d.dtype.String(),
-			"name":      d.name,
-			"normalize": d.normalize,
-			"trainable": d.trainable,
+			"axes":      l.axes,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"normalize": l.normalize,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (d *Dot) GetCustomLayerDefinition() string {
+func (l *LDot) GetCustomLayerDefinition() string {
 	return ``
 }

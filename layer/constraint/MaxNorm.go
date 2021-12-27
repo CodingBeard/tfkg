@@ -1,44 +1,51 @@
 package constraint
 
-type MaxNorm struct {
-	maxValue float64
+type CMaxNorm struct {
 	axis     float64
+	maxValue float64
+	name     string
 }
 
-func NewMaxNorm() *MaxNorm {
-	return &MaxNorm{
-		maxValue: 2,
+func MaxNorm() *CMaxNorm {
+	return &CMaxNorm{
 		axis:     0,
+		maxValue: 2,
 	}
 }
 
-func MaxNormWithMaxValue(maxValue float64) func(m *MaxNorm) {
-	return func(m *MaxNorm) {
-		m.maxValue = maxValue
-	}
+func (c *CMaxNorm) SetAxis(axis float64) *CMaxNorm {
+	c.axis = axis
+	return c
 }
 
-func MaxNormWithAxis(axis float64) func(m *MaxNorm) {
-	return func(m *MaxNorm) {
-		m.axis = axis
-	}
+func (c *CMaxNorm) SetMaxValue(maxValue float64) *CMaxNorm {
+	c.maxValue = maxValue
+	return c
 }
 
-type jsonConfigMaxNorm struct {
+func (c *CMaxNorm) SetName(name string) *CMaxNorm {
+	c.name = name
+	return c
+}
+
+type jsonConfigCMaxNorm struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (m *MaxNorm) GetKerasLayerConfig() interface{} {
-	if m == nil {
-		return nil
-	}
-	return jsonConfigMaxNorm{
+func (c *CMaxNorm) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigCMaxNorm{
 		ClassName: "MaxNorm",
+		Name:      c.name,
 		Config: map[string]interface{}{
-			"axis":      m.axis,
-			"max_value": m.maxValue,
+			"axis":      c.axis,
+			"max_value": c.maxValue,
 		},
 	}
+}
+
+func (c *CMaxNorm) GetCustomLayerDefinition() string {
+	return ``
 }

@@ -2,99 +2,91 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type RandomFourierFeatures struct {
-	name              string
+type LRandomFourierFeatures struct {
 	dtype             DataType
 	inputs            []Layer
+	kernelInitializer string
+	name              string
+	outputDim         float64
+	scale             interface{}
 	shape             tf.Shape
 	trainable         bool
-	outputDim         float64
-	kernelInitializer string
-	scale             interface{}
 }
 
-func NewRandomFourierFeatures(outputDim float64, options ...RandomFourierFeaturesOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &RandomFourierFeatures{
-			outputDim:         outputDim,
-			kernelInitializer: "gaussian",
-			scale:             nil,
-			trainable:         true,
-			inputs:            inputs,
-			name:              UniqueName("randomfourierfeatures"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func RandomFourierFeatures(outputDim float64) *LRandomFourierFeatures {
+	return &LRandomFourierFeatures{
+		dtype:             Float32,
+		kernelInitializer: "gaussian",
+		name:              UniqueName("nil"),
+		outputDim:         outputDim,
+		scale:             nil,
+		trainable:         true,
 	}
 }
 
-type RandomFourierFeaturesOption func(*RandomFourierFeatures)
-
-func RandomFourierFeaturesWithName(name string) func(r *RandomFourierFeatures) {
-	return func(r *RandomFourierFeatures) {
-		r.name = name
-	}
+func (l *LRandomFourierFeatures) SetDtype(dtype DataType) *LRandomFourierFeatures {
+	l.dtype = dtype
+	return l
 }
 
-func RandomFourierFeaturesWithDtype(dtype DataType) func(r *RandomFourierFeatures) {
-	return func(r *RandomFourierFeatures) {
-		r.dtype = dtype
-	}
+func (l *LRandomFourierFeatures) SetKernelInitializer(kernelInitializer string) *LRandomFourierFeatures {
+	l.kernelInitializer = kernelInitializer
+	return l
 }
 
-func RandomFourierFeaturesWithTrainable(trainable bool) func(r *RandomFourierFeatures) {
-	return func(r *RandomFourierFeatures) {
-		r.trainable = trainable
-	}
+func (l *LRandomFourierFeatures) SetName(name string) *LRandomFourierFeatures {
+	l.name = name
+	return l
 }
 
-func RandomFourierFeaturesWithKernelInitializer(kernelInitializer string) func(r *RandomFourierFeatures) {
-	return func(r *RandomFourierFeatures) {
-		r.kernelInitializer = kernelInitializer
-	}
+func (l *LRandomFourierFeatures) SetScale(scale interface{}) *LRandomFourierFeatures {
+	l.scale = scale
+	return l
 }
 
-func RandomFourierFeaturesWithScale(scale interface{}) func(r *RandomFourierFeatures) {
-	return func(r *RandomFourierFeatures) {
-		r.scale = scale
-	}
+func (l *LRandomFourierFeatures) SetShape(shape tf.Shape) *LRandomFourierFeatures {
+	l.shape = shape
+	return l
 }
 
-func (r *RandomFourierFeatures) GetShape() tf.Shape {
-	return r.shape
+func (l *LRandomFourierFeatures) SetTrainable(trainable bool) *LRandomFourierFeatures {
+	l.trainable = trainable
+	return l
 }
 
-func (r *RandomFourierFeatures) GetDtype() DataType {
-	return r.dtype
+func (l *LRandomFourierFeatures) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *RandomFourierFeatures) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LRandomFourierFeatures) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *RandomFourierFeatures) GetInputs() []Layer {
-	return r.inputs
+func (l *LRandomFourierFeatures) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *RandomFourierFeatures) GetName() string {
-	return r.name
+func (l *LRandomFourierFeatures) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigRandomFourierFeatures struct {
+func (l *LRandomFourierFeatures) GetName() string {
+	return l.name
+}
+
+type jsonConfigLRandomFourierFeatures struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *RandomFourierFeatures) GetKerasLayerConfig() interface{} {
+func (l *LRandomFourierFeatures) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -102,21 +94,21 @@ func (r *RandomFourierFeatures) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigRandomFourierFeatures{
+	return jsonConfigLRandomFourierFeatures{
 		ClassName: "RandomFourierFeatures",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":              r.dtype.String(),
-			"kernel_initializer": r.kernelInitializer,
-			"name":               r.name,
-			"output_dim":         r.outputDim,
-			"scale":              r.scale,
-			"trainable":          r.trainable,
+			"dtype":              l.dtype.String(),
+			"kernel_initializer": l.kernelInitializer,
+			"name":               l.name,
+			"output_dim":         l.outputDim,
+			"scale":              l.scale,
+			"trainable":          l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *RandomFourierFeatures) GetCustomLayerDefinition() string {
+func (l *LRandomFourierFeatures) GetCustomLayerDefinition() string {
 	return ``
 }

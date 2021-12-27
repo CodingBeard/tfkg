@@ -1,261 +1,238 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type LSTM struct {
-	name                 string
-	dtype                DataType
-	inputs               []Layer
-	shape                tf.Shape
-	trainable            bool
-	units                float64
+type LLSTM struct {
 	activation           string
-	recurrentActivation  string
-	useBias              bool
-	kernelInitializer    initializer.Initializer
-	recurrentInitializer initializer.Initializer
-	biasInitializer      initializer.Initializer
-	unitForgetBias       bool
-	kernelRegularizer    regularizer.Regularizer
-	recurrentRegularizer regularizer.Regularizer
-	biasRegularizer      regularizer.Regularizer
 	activityRegularizer  regularizer.Regularizer
-	kernelConstraint     constraint.Constraint
-	recurrentConstraint  constraint.Constraint
 	biasConstraint       constraint.Constraint
+	biasInitializer      initializer.Initializer
+	biasRegularizer      regularizer.Regularizer
 	dropout              float64
+	dtype                DataType
+	goBackwards          bool
+	implementation       float64
+	inputs               []Layer
+	kernelConstraint     constraint.Constraint
+	kernelInitializer    initializer.Initializer
+	kernelRegularizer    regularizer.Regularizer
+	name                 string
+	recurrentActivation  string
+	recurrentConstraint  constraint.Constraint
 	recurrentDropout     float64
+	recurrentInitializer initializer.Initializer
+	recurrentRegularizer regularizer.Regularizer
 	returnSequences      bool
 	returnState          bool
-	goBackwards          bool
+	shape                tf.Shape
 	stateful             bool
 	timeMajor            bool
+	trainable            bool
+	unitForgetBias       bool
+	units                float64
 	unroll               bool
-	implementation       float64
+	useBias              bool
 }
 
-func NewLSTM(units float64, options ...LSTMOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		l := &LSTM{
-			units:                units,
-			activation:           "tanh",
-			recurrentActivation:  "sigmoid",
-			useBias:              true,
-			kernelInitializer:    &initializer.GlorotUniform{},
-			recurrentInitializer: &initializer.Orthogonal{},
-			biasInitializer:      &initializer.Zeros{},
-			unitForgetBias:       true,
-			kernelRegularizer:    &regularizer.NilRegularizer{},
-			recurrentRegularizer: &regularizer.NilRegularizer{},
-			biasRegularizer:      &regularizer.NilRegularizer{},
-			activityRegularizer:  &regularizer.NilRegularizer{},
-			kernelConstraint:     &constraint.NilConstraint{},
-			recurrentConstraint:  &constraint.NilConstraint{},
-			biasConstraint:       &constraint.NilConstraint{},
-			dropout:              0,
-			recurrentDropout:     0,
-			returnSequences:      false,
-			returnState:          false,
-			goBackwards:          false,
-			stateful:             false,
-			timeMajor:            false,
-			unroll:               false,
-			implementation:       2,
-			trainable:            true,
-			inputs:               inputs,
-			name:                 UniqueName("lstm"),
-		}
-		for _, option := range options {
-			option(l)
-		}
-		return l
+func LSTM(units float64) *LLSTM {
+	return &LLSTM{
+		activation:           "tanh",
+		activityRegularizer:  &regularizer.NilRegularizer{},
+		biasConstraint:       &constraint.NilConstraint{},
+		biasInitializer:      initializer.Zeros(),
+		biasRegularizer:      &regularizer.NilRegularizer{},
+		dropout:              0,
+		dtype:                Float32,
+		goBackwards:          false,
+		implementation:       2,
+		kernelConstraint:     &constraint.NilConstraint{},
+		kernelInitializer:    initializer.GlorotUniform(),
+		kernelRegularizer:    &regularizer.NilRegularizer{},
+		name:                 UniqueName("lstm_1"),
+		recurrentActivation:  "sigmoid",
+		recurrentConstraint:  &constraint.NilConstraint{},
+		recurrentDropout:     0,
+		recurrentInitializer: initializer.Orthogonal(),
+		recurrentRegularizer: &regularizer.NilRegularizer{},
+		returnSequences:      false,
+		returnState:          false,
+		stateful:             false,
+		timeMajor:            false,
+		trainable:            true,
+		unitForgetBias:       true,
+		units:                units,
+		unroll:               false,
+		useBias:              true,
 	}
 }
 
-type LSTMOption func(*LSTM)
-
-func LSTMWithName(name string) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.name = name
-	}
+func (l *LLSTM) SetActivation(activation string) *LLSTM {
+	l.activation = activation
+	return l
 }
 
-func LSTMWithDtype(dtype DataType) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.dtype = dtype
-	}
+func (l *LLSTM) SetActivityRegularizer(activityRegularizer regularizer.Regularizer) *LLSTM {
+	l.activityRegularizer = activityRegularizer
+	return l
 }
 
-func LSTMWithTrainable(trainable bool) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.trainable = trainable
-	}
+func (l *LLSTM) SetBiasConstraint(biasConstraint constraint.Constraint) *LLSTM {
+	l.biasConstraint = biasConstraint
+	return l
 }
 
-func LSTMWithActivation(activation string) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.activation = activation
-	}
+func (l *LLSTM) SetBiasInitializer(biasInitializer initializer.Initializer) *LLSTM {
+	l.biasInitializer = biasInitializer
+	return l
 }
 
-func LSTMWithRecurrentActivation(recurrentActivation string) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.recurrentActivation = recurrentActivation
-	}
+func (l *LLSTM) SetBiasRegularizer(biasRegularizer regularizer.Regularizer) *LLSTM {
+	l.biasRegularizer = biasRegularizer
+	return l
 }
 
-func LSTMWithUseBias(useBias bool) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.useBias = useBias
-	}
+func (l *LLSTM) SetDropout(dropout float64) *LLSTM {
+	l.dropout = dropout
+	return l
 }
 
-func LSTMWithKernelInitializer(kernelInitializer initializer.Initializer) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.kernelInitializer = kernelInitializer
-	}
+func (l *LLSTM) SetDtype(dtype DataType) *LLSTM {
+	l.dtype = dtype
+	return l
 }
 
-func LSTMWithRecurrentInitializer(recurrentInitializer initializer.Initializer) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.recurrentInitializer = recurrentInitializer
-	}
+func (l *LLSTM) SetGoBackwards(goBackwards bool) *LLSTM {
+	l.goBackwards = goBackwards
+	return l
 }
 
-func LSTMWithBiasInitializer(biasInitializer initializer.Initializer) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.biasInitializer = biasInitializer
-	}
+func (l *LLSTM) SetImplementation(implementation float64) *LLSTM {
+	l.implementation = implementation
+	return l
 }
 
-func LSTMWithUnitForgetBias(unitForgetBias bool) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.unitForgetBias = unitForgetBias
-	}
+func (l *LLSTM) SetKernelConstraint(kernelConstraint constraint.Constraint) *LLSTM {
+	l.kernelConstraint = kernelConstraint
+	return l
 }
 
-func LSTMWithKernelRegularizer(kernelRegularizer regularizer.Regularizer) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.kernelRegularizer = kernelRegularizer
-	}
+func (l *LLSTM) SetKernelInitializer(kernelInitializer initializer.Initializer) *LLSTM {
+	l.kernelInitializer = kernelInitializer
+	return l
 }
 
-func LSTMWithRecurrentRegularizer(recurrentRegularizer regularizer.Regularizer) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.recurrentRegularizer = recurrentRegularizer
-	}
+func (l *LLSTM) SetKernelRegularizer(kernelRegularizer regularizer.Regularizer) *LLSTM {
+	l.kernelRegularizer = kernelRegularizer
+	return l
 }
 
-func LSTMWithBiasRegularizer(biasRegularizer regularizer.Regularizer) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.biasRegularizer = biasRegularizer
-	}
+func (l *LLSTM) SetName(name string) *LLSTM {
+	l.name = name
+	return l
 }
 
-func LSTMWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.activityRegularizer = activityRegularizer
-	}
+func (l *LLSTM) SetRecurrentActivation(recurrentActivation string) *LLSTM {
+	l.recurrentActivation = recurrentActivation
+	return l
 }
 
-func LSTMWithKernelConstraint(kernelConstraint constraint.Constraint) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.kernelConstraint = kernelConstraint
-	}
+func (l *LLSTM) SetRecurrentConstraint(recurrentConstraint constraint.Constraint) *LLSTM {
+	l.recurrentConstraint = recurrentConstraint
+	return l
 }
 
-func LSTMWithRecurrentConstraint(recurrentConstraint constraint.Constraint) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.recurrentConstraint = recurrentConstraint
-	}
+func (l *LLSTM) SetRecurrentDropout(recurrentDropout float64) *LLSTM {
+	l.recurrentDropout = recurrentDropout
+	return l
 }
 
-func LSTMWithBiasConstraint(biasConstraint constraint.Constraint) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.biasConstraint = biasConstraint
-	}
+func (l *LLSTM) SetRecurrentInitializer(recurrentInitializer initializer.Initializer) *LLSTM {
+	l.recurrentInitializer = recurrentInitializer
+	return l
 }
 
-func LSTMWithDropout(dropout float64) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.dropout = dropout
-	}
+func (l *LLSTM) SetRecurrentRegularizer(recurrentRegularizer regularizer.Regularizer) *LLSTM {
+	l.recurrentRegularizer = recurrentRegularizer
+	return l
 }
 
-func LSTMWithRecurrentDropout(recurrentDropout float64) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.recurrentDropout = recurrentDropout
-	}
+func (l *LLSTM) SetReturnSequences(returnSequences bool) *LLSTM {
+	l.returnSequences = returnSequences
+	return l
 }
 
-func LSTMWithReturnSequences(returnSequences bool) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.returnSequences = returnSequences
-	}
+func (l *LLSTM) SetReturnState(returnState bool) *LLSTM {
+	l.returnState = returnState
+	return l
 }
 
-func LSTMWithReturnState(returnState bool) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.returnState = returnState
-	}
+func (l *LLSTM) SetShape(shape tf.Shape) *LLSTM {
+	l.shape = shape
+	return l
 }
 
-func LSTMWithGoBackwards(goBackwards bool) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.goBackwards = goBackwards
-	}
+func (l *LLSTM) SetStateful(stateful bool) *LLSTM {
+	l.stateful = stateful
+	return l
 }
 
-func LSTMWithStateful(stateful bool) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.stateful = stateful
-	}
+func (l *LLSTM) SetTimeMajor(timeMajor bool) *LLSTM {
+	l.timeMajor = timeMajor
+	return l
 }
 
-func LSTMWithTimeMajor(timeMajor bool) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.timeMajor = timeMajor
-	}
+func (l *LLSTM) SetTrainable(trainable bool) *LLSTM {
+	l.trainable = trainable
+	return l
 }
 
-func LSTMWithUnroll(unroll bool) func(l *LSTM) {
-	return func(l *LSTM) {
-		l.unroll = unroll
-	}
+func (l *LLSTM) SetUnitForgetBias(unitForgetBias bool) *LLSTM {
+	l.unitForgetBias = unitForgetBias
+	return l
 }
 
-func (l *LSTM) GetShape() tf.Shape {
+func (l *LLSTM) SetUnroll(unroll bool) *LLSTM {
+	l.unroll = unroll
+	return l
+}
+
+func (l *LLSTM) SetUseBias(useBias bool) *LLSTM {
+	l.useBias = useBias
+	return l
+}
+
+func (l *LLSTM) GetShape() tf.Shape {
 	return l.shape
 }
 
-func (l *LSTM) GetDtype() DataType {
+func (l *LLSTM) GetDtype() DataType {
 	return l.dtype
 }
 
-func (l *LSTM) SetInput(inputs []Layer) {
+func (l *LLSTM) SetInputs(inputs ...Layer) Layer {
 	l.inputs = inputs
-	l.dtype = inputs[0].GetDtype()
+	return l
 }
 
-func (l *LSTM) GetInputs() []Layer {
+func (l *LLSTM) GetInputs() []Layer {
 	return l.inputs
 }
 
-func (l *LSTM) GetName() string {
+func (l *LLSTM) GetName() string {
 	return l.name
 }
 
-type jsonConfigLSTM struct {
+type jsonConfigLLSTM struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (l *LSTM) GetKerasLayerConfig() interface{} {
+func (l *LLSTM) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
@@ -267,7 +244,7 @@ func (l *LSTM) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigLSTM{
+	return jsonConfigLLSTM{
 		ClassName: "LSTM",
 		Name:      l.name,
 		Config: map[string]interface{}{
@@ -303,6 +280,6 @@ func (l *LSTM) GetKerasLayerConfig() interface{} {
 	}
 }
 
-func (l *LSTM) GetCustomLayerDefinition() string {
+func (l *LLSTM) GetCustomLayerDefinition() string {
 	return ``
 }

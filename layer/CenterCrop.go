@@ -2,85 +2,79 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type CenterCrop struct {
-	name      string
+type LCenterCrop struct {
 	dtype     DataType
+	height    float64
 	inputs    []Layer
+	name      string
 	shape     tf.Shape
 	trainable bool
-	height    float64
 	width     float64
 }
 
-func NewCenterCrop(height float64, width float64, options ...CenterCropOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		c := &CenterCrop{
-			height:    height,
-			width:     width,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("centercrop"),
-		}
-		for _, option := range options {
-			option(c)
-		}
-		return c
+func CenterCrop(height float64, width float64) *LCenterCrop {
+	return &LCenterCrop{
+		dtype:     Float32,
+		height:    height,
+		name:      UniqueName("center_crop"),
+		trainable: true,
+		width:     width,
 	}
 }
 
-type CenterCropOption func(*CenterCrop)
-
-func CenterCropWithName(name string) func(c *CenterCrop) {
-	return func(c *CenterCrop) {
-		c.name = name
-	}
+func (l *LCenterCrop) SetDtype(dtype DataType) *LCenterCrop {
+	l.dtype = dtype
+	return l
 }
 
-func CenterCropWithDtype(dtype DataType) func(c *CenterCrop) {
-	return func(c *CenterCrop) {
-		c.dtype = dtype
-	}
+func (l *LCenterCrop) SetName(name string) *LCenterCrop {
+	l.name = name
+	return l
 }
 
-func CenterCropWithTrainable(trainable bool) func(c *CenterCrop) {
-	return func(c *CenterCrop) {
-		c.trainable = trainable
-	}
+func (l *LCenterCrop) SetShape(shape tf.Shape) *LCenterCrop {
+	l.shape = shape
+	return l
 }
 
-func (c *CenterCrop) GetShape() tf.Shape {
-	return c.shape
+func (l *LCenterCrop) SetTrainable(trainable bool) *LCenterCrop {
+	l.trainable = trainable
+	return l
 }
 
-func (c *CenterCrop) GetDtype() DataType {
-	return c.dtype
+func (l *LCenterCrop) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (c *CenterCrop) SetInput(inputs []Layer) {
-	c.inputs = inputs
-	c.dtype = inputs[0].GetDtype()
+func (l *LCenterCrop) GetDtype() DataType {
+	return l.dtype
 }
 
-func (c *CenterCrop) GetInputs() []Layer {
-	return c.inputs
+func (l *LCenterCrop) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (c *CenterCrop) GetName() string {
-	return c.name
+func (l *LCenterCrop) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigCenterCrop struct {
+func (l *LCenterCrop) GetName() string {
+	return l.name
+}
+
+type jsonConfigLCenterCrop struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (c *CenterCrop) GetKerasLayerConfig() interface{} {
+func (l *LCenterCrop) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range c.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -88,20 +82,20 @@ func (c *CenterCrop) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigCenterCrop{
+	return jsonConfigLCenterCrop{
 		ClassName: "CenterCrop",
-		Name:      c.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     c.dtype.String(),
-			"height":    c.height,
-			"name":      c.name,
-			"trainable": c.trainable,
-			"width":     c.width,
+			"dtype":     l.dtype.String(),
+			"height":    l.height,
+			"name":      l.name,
+			"trainable": l.trainable,
+			"width":     l.width,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (c *CenterCrop) GetCustomLayerDefinition() string {
+func (l *LCenterCrop) GetCustomLayerDefinition() string {
 	return ``
 }

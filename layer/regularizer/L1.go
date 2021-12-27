@@ -1,35 +1,43 @@
 package regularizer
 
-type L1 struct {
-	l1 float64
+type RL1 struct {
+	l1   float64
+	name string
 }
 
-func NewL1() *L1 {
-	return &L1{
+func L1() *RL1 {
+	return &RL1{
 		l1: 0.01,
 	}
 }
 
-func L1WithL1(l1 float64) func(l *L1) {
-	return func(l *L1) {
-		l.l1 = l1
-	}
+func (r *RL1) SetL1(l1 float64) *RL1 {
+	r.l1 = l1
+	return r
 }
 
-type jsonConfigL1 struct {
+func (r *RL1) SetName(name string) *RL1 {
+	r.name = name
+	return r
+}
+
+type jsonConfigRL1 struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (l *L1) GetKerasLayerConfig() interface{} {
-	if l == nil {
-		return nil
-	}
-	return jsonConfigL1{
+func (r *RL1) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigRL1{
 		ClassName: "L1",
+		Name:      r.name,
 		Config: map[string]interface{}{
-			"l1": l.l1,
+			"l1": r.l1,
 		},
 	}
+}
+
+func (r *RL1) GetCustomLayerDefinition() string {
+	return ``
 }

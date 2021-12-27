@@ -2,83 +2,77 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Activation struct {
-	name       string
+type LActivation struct {
+	activation string
 	dtype      DataType
 	inputs     []Layer
+	name       string
 	shape      tf.Shape
 	trainable  bool
-	activation string
 }
 
-func NewActivation(activation string, options ...ActivationOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		a := &Activation{
-			activation: activation,
-			trainable:  true,
-			inputs:     inputs,
-			name:       UniqueName("activation"),
-		}
-		for _, option := range options {
-			option(a)
-		}
-		return a
+func Activation(activation string) *LActivation {
+	return &LActivation{
+		activation: activation,
+		dtype:      Float32,
+		name:       UniqueName("activation"),
+		trainable:  true,
 	}
 }
 
-type ActivationOption func(*Activation)
-
-func ActivationWithName(name string) func(a *Activation) {
-	return func(a *Activation) {
-		a.name = name
-	}
+func (l *LActivation) SetDtype(dtype DataType) *LActivation {
+	l.dtype = dtype
+	return l
 }
 
-func ActivationWithDtype(dtype DataType) func(a *Activation) {
-	return func(a *Activation) {
-		a.dtype = dtype
-	}
+func (l *LActivation) SetName(name string) *LActivation {
+	l.name = name
+	return l
 }
 
-func ActivationWithTrainable(trainable bool) func(a *Activation) {
-	return func(a *Activation) {
-		a.trainable = trainable
-	}
+func (l *LActivation) SetShape(shape tf.Shape) *LActivation {
+	l.shape = shape
+	return l
 }
 
-func (a *Activation) GetShape() tf.Shape {
-	return a.shape
+func (l *LActivation) SetTrainable(trainable bool) *LActivation {
+	l.trainable = trainable
+	return l
 }
 
-func (a *Activation) GetDtype() DataType {
-	return a.dtype
+func (l *LActivation) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (a *Activation) SetInput(inputs []Layer) {
-	a.inputs = inputs
-	a.dtype = inputs[0].GetDtype()
+func (l *LActivation) GetDtype() DataType {
+	return l.dtype
 }
 
-func (a *Activation) GetInputs() []Layer {
-	return a.inputs
+func (l *LActivation) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (a *Activation) GetName() string {
-	return a.name
+func (l *LActivation) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigActivation struct {
+func (l *LActivation) GetName() string {
+	return l.name
+}
+
+type jsonConfigLActivation struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (a *Activation) GetKerasLayerConfig() interface{} {
+func (l *LActivation) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range a.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -86,19 +80,19 @@ func (a *Activation) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigActivation{
+	return jsonConfigLActivation{
 		ClassName: "Activation",
-		Name:      a.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"activation": a.activation,
-			"dtype":      a.dtype.String(),
-			"name":       a.name,
-			"trainable":  a.trainable,
+			"activation": l.activation,
+			"dtype":      l.dtype.String(),
+			"name":       l.name,
+			"trainable":  l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (a *Activation) GetCustomLayerDefinition() string {
+func (l *LActivation) GetCustomLayerDefinition() string {
 	return ``
 }

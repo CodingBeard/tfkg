@@ -2,99 +2,91 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Dropout struct {
-	name       string
+type LDropout struct {
 	dtype      DataType
 	inputs     []Layer
+	name       string
+	noiseShape interface{}
+	rate       float64
+	seed       interface{}
 	shape      tf.Shape
 	trainable  bool
-	rate       float64
-	noiseShape interface{}
-	seed       interface{}
 }
 
-func NewDropout(rate float64, options ...DropoutOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		d := &Dropout{
-			rate:       rate,
-			noiseShape: nil,
-			seed:       nil,
-			trainable:  true,
-			inputs:     inputs,
-			name:       UniqueName("dropout"),
-		}
-		for _, option := range options {
-			option(d)
-		}
-		return d
+func Dropout(rate float64) *LDropout {
+	return &LDropout{
+		dtype:      Float32,
+		name:       UniqueName("dropout"),
+		noiseShape: nil,
+		rate:       rate,
+		seed:       nil,
+		trainable:  true,
 	}
 }
 
-type DropoutOption func(*Dropout)
-
-func DropoutWithName(name string) func(d *Dropout) {
-	return func(d *Dropout) {
-		d.name = name
-	}
+func (l *LDropout) SetDtype(dtype DataType) *LDropout {
+	l.dtype = dtype
+	return l
 }
 
-func DropoutWithDtype(dtype DataType) func(d *Dropout) {
-	return func(d *Dropout) {
-		d.dtype = dtype
-	}
+func (l *LDropout) SetName(name string) *LDropout {
+	l.name = name
+	return l
 }
 
-func DropoutWithTrainable(trainable bool) func(d *Dropout) {
-	return func(d *Dropout) {
-		d.trainable = trainable
-	}
+func (l *LDropout) SetNoiseShape(noiseShape interface{}) *LDropout {
+	l.noiseShape = noiseShape
+	return l
 }
 
-func DropoutWithNoiseShape(noiseShape interface{}) func(d *Dropout) {
-	return func(d *Dropout) {
-		d.noiseShape = noiseShape
-	}
+func (l *LDropout) SetSeed(seed interface{}) *LDropout {
+	l.seed = seed
+	return l
 }
 
-func DropoutWithSeed(seed interface{}) func(d *Dropout) {
-	return func(d *Dropout) {
-		d.seed = seed
-	}
+func (l *LDropout) SetShape(shape tf.Shape) *LDropout {
+	l.shape = shape
+	return l
 }
 
-func (d *Dropout) GetShape() tf.Shape {
-	return d.shape
+func (l *LDropout) SetTrainable(trainable bool) *LDropout {
+	l.trainable = trainable
+	return l
 }
 
-func (d *Dropout) GetDtype() DataType {
-	return d.dtype
+func (l *LDropout) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (d *Dropout) SetInput(inputs []Layer) {
-	d.inputs = inputs
-	d.dtype = inputs[0].GetDtype()
+func (l *LDropout) GetDtype() DataType {
+	return l.dtype
 }
 
-func (d *Dropout) GetInputs() []Layer {
-	return d.inputs
+func (l *LDropout) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (d *Dropout) GetName() string {
-	return d.name
+func (l *LDropout) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigDropout struct {
+func (l *LDropout) GetName() string {
+	return l.name
+}
+
+type jsonConfigLDropout struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (d *Dropout) GetKerasLayerConfig() interface{} {
+func (l *LDropout) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range d.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -102,21 +94,21 @@ func (d *Dropout) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigDropout{
+	return jsonConfigLDropout{
 		ClassName: "Dropout",
-		Name:      d.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":       d.dtype.String(),
-			"name":        d.name,
-			"noise_shape": d.noiseShape,
-			"rate":        d.rate,
-			"seed":        d.seed,
-			"trainable":   d.trainable,
+			"dtype":       l.dtype.String(),
+			"name":        l.name,
+			"noise_shape": l.noiseShape,
+			"rate":        l.rate,
+			"seed":        l.seed,
+			"trainable":   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (d *Dropout) GetCustomLayerDefinition() string {
+func (l *LDropout) GetCustomLayerDefinition() string {
 	return ``
 }

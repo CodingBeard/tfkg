@@ -1,203 +1,188 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Conv3DTranspose struct {
-	name                string
-	dtype               DataType
-	inputs              []Layer
-	shape               tf.Shape
-	trainable           bool
-	filters             float64
-	kernelSize          float64
-	strides             []interface{}
-	padding             string
-	outputPadding       interface{}
+type LConv3DTranspose struct {
+	activation          string
+	activityRegularizer regularizer.Regularizer
+	biasConstraint      constraint.Constraint
+	biasInitializer     initializer.Initializer
+	biasRegularizer     regularizer.Regularizer
 	dataFormat          interface{}
 	dilationRate        []interface{}
-	activation          string
-	useBias             bool
-	kernelInitializer   initializer.Initializer
-	biasInitializer     initializer.Initializer
-	kernelRegularizer   regularizer.Regularizer
-	biasRegularizer     regularizer.Regularizer
-	activityRegularizer regularizer.Regularizer
-	kernelConstraint    constraint.Constraint
-	biasConstraint      constraint.Constraint
+	dtype               DataType
+	filters             float64
 	groups              float64
+	inputs              []Layer
+	kernelConstraint    constraint.Constraint
+	kernelInitializer   initializer.Initializer
+	kernelRegularizer   regularizer.Regularizer
+	kernelSize          float64
+	name                string
+	outputPadding       interface{}
+	padding             string
+	shape               tf.Shape
+	strides             []interface{}
+	trainable           bool
+	useBias             bool
 }
 
-func NewConv3DTranspose(filters float64, kernelSize float64, options ...Conv3DTransposeOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		c := &Conv3DTranspose{
-			filters:             filters,
-			kernelSize:          kernelSize,
-			strides:             []interface{}{1, 1, 1},
-			padding:             "valid",
-			outputPadding:       nil,
-			dataFormat:          nil,
-			dilationRate:        []interface{}{1, 1, 1},
-			activation:          "linear",
-			useBias:             true,
-			kernelInitializer:   &initializer.GlorotUniform{},
-			biasInitializer:     &initializer.Zeros{},
-			kernelRegularizer:   &regularizer.NilRegularizer{},
-			biasRegularizer:     &regularizer.NilRegularizer{},
-			activityRegularizer: &regularizer.NilRegularizer{},
-			kernelConstraint:    &constraint.NilConstraint{},
-			biasConstraint:      &constraint.NilConstraint{},
-			groups:              1,
-			trainable:           true,
-			inputs:              inputs,
-			name:                UniqueName("conv3dtranspose"),
-		}
-		for _, option := range options {
-			option(c)
-		}
-		return c
+func Conv3DTranspose(filters float64, kernelSize float64) *LConv3DTranspose {
+	return &LConv3DTranspose{
+		activation:          "linear",
+		activityRegularizer: &regularizer.NilRegularizer{},
+		biasConstraint:      &constraint.NilConstraint{},
+		biasInitializer:     initializer.Zeros(),
+		biasRegularizer:     &regularizer.NilRegularizer{},
+		dataFormat:          nil,
+		dilationRate:        []interface{}{1, 1, 1},
+		dtype:               Float32,
+		filters:             filters,
+		groups:              1,
+		kernelConstraint:    &constraint.NilConstraint{},
+		kernelInitializer:   initializer.GlorotUniform(),
+		kernelRegularizer:   &regularizer.NilRegularizer{},
+		kernelSize:          kernelSize,
+		name:                UniqueName("conv3d_transpose"),
+		outputPadding:       nil,
+		padding:             "valid",
+		strides:             []interface{}{1, 1, 1},
+		trainable:           true,
+		useBias:             true,
 	}
 }
 
-type Conv3DTransposeOption func(*Conv3DTranspose)
-
-func Conv3DTransposeWithName(name string) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.name = name
-	}
+func (l *LConv3DTranspose) SetActivation(activation string) *LConv3DTranspose {
+	l.activation = activation
+	return l
 }
 
-func Conv3DTransposeWithDtype(dtype DataType) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.dtype = dtype
-	}
+func (l *LConv3DTranspose) SetActivityRegularizer(activityRegularizer regularizer.Regularizer) *LConv3DTranspose {
+	l.activityRegularizer = activityRegularizer
+	return l
 }
 
-func Conv3DTransposeWithTrainable(trainable bool) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.trainable = trainable
-	}
+func (l *LConv3DTranspose) SetBiasConstraint(biasConstraint constraint.Constraint) *LConv3DTranspose {
+	l.biasConstraint = biasConstraint
+	return l
 }
 
-func Conv3DTransposeWithStrides(strides []interface{}) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.strides = strides
-	}
+func (l *LConv3DTranspose) SetBiasInitializer(biasInitializer initializer.Initializer) *LConv3DTranspose {
+	l.biasInitializer = biasInitializer
+	return l
 }
 
-func Conv3DTransposeWithPadding(padding string) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.padding = padding
-	}
+func (l *LConv3DTranspose) SetBiasRegularizer(biasRegularizer regularizer.Regularizer) *LConv3DTranspose {
+	l.biasRegularizer = biasRegularizer
+	return l
 }
 
-func Conv3DTransposeWithOutputPadding(outputPadding interface{}) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.outputPadding = outputPadding
-	}
+func (l *LConv3DTranspose) SetDataFormat(dataFormat interface{}) *LConv3DTranspose {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func Conv3DTransposeWithDataFormat(dataFormat interface{}) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.dataFormat = dataFormat
-	}
+func (l *LConv3DTranspose) SetDilationRate(dilationRate []interface{}) *LConv3DTranspose {
+	l.dilationRate = dilationRate
+	return l
 }
 
-func Conv3DTransposeWithDilationRate(dilationRate []interface{}) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.dilationRate = dilationRate
-	}
+func (l *LConv3DTranspose) SetDtype(dtype DataType) *LConv3DTranspose {
+	l.dtype = dtype
+	return l
 }
 
-func Conv3DTransposeWithActivation(activation string) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.activation = activation
-	}
+func (l *LConv3DTranspose) SetGroups(groups float64) *LConv3DTranspose {
+	l.groups = groups
+	return l
 }
 
-func Conv3DTransposeWithUseBias(useBias bool) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.useBias = useBias
-	}
+func (l *LConv3DTranspose) SetKernelConstraint(kernelConstraint constraint.Constraint) *LConv3DTranspose {
+	l.kernelConstraint = kernelConstraint
+	return l
 }
 
-func Conv3DTransposeWithKernelInitializer(kernelInitializer initializer.Initializer) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.kernelInitializer = kernelInitializer
-	}
+func (l *LConv3DTranspose) SetKernelInitializer(kernelInitializer initializer.Initializer) *LConv3DTranspose {
+	l.kernelInitializer = kernelInitializer
+	return l
 }
 
-func Conv3DTransposeWithBiasInitializer(biasInitializer initializer.Initializer) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.biasInitializer = biasInitializer
-	}
+func (l *LConv3DTranspose) SetKernelRegularizer(kernelRegularizer regularizer.Regularizer) *LConv3DTranspose {
+	l.kernelRegularizer = kernelRegularizer
+	return l
 }
 
-func Conv3DTransposeWithKernelRegularizer(kernelRegularizer regularizer.Regularizer) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.kernelRegularizer = kernelRegularizer
-	}
+func (l *LConv3DTranspose) SetName(name string) *LConv3DTranspose {
+	l.name = name
+	return l
 }
 
-func Conv3DTransposeWithBiasRegularizer(biasRegularizer regularizer.Regularizer) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.biasRegularizer = biasRegularizer
-	}
+func (l *LConv3DTranspose) SetOutputPadding(outputPadding interface{}) *LConv3DTranspose {
+	l.outputPadding = outputPadding
+	return l
 }
 
-func Conv3DTransposeWithActivityRegularizer(activityRegularizer regularizer.Regularizer) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.activityRegularizer = activityRegularizer
-	}
+func (l *LConv3DTranspose) SetPadding(padding string) *LConv3DTranspose {
+	l.padding = padding
+	return l
 }
 
-func Conv3DTransposeWithKernelConstraint(kernelConstraint constraint.Constraint) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.kernelConstraint = kernelConstraint
-	}
+func (l *LConv3DTranspose) SetShape(shape tf.Shape) *LConv3DTranspose {
+	l.shape = shape
+	return l
 }
 
-func Conv3DTransposeWithBiasConstraint(biasConstraint constraint.Constraint) func(c *Conv3DTranspose) {
-	return func(c *Conv3DTranspose) {
-		c.biasConstraint = biasConstraint
-	}
+func (l *LConv3DTranspose) SetStrides(strides []interface{}) *LConv3DTranspose {
+	l.strides = strides
+	return l
 }
 
-func (c *Conv3DTranspose) GetShape() tf.Shape {
-	return c.shape
+func (l *LConv3DTranspose) SetTrainable(trainable bool) *LConv3DTranspose {
+	l.trainable = trainable
+	return l
 }
 
-func (c *Conv3DTranspose) GetDtype() DataType {
-	return c.dtype
+func (l *LConv3DTranspose) SetUseBias(useBias bool) *LConv3DTranspose {
+	l.useBias = useBias
+	return l
 }
 
-func (c *Conv3DTranspose) SetInput(inputs []Layer) {
-	c.inputs = inputs
-	c.dtype = inputs[0].GetDtype()
+func (l *LConv3DTranspose) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (c *Conv3DTranspose) GetInputs() []Layer {
-	return c.inputs
+func (l *LConv3DTranspose) GetDtype() DataType {
+	return l.dtype
 }
 
-func (c *Conv3DTranspose) GetName() string {
-	return c.name
+func (l *LConv3DTranspose) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-type jsonConfigConv3DTranspose struct {
+func (l *LConv3DTranspose) GetInputs() []Layer {
+	return l.inputs
+}
+
+func (l *LConv3DTranspose) GetName() string {
+	return l.name
+}
+
+type jsonConfigLConv3DTranspose struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (c *Conv3DTranspose) GetKerasLayerConfig() interface{} {
+func (l *LConv3DTranspose) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range c.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -205,34 +190,35 @@ func (c *Conv3DTranspose) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigConv3DTranspose{
+	return jsonConfigLConv3DTranspose{
 		ClassName: "Conv3DTranspose",
-		Name:      c.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"activation":           c.activation,
-			"activity_regularizer": c.activityRegularizer.GetKerasLayerConfig(),
-			"bias_constraint":      c.biasConstraint.GetKerasLayerConfig(),
-			"bias_initializer":     c.biasInitializer.GetKerasLayerConfig(),
-			"bias_regularizer":     c.biasRegularizer.GetKerasLayerConfig(),
-			"data_format":          c.dataFormat,
-			"dtype":                c.dtype.String(),
-			"filters":              c.filters,
-			"groups":               c.groups,
-			"kernel_constraint":    c.kernelConstraint.GetKerasLayerConfig(),
-			"kernel_initializer":   c.kernelInitializer.GetKerasLayerConfig(),
-			"kernel_regularizer":   c.kernelRegularizer.GetKerasLayerConfig(),
-			"kernel_size":          c.kernelSize,
-			"name":                 c.name,
-			"output_padding":       c.outputPadding,
-			"padding":              c.padding,
-			"strides":              c.strides,
-			"trainable":            c.trainable,
-			"use_bias":             c.useBias,
+			"activation":           l.activation,
+			"activity_regularizer": l.activityRegularizer.GetKerasLayerConfig(),
+			"bias_constraint":      l.biasConstraint.GetKerasLayerConfig(),
+			"bias_initializer":     l.biasInitializer.GetKerasLayerConfig(),
+			"bias_regularizer":     l.biasRegularizer.GetKerasLayerConfig(),
+			"data_format":          l.dataFormat,
+			"dilation_rate":        l.dilationRate,
+			"dtype":                l.dtype.String(),
+			"filters":              l.filters,
+			"groups":               l.groups,
+			"kernel_constraint":    l.kernelConstraint.GetKerasLayerConfig(),
+			"kernel_initializer":   l.kernelInitializer.GetKerasLayerConfig(),
+			"kernel_regularizer":   l.kernelRegularizer.GetKerasLayerConfig(),
+			"kernel_size":          l.kernelSize,
+			"name":                 l.name,
+			"output_padding":       l.outputPadding,
+			"padding":              l.padding,
+			"strides":              l.strides,
+			"trainable":            l.trainable,
+			"use_bias":             l.useBias,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (c *Conv3DTranspose) GetCustomLayerDefinition() string {
+func (l *LConv3DTranspose) GetCustomLayerDefinition() string {
 	return ``
 }

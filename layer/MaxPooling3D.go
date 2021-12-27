@@ -2,113 +2,103 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type MaxPooling3D struct {
-	name       string
+type LMaxPooling3D struct {
+	dataFormat interface{}
 	dtype      DataType
 	inputs     []Layer
-	shape      tf.Shape
-	trainable  bool
-	poolSize   []interface{}
-	strides    interface{}
+	name       string
 	padding    string
-	dataFormat interface{}
+	poolSize   []interface{}
+	shape      tf.Shape
+	strides    interface{}
+	trainable  bool
 }
 
-func NewMaxPooling3D(options ...MaxPooling3DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		m := &MaxPooling3D{
-			poolSize:   []interface{}{2, 2, 2},
-			strides:    nil,
-			padding:    "valid",
-			dataFormat: nil,
-			trainable:  true,
-			inputs:     inputs,
-			name:       UniqueName("maxpooling3d"),
-		}
-		for _, option := range options {
-			option(m)
-		}
-		return m
+func MaxPooling3D() *LMaxPooling3D {
+	return &LMaxPooling3D{
+		dataFormat: nil,
+		dtype:      Float32,
+		name:       UniqueName("max_pooling3d"),
+		padding:    "valid",
+		poolSize:   []interface{}{2, 2, 2},
+		strides:    nil,
+		trainable:  true,
 	}
 }
 
-type MaxPooling3DOption func(*MaxPooling3D)
-
-func MaxPooling3DWithName(name string) func(m *MaxPooling3D) {
-	return func(m *MaxPooling3D) {
-		m.name = name
-	}
+func (l *LMaxPooling3D) SetDataFormat(dataFormat interface{}) *LMaxPooling3D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func MaxPooling3DWithDtype(dtype DataType) func(m *MaxPooling3D) {
-	return func(m *MaxPooling3D) {
-		m.dtype = dtype
-	}
+func (l *LMaxPooling3D) SetDtype(dtype DataType) *LMaxPooling3D {
+	l.dtype = dtype
+	return l
 }
 
-func MaxPooling3DWithTrainable(trainable bool) func(m *MaxPooling3D) {
-	return func(m *MaxPooling3D) {
-		m.trainable = trainable
-	}
+func (l *LMaxPooling3D) SetName(name string) *LMaxPooling3D {
+	l.name = name
+	return l
 }
 
-func MaxPooling3DWithPoolSize(poolSize []interface{}) func(m *MaxPooling3D) {
-	return func(m *MaxPooling3D) {
-		m.poolSize = poolSize
-	}
+func (l *LMaxPooling3D) SetPadding(padding string) *LMaxPooling3D {
+	l.padding = padding
+	return l
 }
 
-func MaxPooling3DWithStrides(strides interface{}) func(m *MaxPooling3D) {
-	return func(m *MaxPooling3D) {
-		m.strides = strides
-	}
+func (l *LMaxPooling3D) SetPoolSize(poolSize []interface{}) *LMaxPooling3D {
+	l.poolSize = poolSize
+	return l
 }
 
-func MaxPooling3DWithPadding(padding string) func(m *MaxPooling3D) {
-	return func(m *MaxPooling3D) {
-		m.padding = padding
-	}
+func (l *LMaxPooling3D) SetShape(shape tf.Shape) *LMaxPooling3D {
+	l.shape = shape
+	return l
 }
 
-func MaxPooling3DWithDataFormat(dataFormat interface{}) func(m *MaxPooling3D) {
-	return func(m *MaxPooling3D) {
-		m.dataFormat = dataFormat
-	}
+func (l *LMaxPooling3D) SetStrides(strides interface{}) *LMaxPooling3D {
+	l.strides = strides
+	return l
 }
 
-func (m *MaxPooling3D) GetShape() tf.Shape {
-	return m.shape
+func (l *LMaxPooling3D) SetTrainable(trainable bool) *LMaxPooling3D {
+	l.trainable = trainable
+	return l
 }
 
-func (m *MaxPooling3D) GetDtype() DataType {
-	return m.dtype
+func (l *LMaxPooling3D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (m *MaxPooling3D) SetInput(inputs []Layer) {
-	m.inputs = inputs
-	m.dtype = inputs[0].GetDtype()
+func (l *LMaxPooling3D) GetDtype() DataType {
+	return l.dtype
 }
 
-func (m *MaxPooling3D) GetInputs() []Layer {
-	return m.inputs
+func (l *LMaxPooling3D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (m *MaxPooling3D) GetName() string {
-	return m.name
+func (l *LMaxPooling3D) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigMaxPooling3D struct {
+func (l *LMaxPooling3D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLMaxPooling3D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (m *MaxPooling3D) GetKerasLayerConfig() interface{} {
+func (l *LMaxPooling3D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range m.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -116,22 +106,22 @@ func (m *MaxPooling3D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigMaxPooling3D{
+	return jsonConfigLMaxPooling3D{
 		ClassName: "MaxPooling3D",
-		Name:      m.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"data_format": m.dataFormat,
-			"dtype":       m.dtype.String(),
-			"name":        m.name,
-			"padding":     m.padding,
-			"pool_size":   m.poolSize,
-			"strides":     m.strides,
-			"trainable":   m.trainable,
+			"data_format": l.dataFormat,
+			"dtype":       l.dtype.String(),
+			"name":        l.name,
+			"padding":     l.padding,
+			"pool_size":   l.poolSize,
+			"strides":     l.strides,
+			"trainable":   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (m *MaxPooling3D) GetCustomLayerDefinition() string {
+func (l *LMaxPooling3D) GetCustomLayerDefinition() string {
 	return ``
 }

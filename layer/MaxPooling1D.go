@@ -2,113 +2,103 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type MaxPooling1D struct {
-	name       string
+type LMaxPooling1D struct {
+	dataFormat string
 	dtype      DataType
 	inputs     []Layer
-	shape      tf.Shape
-	trainable  bool
-	poolSize   float64
-	strides    interface{}
+	name       string
 	padding    string
-	dataFormat string
+	poolSize   float64
+	shape      tf.Shape
+	strides    interface{}
+	trainable  bool
 }
 
-func NewMaxPooling1D(options ...MaxPooling1DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		m := &MaxPooling1D{
-			poolSize:   2,
-			strides:    nil,
-			padding:    "valid",
-			dataFormat: "channels_last",
-			trainable:  true,
-			inputs:     inputs,
-			name:       UniqueName("maxpooling1d"),
-		}
-		for _, option := range options {
-			option(m)
-		}
-		return m
+func MaxPooling1D() *LMaxPooling1D {
+	return &LMaxPooling1D{
+		dataFormat: "channels_last",
+		dtype:      Float32,
+		name:       UniqueName("max_pooling1d"),
+		padding:    "valid",
+		poolSize:   2,
+		strides:    nil,
+		trainable:  true,
 	}
 }
 
-type MaxPooling1DOption func(*MaxPooling1D)
-
-func MaxPooling1DWithName(name string) func(m *MaxPooling1D) {
-	return func(m *MaxPooling1D) {
-		m.name = name
-	}
+func (l *LMaxPooling1D) SetDataFormat(dataFormat string) *LMaxPooling1D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func MaxPooling1DWithDtype(dtype DataType) func(m *MaxPooling1D) {
-	return func(m *MaxPooling1D) {
-		m.dtype = dtype
-	}
+func (l *LMaxPooling1D) SetDtype(dtype DataType) *LMaxPooling1D {
+	l.dtype = dtype
+	return l
 }
 
-func MaxPooling1DWithTrainable(trainable bool) func(m *MaxPooling1D) {
-	return func(m *MaxPooling1D) {
-		m.trainable = trainable
-	}
+func (l *LMaxPooling1D) SetName(name string) *LMaxPooling1D {
+	l.name = name
+	return l
 }
 
-func MaxPooling1DWithPoolSize(poolSize float64) func(m *MaxPooling1D) {
-	return func(m *MaxPooling1D) {
-		m.poolSize = poolSize
-	}
+func (l *LMaxPooling1D) SetPadding(padding string) *LMaxPooling1D {
+	l.padding = padding
+	return l
 }
 
-func MaxPooling1DWithStrides(strides interface{}) func(m *MaxPooling1D) {
-	return func(m *MaxPooling1D) {
-		m.strides = strides
-	}
+func (l *LMaxPooling1D) SetPoolSize(poolSize float64) *LMaxPooling1D {
+	l.poolSize = poolSize
+	return l
 }
 
-func MaxPooling1DWithPadding(padding string) func(m *MaxPooling1D) {
-	return func(m *MaxPooling1D) {
-		m.padding = padding
-	}
+func (l *LMaxPooling1D) SetShape(shape tf.Shape) *LMaxPooling1D {
+	l.shape = shape
+	return l
 }
 
-func MaxPooling1DWithDataFormat(dataFormat string) func(m *MaxPooling1D) {
-	return func(m *MaxPooling1D) {
-		m.dataFormat = dataFormat
-	}
+func (l *LMaxPooling1D) SetStrides(strides interface{}) *LMaxPooling1D {
+	l.strides = strides
+	return l
 }
 
-func (m *MaxPooling1D) GetShape() tf.Shape {
-	return m.shape
+func (l *LMaxPooling1D) SetTrainable(trainable bool) *LMaxPooling1D {
+	l.trainable = trainable
+	return l
 }
 
-func (m *MaxPooling1D) GetDtype() DataType {
-	return m.dtype
+func (l *LMaxPooling1D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (m *MaxPooling1D) SetInput(inputs []Layer) {
-	m.inputs = inputs
-	m.dtype = inputs[0].GetDtype()
+func (l *LMaxPooling1D) GetDtype() DataType {
+	return l.dtype
 }
 
-func (m *MaxPooling1D) GetInputs() []Layer {
-	return m.inputs
+func (l *LMaxPooling1D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (m *MaxPooling1D) GetName() string {
-	return m.name
+func (l *LMaxPooling1D) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigMaxPooling1D struct {
+func (l *LMaxPooling1D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLMaxPooling1D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (m *MaxPooling1D) GetKerasLayerConfig() interface{} {
+func (l *LMaxPooling1D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range m.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -116,22 +106,22 @@ func (m *MaxPooling1D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigMaxPooling1D{
+	return jsonConfigLMaxPooling1D{
 		ClassName: "MaxPooling1D",
-		Name:      m.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"data_format": m.dataFormat,
-			"dtype":       m.dtype.String(),
-			"name":        m.name,
-			"padding":     m.padding,
-			"pool_size":   m.poolSize,
-			"strides":     m.strides,
-			"trainable":   m.trainable,
+			"data_format": l.dataFormat,
+			"dtype":       l.dtype.String(),
+			"name":        l.name,
+			"padding":     l.padding,
+			"pool_size":   l.poolSize,
+			"strides":     l.strides,
+			"trainable":   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (m *MaxPooling1D) GetCustomLayerDefinition() string {
+func (l *LMaxPooling1D) GetCustomLayerDefinition() string {
 	return ``
 }

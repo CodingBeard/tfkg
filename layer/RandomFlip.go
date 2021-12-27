@@ -2,97 +2,89 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type RandomFlip struct {
-	name      string
+type LRandomFlip struct {
 	dtype     DataType
 	inputs    []Layer
+	mode      string
+	name      string
+	seed      interface{}
 	shape     tf.Shape
 	trainable bool
-	mode      string
-	seed      interface{}
 }
 
-func NewRandomFlip(options ...RandomFlipOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		r := &RandomFlip{
-			mode:      "horizontal_and_vertical",
-			seed:      nil,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("randomflip"),
-		}
-		for _, option := range options {
-			option(r)
-		}
-		return r
+func RandomFlip() *LRandomFlip {
+	return &LRandomFlip{
+		dtype:     Float32,
+		mode:      "horizontal_and_vertical",
+		name:      UniqueName("random_flip"),
+		seed:      nil,
+		trainable: true,
 	}
 }
 
-type RandomFlipOption func(*RandomFlip)
-
-func RandomFlipWithName(name string) func(r *RandomFlip) {
-	return func(r *RandomFlip) {
-		r.name = name
-	}
+func (l *LRandomFlip) SetDtype(dtype DataType) *LRandomFlip {
+	l.dtype = dtype
+	return l
 }
 
-func RandomFlipWithDtype(dtype DataType) func(r *RandomFlip) {
-	return func(r *RandomFlip) {
-		r.dtype = dtype
-	}
+func (l *LRandomFlip) SetMode(mode string) *LRandomFlip {
+	l.mode = mode
+	return l
 }
 
-func RandomFlipWithTrainable(trainable bool) func(r *RandomFlip) {
-	return func(r *RandomFlip) {
-		r.trainable = trainable
-	}
+func (l *LRandomFlip) SetName(name string) *LRandomFlip {
+	l.name = name
+	return l
 }
 
-func RandomFlipWithMode(mode string) func(r *RandomFlip) {
-	return func(r *RandomFlip) {
-		r.mode = mode
-	}
+func (l *LRandomFlip) SetSeed(seed interface{}) *LRandomFlip {
+	l.seed = seed
+	return l
 }
 
-func RandomFlipWithSeed(seed interface{}) func(r *RandomFlip) {
-	return func(r *RandomFlip) {
-		r.seed = seed
-	}
+func (l *LRandomFlip) SetShape(shape tf.Shape) *LRandomFlip {
+	l.shape = shape
+	return l
 }
 
-func (r *RandomFlip) GetShape() tf.Shape {
-	return r.shape
+func (l *LRandomFlip) SetTrainable(trainable bool) *LRandomFlip {
+	l.trainable = trainable
+	return l
 }
 
-func (r *RandomFlip) GetDtype() DataType {
-	return r.dtype
+func (l *LRandomFlip) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (r *RandomFlip) SetInput(inputs []Layer) {
-	r.inputs = inputs
-	r.dtype = inputs[0].GetDtype()
+func (l *LRandomFlip) GetDtype() DataType {
+	return l.dtype
 }
 
-func (r *RandomFlip) GetInputs() []Layer {
-	return r.inputs
+func (l *LRandomFlip) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (r *RandomFlip) GetName() string {
-	return r.name
+func (l *LRandomFlip) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigRandomFlip struct {
+func (l *LRandomFlip) GetName() string {
+	return l.name
+}
+
+type jsonConfigLRandomFlip struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (r *RandomFlip) GetKerasLayerConfig() interface{} {
+func (l *LRandomFlip) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range r.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -100,20 +92,20 @@ func (r *RandomFlip) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigRandomFlip{
+	return jsonConfigLRandomFlip{
 		ClassName: "RandomFlip",
-		Name:      r.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     r.dtype.String(),
-			"mode":      r.mode,
-			"name":      r.name,
-			"seed":      r.seed,
-			"trainable": r.trainable,
+			"dtype":     l.dtype.String(),
+			"mode":      l.mode,
+			"name":      l.name,
+			"seed":      l.seed,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (r *RandomFlip) GetCustomLayerDefinition() string {
+func (l *LRandomFlip) GetCustomLayerDefinition() string {
 	return ``
 }

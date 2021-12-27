@@ -1,24 +1,33 @@
 package initializer
 
-type Ones struct {
+type IOnes struct {
+	name string
 }
 
-func NewOnes() *Ones {
-	return &Ones{}
+func Ones() *IOnes {
+	return &IOnes{}
 }
 
-type jsonConfigOnes struct {
+func (i *IOnes) SetName(name string) *IOnes {
+	i.name = name
+	return i
+}
+
+type jsonConfigIOnes struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (o *Ones) GetKerasLayerConfig() interface{} {
-	if o == nil {
-		return nil
-	}
-	return jsonConfigOnes{
+func (i *IOnes) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigIOnes{
 		ClassName: "Ones",
+		Name:      i.name,
 		Config:    map[string]interface{}{},
 	}
+}
+
+func (i *IOnes) GetCustomLayerDefinition() string {
+	return ``
 }

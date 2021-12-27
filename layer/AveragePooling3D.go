@@ -2,113 +2,103 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type AveragePooling3D struct {
-	name       string
+type LAveragePooling3D struct {
+	dataFormat interface{}
 	dtype      DataType
 	inputs     []Layer
-	shape      tf.Shape
-	trainable  bool
-	poolSize   []interface{}
-	strides    interface{}
+	name       string
 	padding    string
-	dataFormat interface{}
+	poolSize   []interface{}
+	shape      tf.Shape
+	strides    interface{}
+	trainable  bool
 }
 
-func NewAveragePooling3D(options ...AveragePooling3DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		a := &AveragePooling3D{
-			poolSize:   []interface{}{2, 2, 2},
-			strides:    nil,
-			padding:    "valid",
-			dataFormat: nil,
-			trainable:  true,
-			inputs:     inputs,
-			name:       UniqueName("averagepooling3d"),
-		}
-		for _, option := range options {
-			option(a)
-		}
-		return a
+func AveragePooling3D() *LAveragePooling3D {
+	return &LAveragePooling3D{
+		dataFormat: nil,
+		dtype:      Float32,
+		name:       UniqueName("average_pooling3d"),
+		padding:    "valid",
+		poolSize:   []interface{}{2, 2, 2},
+		strides:    nil,
+		trainable:  true,
 	}
 }
 
-type AveragePooling3DOption func(*AveragePooling3D)
-
-func AveragePooling3DWithName(name string) func(a *AveragePooling3D) {
-	return func(a *AveragePooling3D) {
-		a.name = name
-	}
+func (l *LAveragePooling3D) SetDataFormat(dataFormat interface{}) *LAveragePooling3D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func AveragePooling3DWithDtype(dtype DataType) func(a *AveragePooling3D) {
-	return func(a *AveragePooling3D) {
-		a.dtype = dtype
-	}
+func (l *LAveragePooling3D) SetDtype(dtype DataType) *LAveragePooling3D {
+	l.dtype = dtype
+	return l
 }
 
-func AveragePooling3DWithTrainable(trainable bool) func(a *AveragePooling3D) {
-	return func(a *AveragePooling3D) {
-		a.trainable = trainable
-	}
+func (l *LAveragePooling3D) SetName(name string) *LAveragePooling3D {
+	l.name = name
+	return l
 }
 
-func AveragePooling3DWithPoolSize(poolSize []interface{}) func(a *AveragePooling3D) {
-	return func(a *AveragePooling3D) {
-		a.poolSize = poolSize
-	}
+func (l *LAveragePooling3D) SetPadding(padding string) *LAveragePooling3D {
+	l.padding = padding
+	return l
 }
 
-func AveragePooling3DWithStrides(strides interface{}) func(a *AveragePooling3D) {
-	return func(a *AveragePooling3D) {
-		a.strides = strides
-	}
+func (l *LAveragePooling3D) SetPoolSize(poolSize []interface{}) *LAveragePooling3D {
+	l.poolSize = poolSize
+	return l
 }
 
-func AveragePooling3DWithPadding(padding string) func(a *AveragePooling3D) {
-	return func(a *AveragePooling3D) {
-		a.padding = padding
-	}
+func (l *LAveragePooling3D) SetShape(shape tf.Shape) *LAveragePooling3D {
+	l.shape = shape
+	return l
 }
 
-func AveragePooling3DWithDataFormat(dataFormat interface{}) func(a *AveragePooling3D) {
-	return func(a *AveragePooling3D) {
-		a.dataFormat = dataFormat
-	}
+func (l *LAveragePooling3D) SetStrides(strides interface{}) *LAveragePooling3D {
+	l.strides = strides
+	return l
 }
 
-func (a *AveragePooling3D) GetShape() tf.Shape {
-	return a.shape
+func (l *LAveragePooling3D) SetTrainable(trainable bool) *LAveragePooling3D {
+	l.trainable = trainable
+	return l
 }
 
-func (a *AveragePooling3D) GetDtype() DataType {
-	return a.dtype
+func (l *LAveragePooling3D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (a *AveragePooling3D) SetInput(inputs []Layer) {
-	a.inputs = inputs
-	a.dtype = inputs[0].GetDtype()
+func (l *LAveragePooling3D) GetDtype() DataType {
+	return l.dtype
 }
 
-func (a *AveragePooling3D) GetInputs() []Layer {
-	return a.inputs
+func (l *LAveragePooling3D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (a *AveragePooling3D) GetName() string {
-	return a.name
+func (l *LAveragePooling3D) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigAveragePooling3D struct {
+func (l *LAveragePooling3D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLAveragePooling3D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (a *AveragePooling3D) GetKerasLayerConfig() interface{} {
+func (l *LAveragePooling3D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range a.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -116,22 +106,22 @@ func (a *AveragePooling3D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigAveragePooling3D{
+	return jsonConfigLAveragePooling3D{
 		ClassName: "AveragePooling3D",
-		Name:      a.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"data_format": a.dataFormat,
-			"dtype":       a.dtype.String(),
-			"name":        a.name,
-			"padding":     a.padding,
-			"pool_size":   a.poolSize,
-			"strides":     a.strides,
-			"trainable":   a.trainable,
+			"data_format": l.dataFormat,
+			"dtype":       l.dtype.String(),
+			"name":        l.name,
+			"padding":     l.padding,
+			"pool_size":   l.poolSize,
+			"strides":     l.strides,
+			"trainable":   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (a *AveragePooling3D) GetCustomLayerDefinition() string {
+func (l *LAveragePooling3D) GetCustomLayerDefinition() string {
 	return ``
 }

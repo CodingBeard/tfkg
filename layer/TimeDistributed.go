@@ -2,83 +2,77 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type TimeDistributed struct {
-	name      string
+type LTimeDistributed struct {
 	dtype     DataType
 	inputs    []Layer
+	layer     interface{}
+	name      string
 	shape     tf.Shape
 	trainable bool
-	layer     interface{}
 }
 
-func NewTimeDistributed(layer interface{}, options ...TimeDistributedOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		t := &TimeDistributed{
-			layer:     layer,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("timedistributed"),
-		}
-		for _, option := range options {
-			option(t)
-		}
-		return t
+func TimeDistributed(layer interface{}) *LTimeDistributed {
+	return &LTimeDistributed{
+		dtype:     Float32,
+		layer:     layer,
+		name:      UniqueName("time_distributed"),
+		trainable: true,
 	}
 }
 
-type TimeDistributedOption func(*TimeDistributed)
-
-func TimeDistributedWithName(name string) func(t *TimeDistributed) {
-	return func(t *TimeDistributed) {
-		t.name = name
-	}
+func (l *LTimeDistributed) SetDtype(dtype DataType) *LTimeDistributed {
+	l.dtype = dtype
+	return l
 }
 
-func TimeDistributedWithDtype(dtype DataType) func(t *TimeDistributed) {
-	return func(t *TimeDistributed) {
-		t.dtype = dtype
-	}
+func (l *LTimeDistributed) SetName(name string) *LTimeDistributed {
+	l.name = name
+	return l
 }
 
-func TimeDistributedWithTrainable(trainable bool) func(t *TimeDistributed) {
-	return func(t *TimeDistributed) {
-		t.trainable = trainable
-	}
+func (l *LTimeDistributed) SetShape(shape tf.Shape) *LTimeDistributed {
+	l.shape = shape
+	return l
 }
 
-func (t *TimeDistributed) GetShape() tf.Shape {
-	return t.shape
+func (l *LTimeDistributed) SetTrainable(trainable bool) *LTimeDistributed {
+	l.trainable = trainable
+	return l
 }
 
-func (t *TimeDistributed) GetDtype() DataType {
-	return t.dtype
+func (l *LTimeDistributed) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (t *TimeDistributed) SetInput(inputs []Layer) {
-	t.inputs = inputs
-	t.dtype = inputs[0].GetDtype()
+func (l *LTimeDistributed) GetDtype() DataType {
+	return l.dtype
 }
 
-func (t *TimeDistributed) GetInputs() []Layer {
-	return t.inputs
+func (l *LTimeDistributed) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (t *TimeDistributed) GetName() string {
-	return t.name
+func (l *LTimeDistributed) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigTimeDistributed struct {
+func (l *LTimeDistributed) GetName() string {
+	return l.name
+}
+
+type jsonConfigLTimeDistributed struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (t *TimeDistributed) GetKerasLayerConfig() interface{} {
+func (l *LTimeDistributed) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range t.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -86,19 +80,19 @@ func (t *TimeDistributed) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigTimeDistributed{
+	return jsonConfigLTimeDistributed{
 		ClassName: "TimeDistributed",
-		Name:      t.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     t.dtype.String(),
-			"layer":     t.layer,
-			"name":      t.name,
-			"trainable": t.trainable,
+			"dtype":     l.dtype.String(),
+			"layer":     l.layer,
+			"name":      l.name,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (t *TimeDistributed) GetCustomLayerDefinition() string {
+func (l *LTimeDistributed) GetCustomLayerDefinition() string {
 	return ``
 }

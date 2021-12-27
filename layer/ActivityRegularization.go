@@ -2,97 +2,89 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type ActivityRegularization struct {
-	name      string
+type LActivityRegularization struct {
 	dtype     DataType
 	inputs    []Layer
-	shape     tf.Shape
-	trainable bool
 	l1        float64
 	l2        float64
+	name      string
+	shape     tf.Shape
+	trainable bool
 }
 
-func NewActivityRegularization(options ...ActivityRegularizationOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		a := &ActivityRegularization{
-			l1:        0,
-			l2:        0,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("activityregularization"),
-		}
-		for _, option := range options {
-			option(a)
-		}
-		return a
+func ActivityRegularization() *LActivityRegularization {
+	return &LActivityRegularization{
+		dtype:     Float32,
+		l1:        0,
+		l2:        0,
+		name:      UniqueName("activity_regularization"),
+		trainable: true,
 	}
 }
 
-type ActivityRegularizationOption func(*ActivityRegularization)
-
-func ActivityRegularizationWithName(name string) func(a *ActivityRegularization) {
-	return func(a *ActivityRegularization) {
-		a.name = name
-	}
+func (l *LActivityRegularization) SetDtype(dtype DataType) *LActivityRegularization {
+	l.dtype = dtype
+	return l
 }
 
-func ActivityRegularizationWithDtype(dtype DataType) func(a *ActivityRegularization) {
-	return func(a *ActivityRegularization) {
-		a.dtype = dtype
-	}
+func (l *LActivityRegularization) SetL1(l1 float64) *LActivityRegularization {
+	l.l1 = l1
+	return l
 }
 
-func ActivityRegularizationWithTrainable(trainable bool) func(a *ActivityRegularization) {
-	return func(a *ActivityRegularization) {
-		a.trainable = trainable
-	}
+func (l *LActivityRegularization) SetL2(l2 float64) *LActivityRegularization {
+	l.l2 = l2
+	return l
 }
 
-func ActivityRegularizationWithL1(l1 float64) func(a *ActivityRegularization) {
-	return func(a *ActivityRegularization) {
-		a.l1 = l1
-	}
+func (l *LActivityRegularization) SetName(name string) *LActivityRegularization {
+	l.name = name
+	return l
 }
 
-func ActivityRegularizationWithL2(l2 float64) func(a *ActivityRegularization) {
-	return func(a *ActivityRegularization) {
-		a.l2 = l2
-	}
+func (l *LActivityRegularization) SetShape(shape tf.Shape) *LActivityRegularization {
+	l.shape = shape
+	return l
 }
 
-func (a *ActivityRegularization) GetShape() tf.Shape {
-	return a.shape
+func (l *LActivityRegularization) SetTrainable(trainable bool) *LActivityRegularization {
+	l.trainable = trainable
+	return l
 }
 
-func (a *ActivityRegularization) GetDtype() DataType {
-	return a.dtype
+func (l *LActivityRegularization) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (a *ActivityRegularization) SetInput(inputs []Layer) {
-	a.inputs = inputs
-	a.dtype = inputs[0].GetDtype()
+func (l *LActivityRegularization) GetDtype() DataType {
+	return l.dtype
 }
 
-func (a *ActivityRegularization) GetInputs() []Layer {
-	return a.inputs
+func (l *LActivityRegularization) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (a *ActivityRegularization) GetName() string {
-	return a.name
+func (l *LActivityRegularization) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigActivityRegularization struct {
+func (l *LActivityRegularization) GetName() string {
+	return l.name
+}
+
+type jsonConfigLActivityRegularization struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (a *ActivityRegularization) GetKerasLayerConfig() interface{} {
+func (l *LActivityRegularization) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range a.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -100,20 +92,20 @@ func (a *ActivityRegularization) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigActivityRegularization{
+	return jsonConfigLActivityRegularization{
 		ClassName: "ActivityRegularization",
-		Name:      a.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":     a.dtype.String(),
-			"l1":        a.l1,
-			"l2":        a.l2,
-			"name":      a.name,
-			"trainable": a.trainable,
+			"dtype":     l.dtype.String(),
+			"l1":        l.l1,
+			"l2":        l.l2,
+			"name":      l.name,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (a *ActivityRegularization) GetCustomLayerDefinition() string {
+func (l *LActivityRegularization) GetCustomLayerDefinition() string {
 	return ``
 }

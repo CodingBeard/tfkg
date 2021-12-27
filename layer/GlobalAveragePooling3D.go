@@ -2,97 +2,89 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type GlobalAveragePooling3D struct {
-	name       string
+type LGlobalAveragePooling3D struct {
+	dataFormat interface{}
 	dtype      DataType
 	inputs     []Layer
+	keepdims   bool
+	name       string
 	shape      tf.Shape
 	trainable  bool
-	dataFormat interface{}
-	keepdims   bool
 }
 
-func NewGlobalAveragePooling3D(options ...GlobalAveragePooling3DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		g := &GlobalAveragePooling3D{
-			dataFormat: nil,
-			keepdims:   false,
-			trainable:  true,
-			inputs:     inputs,
-			name:       UniqueName("globalaveragepooling3d"),
-		}
-		for _, option := range options {
-			option(g)
-		}
-		return g
+func GlobalAveragePooling3D() *LGlobalAveragePooling3D {
+	return &LGlobalAveragePooling3D{
+		dataFormat: nil,
+		dtype:      Float32,
+		keepdims:   false,
+		name:       UniqueName("global_average_pooling3d"),
+		trainable:  true,
 	}
 }
 
-type GlobalAveragePooling3DOption func(*GlobalAveragePooling3D)
-
-func GlobalAveragePooling3DWithName(name string) func(g *GlobalAveragePooling3D) {
-	return func(g *GlobalAveragePooling3D) {
-		g.name = name
-	}
+func (l *LGlobalAveragePooling3D) SetDataFormat(dataFormat interface{}) *LGlobalAveragePooling3D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func GlobalAveragePooling3DWithDtype(dtype DataType) func(g *GlobalAveragePooling3D) {
-	return func(g *GlobalAveragePooling3D) {
-		g.dtype = dtype
-	}
+func (l *LGlobalAveragePooling3D) SetDtype(dtype DataType) *LGlobalAveragePooling3D {
+	l.dtype = dtype
+	return l
 }
 
-func GlobalAveragePooling3DWithTrainable(trainable bool) func(g *GlobalAveragePooling3D) {
-	return func(g *GlobalAveragePooling3D) {
-		g.trainable = trainable
-	}
+func (l *LGlobalAveragePooling3D) SetKeepdims(keepdims bool) *LGlobalAveragePooling3D {
+	l.keepdims = keepdims
+	return l
 }
 
-func GlobalAveragePooling3DWithDataFormat(dataFormat interface{}) func(g *GlobalAveragePooling3D) {
-	return func(g *GlobalAveragePooling3D) {
-		g.dataFormat = dataFormat
-	}
+func (l *LGlobalAveragePooling3D) SetName(name string) *LGlobalAveragePooling3D {
+	l.name = name
+	return l
 }
 
-func GlobalAveragePooling3DWithKeepdims(keepdims bool) func(g *GlobalAveragePooling3D) {
-	return func(g *GlobalAveragePooling3D) {
-		g.keepdims = keepdims
-	}
+func (l *LGlobalAveragePooling3D) SetShape(shape tf.Shape) *LGlobalAveragePooling3D {
+	l.shape = shape
+	return l
 }
 
-func (g *GlobalAveragePooling3D) GetShape() tf.Shape {
-	return g.shape
+func (l *LGlobalAveragePooling3D) SetTrainable(trainable bool) *LGlobalAveragePooling3D {
+	l.trainable = trainable
+	return l
 }
 
-func (g *GlobalAveragePooling3D) GetDtype() DataType {
-	return g.dtype
+func (l *LGlobalAveragePooling3D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (g *GlobalAveragePooling3D) SetInput(inputs []Layer) {
-	g.inputs = inputs
-	g.dtype = inputs[0].GetDtype()
+func (l *LGlobalAveragePooling3D) GetDtype() DataType {
+	return l.dtype
 }
 
-func (g *GlobalAveragePooling3D) GetInputs() []Layer {
-	return g.inputs
+func (l *LGlobalAveragePooling3D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (g *GlobalAveragePooling3D) GetName() string {
-	return g.name
+func (l *LGlobalAveragePooling3D) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigGlobalAveragePooling3D struct {
+func (l *LGlobalAveragePooling3D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLGlobalAveragePooling3D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (g *GlobalAveragePooling3D) GetKerasLayerConfig() interface{} {
+func (l *LGlobalAveragePooling3D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range g.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -100,20 +92,20 @@ func (g *GlobalAveragePooling3D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigGlobalAveragePooling3D{
+	return jsonConfigLGlobalAveragePooling3D{
 		ClassName: "GlobalAveragePooling3D",
-		Name:      g.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"data_format": g.dataFormat,
-			"dtype":       g.dtype.String(),
-			"keepdims":    g.keepdims,
-			"name":        g.name,
-			"trainable":   g.trainable,
+			"data_format": l.dataFormat,
+			"dtype":       l.dtype.String(),
+			"keepdims":    l.keepdims,
+			"name":        l.name,
+			"trainable":   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (g *GlobalAveragePooling3D) GetCustomLayerDefinition() string {
+func (l *LGlobalAveragePooling3D) GetCustomLayerDefinition() string {
 	return ``
 }

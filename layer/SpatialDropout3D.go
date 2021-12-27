@@ -2,95 +2,98 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type SpatialDropout3D struct {
-	name       string
+type LSpatialDropout3D struct {
+	dataFormat interface{}
 	dtype      DataType
 	inputs     []Layer
+	name       string
+	noiseShape interface{}
+	rate       float64
+	seed       interface{}
 	shape      tf.Shape
 	trainable  bool
-	rate       float64
-	dataFormat interface{}
-	noiseShape interface{}
-	seed       interface{}
 }
 
-func NewSpatialDropout3D(rate float64, options ...SpatialDropout3DOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		s := &SpatialDropout3D{
-			rate:       rate,
-			dataFormat: nil,
-			noiseShape: nil,
-			seed:       nil,
-			trainable:  true,
-			inputs:     inputs,
-			name:       UniqueName("spatialdropout3d"),
-		}
-		for _, option := range options {
-			option(s)
-		}
-		return s
+func SpatialDropout3D(rate float64) *LSpatialDropout3D {
+	return &LSpatialDropout3D{
+		dataFormat: nil,
+		dtype:      Float32,
+		name:       UniqueName("spatial_dropout3d"),
+		noiseShape: nil,
+		rate:       rate,
+		seed:       nil,
+		trainable:  true,
 	}
 }
 
-type SpatialDropout3DOption func(*SpatialDropout3D)
-
-func SpatialDropout3DWithName(name string) func(s *SpatialDropout3D) {
-	return func(s *SpatialDropout3D) {
-		s.name = name
-	}
+func (l *LSpatialDropout3D) SetDataFormat(dataFormat interface{}) *LSpatialDropout3D {
+	l.dataFormat = dataFormat
+	return l
 }
 
-func SpatialDropout3DWithDtype(dtype DataType) func(s *SpatialDropout3D) {
-	return func(s *SpatialDropout3D) {
-		s.dtype = dtype
-	}
+func (l *LSpatialDropout3D) SetDtype(dtype DataType) *LSpatialDropout3D {
+	l.dtype = dtype
+	return l
 }
 
-func SpatialDropout3DWithTrainable(trainable bool) func(s *SpatialDropout3D) {
-	return func(s *SpatialDropout3D) {
-		s.trainable = trainable
-	}
+func (l *LSpatialDropout3D) SetName(name string) *LSpatialDropout3D {
+	l.name = name
+	return l
 }
 
-func SpatialDropout3DWithDataFormat(dataFormat interface{}) func(s *SpatialDropout3D) {
-	return func(s *SpatialDropout3D) {
-		s.dataFormat = dataFormat
-	}
+func (l *LSpatialDropout3D) SetNoiseShape(noiseShape interface{}) *LSpatialDropout3D {
+	l.noiseShape = noiseShape
+	return l
 }
 
-func (s *SpatialDropout3D) GetShape() tf.Shape {
-	return s.shape
+func (l *LSpatialDropout3D) SetSeed(seed interface{}) *LSpatialDropout3D {
+	l.seed = seed
+	return l
 }
 
-func (s *SpatialDropout3D) GetDtype() DataType {
-	return s.dtype
+func (l *LSpatialDropout3D) SetShape(shape tf.Shape) *LSpatialDropout3D {
+	l.shape = shape
+	return l
 }
 
-func (s *SpatialDropout3D) SetInput(inputs []Layer) {
-	s.inputs = inputs
-	s.dtype = inputs[0].GetDtype()
+func (l *LSpatialDropout3D) SetTrainable(trainable bool) *LSpatialDropout3D {
+	l.trainable = trainable
+	return l
 }
 
-func (s *SpatialDropout3D) GetInputs() []Layer {
-	return s.inputs
+func (l *LSpatialDropout3D) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (s *SpatialDropout3D) GetName() string {
-	return s.name
+func (l *LSpatialDropout3D) GetDtype() DataType {
+	return l.dtype
 }
 
-type jsonConfigSpatialDropout3D struct {
+func (l *LSpatialDropout3D) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
+}
+
+func (l *LSpatialDropout3D) GetInputs() []Layer {
+	return l.inputs
+}
+
+func (l *LSpatialDropout3D) GetName() string {
+	return l.name
+}
+
+type jsonConfigLSpatialDropout3D struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (s *SpatialDropout3D) GetKerasLayerConfig() interface{} {
+func (l *LSpatialDropout3D) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range s.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -98,21 +101,22 @@ func (s *SpatialDropout3D) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigSpatialDropout3D{
+	return jsonConfigLSpatialDropout3D{
 		ClassName: "SpatialDropout3D",
-		Name:      s.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"dtype":       s.dtype.String(),
-			"name":        s.name,
-			"noise_shape": s.noiseShape,
-			"rate":        s.rate,
-			"seed":        s.seed,
-			"trainable":   s.trainable,
+			"data_format": l.dataFormat,
+			"dtype":       l.dtype.String(),
+			"name":        l.name,
+			"noise_shape": l.noiseShape,
+			"rate":        l.rate,
+			"seed":        l.seed,
+			"trainable":   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (s *SpatialDropout3D) GetCustomLayerDefinition() string {
+func (l *LSpatialDropout3D) GetCustomLayerDefinition() string {
 	return ``
 }

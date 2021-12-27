@@ -25,7 +25,7 @@ See `ideas-todo.md` for what's in store
 
 Versions starting with v0 are liable to change radically.
 
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.16`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.17`
 
 ## Requirements
 
@@ -124,10 +124,10 @@ Define a model:
 m := model.NewSequentialModel(
     logger,
     errorHandler,
-    layer.NewInput(layer.InputWithInputShape(tf.MakeShape(-1, 4)), layer.InputWithDtype(layer.Float32)),
-    layer.NewDense(100, layer.DenseWithDtype(layer.Float32), layer.DenseWithActivation("swish")),
-    layer.NewDense(100, layer.DenseWithDtype(layer.Float32), layer.DenseWithActivation("swish")),
-    layer.NewDense(float64(dataset.NumCategoricalClasses()), layer.DenseWithDtype(layer.Float32), layer.DenseWithActivation("softmax")),
+    layer.Input().SetInputShape(tf.MakeShape(-1, 4)).SetDtype(layer.Float32),
+    layer.Dense(100).SetActivation("swish"),
+    layer.Dense(100).SetActivation("swish"),
+    layer.Dense(float64(dataset.NumCategoricalClasses())).SetActivation("softmax"),
 )
 
 e = m.CompileAndLoad(model.LossSparseCategoricalCrossentropy, optimizer.NewAdam(), saveDir)

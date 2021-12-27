@@ -1,189 +1,170 @@
 package layer
 
-import tf "github.com/galeone/tensorflow/tensorflow/go"
 import "github.com/codingbeard/tfkg/layer/constraint"
 import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
+import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type SyncBatchNormalization struct {
-	name                      string
-	dtype                     DataType
-	inputs                    []Layer
-	shape                     tf.Shape
-	trainable                 bool
+type LSyncBatchNormalization struct {
 	axis                      float64
-	momentum                  float64
-	epsilon                   float64
-	center                    bool
-	scale                     bool
+	betaConstraint            constraint.Constraint
 	betaInitializer           initializer.Initializer
+	betaRegularizer           regularizer.Regularizer
+	center                    bool
+	dtype                     DataType
+	epsilon                   float64
+	gammaConstraint           constraint.Constraint
 	gammaInitializer          initializer.Initializer
+	gammaRegularizer          regularizer.Regularizer
+	inputs                    []Layer
+	momentum                  float64
 	movingMeanInitializer     initializer.Initializer
 	movingVarianceInitializer initializer.Initializer
-	betaRegularizer           regularizer.Regularizer
-	gammaRegularizer          regularizer.Regularizer
-	betaConstraint            constraint.Constraint
-	gammaConstraint           constraint.Constraint
+	name                      string
+	scale                     bool
+	shape                     tf.Shape
+	trainable                 bool
 }
 
-func NewSyncBatchNormalization(options ...SyncBatchNormalizationOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		s := &SyncBatchNormalization{
-			axis:                      -1,
-			momentum:                  0.99,
-			epsilon:                   0.001,
-			center:                    true,
-			scale:                     true,
-			betaInitializer:           &initializer.Zeros{},
-			gammaInitializer:          &initializer.Ones{},
-			movingMeanInitializer:     &initializer.Zeros{},
-			movingVarianceInitializer: &initializer.Ones{},
-			betaRegularizer:           &regularizer.NilRegularizer{},
-			gammaRegularizer:          &regularizer.NilRegularizer{},
-			betaConstraint:            &constraint.NilConstraint{},
-			gammaConstraint:           &constraint.NilConstraint{},
-			trainable:                 true,
-			inputs:                    inputs,
-			name:                      UniqueName("syncbatchnormalization"),
-		}
-		for _, option := range options {
-			option(s)
-		}
-		return s
+func SyncBatchNormalization() *LSyncBatchNormalization {
+	return &LSyncBatchNormalization{
+		axis:                      -1,
+		betaConstraint:            &constraint.NilConstraint{},
+		betaInitializer:           initializer.Zeros(),
+		betaRegularizer:           &regularizer.NilRegularizer{},
+		center:                    true,
+		dtype:                     Float32,
+		epsilon:                   0.001,
+		gammaConstraint:           &constraint.NilConstraint{},
+		gammaInitializer:          initializer.Ones(),
+		gammaRegularizer:          &regularizer.NilRegularizer{},
+		momentum:                  0.99,
+		movingMeanInitializer:     initializer.Zeros(),
+		movingVarianceInitializer: initializer.Ones(),
+		name:                      UniqueName("sync_batch_normalization"),
+		scale:                     true,
+		trainable:                 true,
 	}
 }
 
-type SyncBatchNormalizationOption func(*SyncBatchNormalization)
-
-func SyncBatchNormalizationWithName(name string) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.name = name
-	}
+func (l *LSyncBatchNormalization) SetAxis(axis float64) *LSyncBatchNormalization {
+	l.axis = axis
+	return l
 }
 
-func SyncBatchNormalizationWithDtype(dtype DataType) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.dtype = dtype
-	}
+func (l *LSyncBatchNormalization) SetBetaConstraint(betaConstraint constraint.Constraint) *LSyncBatchNormalization {
+	l.betaConstraint = betaConstraint
+	return l
 }
 
-func SyncBatchNormalizationWithTrainable(trainable bool) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.trainable = trainable
-	}
+func (l *LSyncBatchNormalization) SetBetaInitializer(betaInitializer initializer.Initializer) *LSyncBatchNormalization {
+	l.betaInitializer = betaInitializer
+	return l
 }
 
-func SyncBatchNormalizationWithAxis(axis float64) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.axis = axis
-	}
+func (l *LSyncBatchNormalization) SetBetaRegularizer(betaRegularizer regularizer.Regularizer) *LSyncBatchNormalization {
+	l.betaRegularizer = betaRegularizer
+	return l
 }
 
-func SyncBatchNormalizationWithMomentum(momentum float64) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.momentum = momentum
-	}
+func (l *LSyncBatchNormalization) SetCenter(center bool) *LSyncBatchNormalization {
+	l.center = center
+	return l
 }
 
-func SyncBatchNormalizationWithEpsilon(epsilon float64) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.epsilon = epsilon
-	}
+func (l *LSyncBatchNormalization) SetDtype(dtype DataType) *LSyncBatchNormalization {
+	l.dtype = dtype
+	return l
 }
 
-func SyncBatchNormalizationWithCenter(center bool) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.center = center
-	}
+func (l *LSyncBatchNormalization) SetEpsilon(epsilon float64) *LSyncBatchNormalization {
+	l.epsilon = epsilon
+	return l
 }
 
-func SyncBatchNormalizationWithScale(scale bool) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.scale = scale
-	}
+func (l *LSyncBatchNormalization) SetGammaConstraint(gammaConstraint constraint.Constraint) *LSyncBatchNormalization {
+	l.gammaConstraint = gammaConstraint
+	return l
 }
 
-func SyncBatchNormalizationWithBetaInitializer(betaInitializer initializer.Initializer) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.betaInitializer = betaInitializer
-	}
+func (l *LSyncBatchNormalization) SetGammaInitializer(gammaInitializer initializer.Initializer) *LSyncBatchNormalization {
+	l.gammaInitializer = gammaInitializer
+	return l
 }
 
-func SyncBatchNormalizationWithGammaInitializer(gammaInitializer initializer.Initializer) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.gammaInitializer = gammaInitializer
-	}
+func (l *LSyncBatchNormalization) SetGammaRegularizer(gammaRegularizer regularizer.Regularizer) *LSyncBatchNormalization {
+	l.gammaRegularizer = gammaRegularizer
+	return l
 }
 
-func SyncBatchNormalizationWithMovingMeanInitializer(movingMeanInitializer initializer.Initializer) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.movingMeanInitializer = movingMeanInitializer
-	}
+func (l *LSyncBatchNormalization) SetMomentum(momentum float64) *LSyncBatchNormalization {
+	l.momentum = momentum
+	return l
 }
 
-func SyncBatchNormalizationWithMovingVarianceInitializer(movingVarianceInitializer initializer.Initializer) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.movingVarianceInitializer = movingVarianceInitializer
-	}
+func (l *LSyncBatchNormalization) SetMovingMeanInitializer(movingMeanInitializer initializer.Initializer) *LSyncBatchNormalization {
+	l.movingMeanInitializer = movingMeanInitializer
+	return l
 }
 
-func SyncBatchNormalizationWithBetaRegularizer(betaRegularizer regularizer.Regularizer) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.betaRegularizer = betaRegularizer
-	}
+func (l *LSyncBatchNormalization) SetMovingVarianceInitializer(movingVarianceInitializer initializer.Initializer) *LSyncBatchNormalization {
+	l.movingVarianceInitializer = movingVarianceInitializer
+	return l
 }
 
-func SyncBatchNormalizationWithGammaRegularizer(gammaRegularizer regularizer.Regularizer) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.gammaRegularizer = gammaRegularizer
-	}
+func (l *LSyncBatchNormalization) SetName(name string) *LSyncBatchNormalization {
+	l.name = name
+	return l
 }
 
-func SyncBatchNormalizationWithBetaConstraint(betaConstraint constraint.Constraint) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.betaConstraint = betaConstraint
-	}
+func (l *LSyncBatchNormalization) SetScale(scale bool) *LSyncBatchNormalization {
+	l.scale = scale
+	return l
 }
 
-func SyncBatchNormalizationWithGammaConstraint(gammaConstraint constraint.Constraint) func(s *SyncBatchNormalization) {
-	return func(s *SyncBatchNormalization) {
-		s.gammaConstraint = gammaConstraint
-	}
+func (l *LSyncBatchNormalization) SetShape(shape tf.Shape) *LSyncBatchNormalization {
+	l.shape = shape
+	return l
 }
 
-func (s *SyncBatchNormalization) GetShape() tf.Shape {
-	return s.shape
+func (l *LSyncBatchNormalization) SetTrainable(trainable bool) *LSyncBatchNormalization {
+	l.trainable = trainable
+	return l
 }
 
-func (s *SyncBatchNormalization) GetDtype() DataType {
-	return s.dtype
+func (l *LSyncBatchNormalization) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (s *SyncBatchNormalization) SetInput(inputs []Layer) {
-	s.inputs = inputs
-	s.dtype = inputs[0].GetDtype()
+func (l *LSyncBatchNormalization) GetDtype() DataType {
+	return l.dtype
 }
 
-func (s *SyncBatchNormalization) GetInputs() []Layer {
-	return s.inputs
+func (l *LSyncBatchNormalization) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (s *SyncBatchNormalization) GetName() string {
-	return s.name
+func (l *LSyncBatchNormalization) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigSyncBatchNormalization struct {
+func (l *LSyncBatchNormalization) GetName() string {
+	return l.name
+}
+
+type jsonConfigLSyncBatchNormalization struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (s *SyncBatchNormalization) GetKerasLayerConfig() interface{} {
+func (l *LSyncBatchNormalization) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range s.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -191,31 +172,31 @@ func (s *SyncBatchNormalization) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigSyncBatchNormalization{
+	return jsonConfigLSyncBatchNormalization{
 		ClassName: "SyncBatchNormalization",
-		Name:      s.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"axis":                        s.axis,
-			"beta_constraint":             s.betaConstraint.GetKerasLayerConfig(),
-			"beta_initializer":            s.betaInitializer.GetKerasLayerConfig(),
-			"beta_regularizer":            s.betaRegularizer.GetKerasLayerConfig(),
-			"center":                      s.center,
-			"dtype":                       s.dtype.String(),
-			"epsilon":                     s.epsilon,
-			"gamma_constraint":            s.gammaConstraint.GetKerasLayerConfig(),
-			"gamma_initializer":           s.gammaInitializer.GetKerasLayerConfig(),
-			"gamma_regularizer":           s.gammaRegularizer.GetKerasLayerConfig(),
-			"momentum":                    s.momentum,
-			"moving_mean_initializer":     s.movingMeanInitializer.GetKerasLayerConfig(),
-			"moving_variance_initializer": s.movingVarianceInitializer.GetKerasLayerConfig(),
-			"name":                        s.name,
-			"scale":                       s.scale,
-			"trainable":                   s.trainable,
+			"axis":                        l.axis,
+			"beta_constraint":             l.betaConstraint.GetKerasLayerConfig(),
+			"beta_initializer":            l.betaInitializer.GetKerasLayerConfig(),
+			"beta_regularizer":            l.betaRegularizer.GetKerasLayerConfig(),
+			"center":                      l.center,
+			"dtype":                       l.dtype.String(),
+			"epsilon":                     l.epsilon,
+			"gamma_constraint":            l.gammaConstraint.GetKerasLayerConfig(),
+			"gamma_initializer":           l.gammaInitializer.GetKerasLayerConfig(),
+			"gamma_regularizer":           l.gammaRegularizer.GetKerasLayerConfig(),
+			"momentum":                    l.momentum,
+			"moving_mean_initializer":     l.movingMeanInitializer.GetKerasLayerConfig(),
+			"moving_variance_initializer": l.movingVarianceInitializer.GetKerasLayerConfig(),
+			"name":                        l.name,
+			"scale":                       l.scale,
+			"trainable":                   l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (s *SyncBatchNormalization) GetCustomLayerDefinition() string {
+func (l *LSyncBatchNormalization) GetCustomLayerDefinition() string {
 	return ``
 }

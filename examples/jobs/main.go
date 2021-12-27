@@ -171,113 +171,123 @@ func main() {
 	dataset.Shuffle(1)
 
 	// Define 6 input paths, one for each of our inputs. They will be passed into an embedding layer and then a LSTM layer
-	titleInput := layer.NewInput(
-		layer.InputWithInputShape(tf.MakeShape(-1, int64(titleProcessor.Tokenizer().MaxLen()))),
-		layer.InputWithDtype(layer.Float32),
-		layer.InputWithName("title_input"),
-	)
+	titleInput := layer.Input().
+		SetInputShape(tf.MakeShape(-1, int64(titleProcessor.Tokenizer().MaxLen()))).
+		SetDtype(layer.Float32).
+		SetName("title_input")
 
-	titleEmbedding := layer.NewEmbedding(
+	titleEmbedding := layer.Embedding(
 		float64(titleProcessor.Tokenizer().NumWords()+1),
 		32,
-		layer.EmbeddingWithName("title_embedding"),
-	)(titleInput)
+	).
+		SetName("title_embedding").
+		SetInputs(titleInput)
 
-	titleLSTM := layer.NewLSTM(32, layer.LSTMWithName("title_lstm"))(titleEmbedding)
+	titleLSTM := layer.LSTM(32).
+		SetName("title_lstm").
+		SetInputs(titleEmbedding)
 
-	locationInput := layer.NewInput(
-		layer.InputWithInputShape(tf.MakeShape(-1, int64(locationProcessor.Tokenizer().MaxLen()))),
-		layer.InputWithDtype(layer.Float32),
-		layer.InputWithName("location_input"),
-	)
+	locationInput := layer.Input().
+		SetInputShape(tf.MakeShape(-1, int64(locationProcessor.Tokenizer().MaxLen()))).
+		SetDtype(layer.Float32).
+		SetName("location_input")
 
-	locationEmbedding := layer.NewEmbedding(
+	locationEmbedding := layer.Embedding(
 		float64(locationProcessor.Tokenizer().NumWords()+1),
 		32,
-		layer.EmbeddingWithName("location_embedding"),
-	)(locationInput)
+	).
+		SetName("location_embedding").
+		SetInputs(locationInput)
 
-	locationLSTM := layer.NewLSTM(32, layer.LSTMWithName("location_lstm"))(locationEmbedding)
+	locationLSTM := layer.LSTM(32).
+		SetName("location_lstm").
+		SetInputs(locationEmbedding)
 
-	departmentInput := layer.NewInput(
-		layer.InputWithInputShape(tf.MakeShape(-1, int64(departmentProcessor.Tokenizer().MaxLen()))),
-		layer.InputWithDtype(layer.Float32),
-		layer.InputWithName("department_input"),
-	)
+	departmentInput := layer.Input().
+		SetInputShape(tf.MakeShape(-1, int64(departmentProcessor.Tokenizer().MaxLen()))).
+		SetDtype(layer.Float32).
+		SetName("department_input")
 
-	departmentEmbedding := layer.NewEmbedding(
+	departmentEmbedding := layer.Embedding(
 		float64(departmentProcessor.Tokenizer().NumWords()+1),
 		32,
-		layer.EmbeddingWithName("department_embedding"),
-	)(departmentInput)
+	).
+		SetName("department_embedding").
+		SetInputs(departmentInput)
 
-	departmentLSTM := layer.NewLSTM(32, layer.LSTMWithName("department_lstm"))(departmentEmbedding)
+	departmentLSTM := layer.LSTM(32).
+		SetName("department_lstm").
+		SetInputs(departmentEmbedding)
 
-	companyProfileInput := layer.NewInput(
-		layer.InputWithInputShape(tf.MakeShape(-1, int64(companyProfileProcessor.Tokenizer().MaxLen()))),
-		layer.InputWithDtype(layer.Float32),
-		layer.InputWithName("companyProfile_input"),
-	)
+	companyProfileInput := layer.Input().
+		SetInputShape(tf.MakeShape(-1, int64(companyProfileProcessor.Tokenizer().MaxLen()))).
+		SetDtype(layer.Float32).
+		SetName("companyProfile_input")
 
-	companyProfileEmbedding := layer.NewEmbedding(
+	companyProfileEmbedding := layer.Embedding(
 		float64(companyProfileProcessor.Tokenizer().NumWords()+1),
 		32,
-		layer.EmbeddingWithName("company_profile_embedding"),
-	)(companyProfileInput)
+	).
+		SetName("company_profile_embedding").
+		SetInputs(companyProfileInput)
 
-	companyProfileLSTM := layer.NewLSTM(32, layer.LSTMWithName("company_profile_lstm"))(companyProfileEmbedding)
+	companyProfileLSTM := layer.LSTM(32).
+		SetName("company_profile_lstm").
+		SetInputs(companyProfileEmbedding)
 
-	descriptionInput := layer.NewInput(
-		layer.InputWithInputShape(tf.MakeShape(-1, int64(descriptionProcessor.Tokenizer().MaxLen()))),
-		layer.InputWithDtype(layer.Float32),
-		layer.InputWithName("description_input"),
-	)
+	descriptionInput := layer.Input().
+		SetInputShape(tf.MakeShape(-1, int64(descriptionProcessor.Tokenizer().MaxLen()))).
+		SetDtype(layer.Float32).
+		SetName("description_input")
 
-	descriptionEmbedding := layer.NewEmbedding(
+	descriptionEmbedding := layer.Embedding(
 		float64(descriptionProcessor.Tokenizer().NumWords()+1),
 		32,
-		layer.EmbeddingWithName("description_embedding"),
-	)(descriptionInput)
+	).
+		SetName("description_embedding").
+		SetInputs(descriptionInput)
 
-	descriptionLSTM := layer.NewLSTM(32, layer.LSTMWithName("description_lstm"))(descriptionEmbedding)
+	descriptionLSTM := layer.LSTM(32).
+		SetName("description_lstm").
+		SetInputs(descriptionEmbedding)
 
-	requirementsInput := layer.NewInput(
-		layer.InputWithInputShape(tf.MakeShape(-1, int64(requirementsProcessor.Tokenizer().MaxLen()))),
-		layer.InputWithDtype(layer.Float32),
-		layer.InputWithName("requirements_input"),
-	)
+	requirementsInput := layer.Input().
+		SetInputShape(tf.MakeShape(-1, int64(requirementsProcessor.Tokenizer().MaxLen()))).
+		SetDtype(layer.Float32).
+		SetName("requirements_input")
 
-	requirementsEmbedding := layer.NewEmbedding(
+	requirementsEmbedding := layer.Embedding(
 		float64(requirementsProcessor.Tokenizer().NumWords()+1),
 		32,
-		layer.EmbeddingWithName("requirements_embedding"),
-	)(requirementsInput)
+	).
+		SetName("requirements_embedding").
+		SetInputs(requirementsInput)
 
-	requirementsLSTM := layer.NewLSTM(32, layer.LSTMWithName("requirements_lstm"))(requirementsEmbedding)
+	requirementsLSTM := layer.LSTM(32).
+		SetName("requirements_lstm").
+		SetInputs(requirementsEmbedding)
 
 	// Merge our LSTM layers into a single tensor
-	concatenate := layer.NewConcatenate()(titleLSTM, locationLSTM, departmentLSTM, companyProfileLSTM, descriptionLSTM, requirementsLSTM)
+	concatenate := layer.Concatenate().
+		SetInputs(titleLSTM, locationLSTM, departmentLSTM, companyProfileLSTM, descriptionLSTM, requirementsLSTM)
 
 	// Feed the merged input into a dense network
-	mergedDense1 := layer.NewDense(
-		100,
-		layer.DenseWithDtype(layer.Float32),
-		layer.DenseWithName("merged_dense_1"),
-		layer.DenseWithActivation("swish"),
-	)(concatenate)
-	mergedDense2 := layer.NewDense(
-		100,
-		layer.DenseWithDtype(layer.Float32),
-		layer.DenseWithName("merged_dense_2"),
-		layer.DenseWithActivation("swish"),
-	)(mergedDense1)
+	mergedDense1 := layer.Dense(100).
+		SetDtype(layer.Float32).
+		SetName("merged_dense_1").
+		SetActivation("swish").
+		SetInputs(concatenate)
+	mergedDense2 := layer.Dense(100).
+		SetDtype(layer.Float32).
+		SetName("merged_dense_2").
+		SetActivation("swish").
+		SetInputs(mergedDense1)
 
-	output := layer.NewDense(
-		1,
-		layer.DenseWithDtype(layer.Float32),
-		layer.DenseWithName("output"),
-		layer.DenseWithActivation("sigmoid"),
-	)(mergedDense2)
+	output := layer.Dense(1).
+		SetDtype(layer.Float32).
+		SetName("output").
+		SetActivation("sigmoid").
+		SetInputs(mergedDense2)
 
 	// Define a keras style Functional model
 	// Note that you don't need to pass in the inputs, the output variable contains all the other nodes as long as you use the same syntax of layer.New()(input)
@@ -289,7 +299,7 @@ func main() {
 
 	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and execute it to save the model in a format we can load and train
 	// A python binary must be available to use for this to work
-	e = m.CompileAndLoad(model.LossBinaryCrossentropy, optimizer.NewAdam(), saveDir)
+	e = m.CompileAndLoad(model.LossBinaryCrossentropy, optimizer.Adam(), saveDir)
 	if e != nil {
 		return
 	}
@@ -303,7 +313,7 @@ func main() {
 	//      We pass the data through 10 times (Epochs: 10)
 	//      We enable validation, which will evaluate the model on the validation portion of the dataset above (Validation: true)
 	//      We continuously (and concurrently) pre-fetch 10 batches to speed up training, though with 150 samples this has almost no effect
-	// 		We calculate the accuracy of the model on training and validation datasets (metric.SparseCategoricalAccuracy)
+	// 		We calculate the accuracy of the model on training and validation datasets (metric.BinaryAccuracy)
 	//		We log the training results to stdout (Verbose:1, callback.Logger)
 	//		We save the best model based on the accuracy metric at the end of the validation stage of each epoch (callback.Checkpoint)
 	m.Fit(
@@ -315,7 +325,7 @@ func main() {
 			PreFetch:   10,
 			Verbose:    1,
 			Metrics: []metric.Metric{
-				&metric.SparseCategoricalAccuracy{
+				&metric.BinaryAccuracy{
 					Name:       "acc",
 					Confidence: 0.5,
 					Average:    true,

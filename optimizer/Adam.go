@@ -1,82 +1,85 @@
 package optimizer
 
-type Adam struct {
-	learningRate float64
+type OAdam struct {
+	amsgrad      bool
 	beta1        float64
 	beta2        float64
-	epsilon      float64
-	amsgrad      bool
-	name         string
 	decay        float64
+	epsilon      float64
+	learningRate float64
+	name         string
 }
 
-func NewAdam() *Adam {
-	return &Adam{
-		learningRate: 0.001,
+func Adam() *OAdam {
+	return &OAdam{
+		amsgrad:      false,
 		beta1:        0.9,
 		beta2:        0.999,
+		decay:        0,
 		epsilon:      1e-07,
-		amsgrad:      false,
-		name:         "Adam",
+		learningRate: 0.001,
+		name:         UniqueName("Adam"),
 	}
 }
 
-func AdamWithLearningRate(learningRate float64) func(a *Adam) {
-	return func(a *Adam) {
-		a.learningRate = learningRate
-	}
+func (o *OAdam) SetAmsgrad(amsgrad bool) *OAdam {
+	o.amsgrad = amsgrad
+	return o
 }
 
-func AdamWithBeta1(beta1 float64) func(a *Adam) {
-	return func(a *Adam) {
-		a.beta1 = beta1
-	}
+func (o *OAdam) SetBeta1(beta1 float64) *OAdam {
+	o.beta1 = beta1
+	return o
 }
 
-func AdamWithBeta2(beta2 float64) func(a *Adam) {
-	return func(a *Adam) {
-		a.beta2 = beta2
-	}
+func (o *OAdam) SetBeta2(beta2 float64) *OAdam {
+	o.beta2 = beta2
+	return o
 }
 
-func AdamWithEpsilon(epsilon float64) func(a *Adam) {
-	return func(a *Adam) {
-		a.epsilon = epsilon
-	}
+func (o *OAdam) SetDecay(decay float64) *OAdam {
+	o.decay = decay
+	return o
 }
 
-func AdamWithAmsgrad(amsgrad bool) func(a *Adam) {
-	return func(a *Adam) {
-		a.amsgrad = amsgrad
-	}
+func (o *OAdam) SetEpsilon(epsilon float64) *OAdam {
+	o.epsilon = epsilon
+	return o
 }
 
-func AdamWithName(name string) func(a *Adam) {
-	return func(a *Adam) {
-		a.name = name
-	}
+func (o *OAdam) SetLearningRate(learningRate float64) *OAdam {
+	o.learningRate = learningRate
+	return o
 }
 
-type jsonConfigAdam struct {
+func (o *OAdam) SetName(name string) *OAdam {
+	o.name = name
+	return o
+}
+
+type jsonConfigOAdam struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (a *Adam) GetKerasLayerConfig() interface{} {
-	if a == nil {
-		return nil
-	}
-	return jsonConfigAdam{
+func (o *OAdam) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigOAdam{
 		ClassName: "Adam",
+		Name:      o.name,
 		Config: map[string]interface{}{
-			"amsgrad":       a.amsgrad,
-			"beta_1":        a.beta1,
-			"beta_2":        a.beta2,
-			"decay":         a.decay,
-			"epsilon":       a.epsilon,
-			"learning_rate": a.learningRate,
-			"name":          a.name,
+			"amsgrad":       o.amsgrad,
+			"beta_1":        o.beta1,
+			"beta_2":        o.beta2,
+			"decay":         o.decay,
+			"epsilon":       o.epsilon,
+			"learning_rate": o.learningRate,
+			"name":          o.name,
 		},
 	}
+}
+
+func (o *OAdam) GetCustomLayerDefinition() string {
+	return ``
 }

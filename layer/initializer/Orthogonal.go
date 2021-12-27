@@ -1,44 +1,51 @@
 package initializer
 
-type Orthogonal struct {
+type IOrthogonal struct {
 	gain float64
+	name string
 	seed interface{}
 }
 
-func NewOrthogonal() *Orthogonal {
-	return &Orthogonal{
+func Orthogonal() *IOrthogonal {
+	return &IOrthogonal{
 		gain: 1,
 		seed: nil,
 	}
 }
 
-func OrthogonalWithGain(gain float64) func(o *Orthogonal) {
-	return func(o *Orthogonal) {
-		o.gain = gain
-	}
+func (i *IOrthogonal) SetGain(gain float64) *IOrthogonal {
+	i.gain = gain
+	return i
 }
 
-func OrthogonalWithSeed(seed interface{}) func(o *Orthogonal) {
-	return func(o *Orthogonal) {
-		o.seed = seed
-	}
+func (i *IOrthogonal) SetName(name string) *IOrthogonal {
+	i.name = name
+	return i
 }
 
-type jsonConfigOrthogonal struct {
+func (i *IOrthogonal) SetSeed(seed interface{}) *IOrthogonal {
+	i.seed = seed
+	return i
+}
+
+type jsonConfigIOrthogonal struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (o *Orthogonal) GetKerasLayerConfig() interface{} {
-	if o == nil {
-		return nil
-	}
-	return jsonConfigOrthogonal{
+func (i *IOrthogonal) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigIOrthogonal{
 		ClassName: "Orthogonal",
+		Name:      i.name,
 		Config: map[string]interface{}{
-			"gain": o.gain,
-			"seed": o.seed,
+			"gain": i.gain,
+			"seed": i.seed,
 		},
 	}
+}
+
+func (i *IOrthogonal) GetCustomLayerDefinition() string {
+	return ``
 }

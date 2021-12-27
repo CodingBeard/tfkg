@@ -2,89 +2,82 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type Concatenate struct {
-	name      string
+type LConcatenate struct {
+	axis      float64
 	dtype     DataType
 	inputs    []Layer
+	name      string
 	shape     tf.Shape
 	trainable bool
-	axis      float64
 }
 
-func NewConcatenate(options ...ConcatenateOption) func(inputs ...Layer) Layer {
-	return func(inputs ...Layer) Layer {
-		c := &Concatenate{
-			axis:      -1,
-			trainable: true,
-			inputs:    inputs,
-			name:      UniqueName("concatenate"),
-		}
-		for _, option := range options {
-			option(c)
-		}
-		return c
+func Concatenate() *LConcatenate {
+	return &LConcatenate{
+		axis:      -1,
+		dtype:     Float32,
+		name:      UniqueName("concatenate"),
+		trainable: true,
 	}
 }
 
-type ConcatenateOption func(*Concatenate)
-
-func ConcatenateWithName(name string) func(c *Concatenate) {
-	return func(c *Concatenate) {
-		c.name = name
-	}
+func (l *LConcatenate) SetAxis(axis float64) *LConcatenate {
+	l.axis = axis
+	return l
 }
 
-func ConcatenateWithDtype(dtype DataType) func(c *Concatenate) {
-	return func(c *Concatenate) {
-		c.dtype = dtype
-	}
+func (l *LConcatenate) SetDtype(dtype DataType) *LConcatenate {
+	l.dtype = dtype
+	return l
 }
 
-func ConcatenateWithTrainable(trainable bool) func(c *Concatenate) {
-	return func(c *Concatenate) {
-		c.trainable = trainable
-	}
+func (l *LConcatenate) SetName(name string) *LConcatenate {
+	l.name = name
+	return l
 }
 
-func ConcatenateWithAxis(axis float64) func(c *Concatenate) {
-	return func(c *Concatenate) {
-		c.axis = axis
-	}
+func (l *LConcatenate) SetShape(shape tf.Shape) *LConcatenate {
+	l.shape = shape
+	return l
 }
 
-func (c *Concatenate) GetShape() tf.Shape {
-	return c.shape
+func (l *LConcatenate) SetTrainable(trainable bool) *LConcatenate {
+	l.trainable = trainable
+	return l
 }
 
-func (c *Concatenate) GetDtype() DataType {
-	return c.dtype
+func (l *LConcatenate) GetShape() tf.Shape {
+	return l.shape
 }
 
-func (c *Concatenate) SetInput(inputs []Layer) {
-	c.inputs = inputs
-	c.dtype = inputs[0].GetDtype()
+func (l *LConcatenate) GetDtype() DataType {
+	return l.dtype
 }
 
-func (c *Concatenate) GetInputs() []Layer {
-	return c.inputs
+func (l *LConcatenate) SetInputs(inputs ...Layer) Layer {
+	l.inputs = inputs
+	return l
 }
 
-func (c *Concatenate) GetName() string {
-	return c.name
+func (l *LConcatenate) GetInputs() []Layer {
+	return l.inputs
 }
 
-type jsonConfigConcatenate struct {
+func (l *LConcatenate) GetName() string {
+	return l.name
+}
+
+type jsonConfigLConcatenate struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (c *Concatenate) GetKerasLayerConfig() interface{} {
+func (l *LConcatenate) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
-	for _, input := range c.inputs {
+	for _, input := range l.inputs {
 		inboundNodes[0] = append(inboundNodes[0], []interface{}{
 			input.GetName(),
 			0,
@@ -92,19 +85,19 @@ func (c *Concatenate) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigConcatenate{
+	return jsonConfigLConcatenate{
 		ClassName: "Concatenate",
-		Name:      c.name,
+		Name:      l.name,
 		Config: map[string]interface{}{
-			"axis":      c.axis,
-			"dtype":     c.dtype.String(),
-			"name":      c.name,
-			"trainable": c.trainable,
+			"axis":      l.axis,
+			"dtype":     l.dtype.String(),
+			"name":      l.name,
+			"trainable": l.trainable,
 		},
 		InboundNodes: inboundNodes,
 	}
 }
 
-func (c *Concatenate) GetCustomLayerDefinition() string {
+func (l *LConcatenate) GetCustomLayerDefinition() string {
 	return ``
 }

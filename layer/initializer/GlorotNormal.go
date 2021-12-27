@@ -1,35 +1,43 @@
 package initializer
 
-type GlorotNormal struct {
+type IGlorotNormal struct {
+	name string
 	seed interface{}
 }
 
-func NewGlorotNormal() *GlorotNormal {
-	return &GlorotNormal{
+func GlorotNormal() *IGlorotNormal {
+	return &IGlorotNormal{
 		seed: nil,
 	}
 }
 
-func GlorotNormalWithSeed(seed interface{}) func(g *GlorotNormal) {
-	return func(g *GlorotNormal) {
-		g.seed = seed
-	}
+func (i *IGlorotNormal) SetName(name string) *IGlorotNormal {
+	i.name = name
+	return i
 }
 
-type jsonConfigGlorotNormal struct {
+func (i *IGlorotNormal) SetSeed(seed interface{}) *IGlorotNormal {
+	i.seed = seed
+	return i
+}
+
+type jsonConfigIGlorotNormal struct {
 	ClassName string                 `json:"class_name"`
 	Name      string                 `json:"name"`
 	Config    map[string]interface{} `json:"config"`
 }
 
-func (g *GlorotNormal) GetKerasLayerConfig() interface{} {
-	if g == nil {
-		return nil
-	}
-	return jsonConfigGlorotNormal{
+func (i *IGlorotNormal) GetKerasLayerConfig() interface{} {
+
+	return jsonConfigIGlorotNormal{
 		ClassName: "GlorotNormal",
+		Name:      i.name,
 		Config: map[string]interface{}{
-			"seed": g.seed,
+			"seed": i.seed,
 		},
 	}
+}
+
+func (i *IGlorotNormal) GetCustomLayerDefinition() string {
+	return ``
 }
