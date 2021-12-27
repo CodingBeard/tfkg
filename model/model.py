@@ -14,7 +14,8 @@ custom_objects = {}
 
 # tfkg-custom-definitions
 
-config = json.load(sys.stdin)
+with open(sys.argv[1], "r") as f:
+    config = json.load(f)
 
 model = tf.keras.models.model_from_json(config["model_config"], custom_objects=custom_objects)
 

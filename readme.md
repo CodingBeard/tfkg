@@ -18,6 +18,7 @@ See `ideas-todo.md` for what's in store
 | Linux    | Ubuntu 18.04 | Intel | RTX 3090  | Docker | Yes         | Yes              |
 | Linux    | Ubuntu 18.04 | Intel | RTX 3090  | Binary | Yes         | Yes              |
 | Windows  | 11           | AMD   | RTX 3080  | Docker | Yes         | Yes              |
+| Windows  | 11           | AMD   | RTX 3080  | Binary | Yes         | Yes              |
 | Mac      | macOS 12     | Intel | AMD 5500m | Docker | Yes         | No               |
 | Mac      | macOS 12     | M1    | M1        | Docker | Yes         | No               |
 
@@ -25,7 +26,7 @@ See `ideas-todo.md` for what's in store
 
 Versions starting with v0 are liable to change radically.
 
-- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.17`
+- Tensorflow 2.6 experimental support: `go get github.com/codingbeard/tfkg v0.2.6.18`
 
 ## Requirements
 
@@ -47,6 +48,7 @@ Linux environments are recommended, no GPU support on macOS and docker volumes a
 - Python 3.8 - the binary "python" must be on your path and the correct version
 - Tensorflow Python library: https://www.tensorflow.org/install
 - CUDA 11.2 and cuDNN 8.1 if using GPU acceleration: https://www.tensorflow.org/install/gpu#hardware_requirements
+- To compile the binary on Windows you must copy the include/tensorflow folder from https://www.tensorflow.org/install/lang_c into the go mod cache at C:\{go-mod-cache-dir}\github.com\codingbeard\tensorflow\tensorflow\go
 
 ## Features
 

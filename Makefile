@@ -13,10 +13,23 @@ init-docker:
 	docker pull tensorflow/tensorflow:2.6.0-gpu-jupyter
 	docker build docker/tf-jupyter-golang -t tf-jupyter-golang
 
+RSYNC_REMOTE?=""
+RSYNC_REMOTE_PATH?=""
+REMOTE?=""
+COMMAND?=""
+DELETE?=""
+remote:
+	rsync $(DELETE) --recursive --relative --exclude=logs --exclude=node_modules --exclude=tensorflow --exclude=examples/*/training-cache * $(RSYNC_REMOTE):$(RSYNC_REMOTE_PATH) || true
+	ssh -t $(REMOTE) "$(COMMAND)"
+
 examples-iris:
 	go generate ./...
 	docker-compose up -d tf-jupyter-golang
 	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg/examples/iris && go run main.go"
+
+examples-iris-raw:
+	go generate ./...
+	cd examples/iris && go run main.go
 
 examples-iris-gpu:
 	go generate ./...
@@ -33,6 +46,10 @@ examples-multiple-inputs-gpu:
 	docker-compose up -d tf-jupyter-golang-gpu
 	docker-compose exec tf-jupyter-golang-gpu sh -c "cd /go/src/tfkg/examples/multiple_inputs && go run main.go"
 
+examples-multiple-inputs-raw:
+	go generate ./...
+	cd examples/multiple_inputs && go run main.go
+
 examples-jobs:
 	go generate ./...
 	docker-compose up -d tf-jupyter-golang
@@ -43,10 +60,18 @@ examples-jobs-gpu:
 	docker-compose up -d tf-jupyter-golang-gpu
 	docker-compose exec tf-jupyter-golang-gpu sh -c "cd /go/src/tfkg/examples/jobs && go run main.go"
 
+examples-jobs-raw:
+	go generate ./...
+	cd examples/jobs && go run main.go
+
 examples-class-weights:
 	go generate ./...
 	docker-compose up -d tf-jupyter-golang
 	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg/examples/class_weights && go run main.go"
+
+examples-class-weights-raw:
+	go generate ./...
+	cd examples/class_weights && go run main.go
 
 test-python:
 	docker-compose up -d tf-jupyter-golang

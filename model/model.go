@@ -790,22 +790,16 @@ func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, mod
 	}
 	defer os.Remove(tempPythonPath)
 
-	cmd := exec.Command("python", tempPythonPath)
-	stdinPipe, e := cmd.StdinPipe()
+	tempConfigPath := filepath.Join(tempDir, "tfkg_config.json")
+
+	e = ioutil.WriteFile(tempConfigPath, configBytes, os.ModePerm)
 	if e != nil {
 		m.errorHandler.Error(e)
 		return e
 	}
-	_, e = stdinPipe.Write(configBytes)
-	if e != nil {
-		m.errorHandler.Error(e)
-		return e
-	}
-	e = stdinPipe.Close()
-	if e != nil {
-		m.errorHandler.Error(e)
-		return e
-	}
+	defer os.Remove(tempPythonPath)
+
+	cmd := exec.Command("python", tempPythonPath, tempConfigPath)
 	output, e := cmd.CombinedOutput()
 	if e != nil {
 		m.errorHandler.Error(e)
