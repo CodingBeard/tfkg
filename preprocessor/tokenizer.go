@@ -123,6 +123,7 @@ func (t *Tokenizer) MaxLen() int {
 }
 
 func (t *Tokenizer) clean(sentence string) string {
+	sentence = strings.ReplaceAll(sentence, "\x00", "")
 	for strings.Contains(sentence, "  ") {
 		sentence = strings.ReplaceAll(sentence, "  ", " ")
 	}
@@ -132,7 +133,6 @@ func (t *Tokenizer) clean(sentence string) string {
 			sentence = strings.ReplaceAll(sentence, string(char), "")
 		}
 	}
-	sentence = strings.ReplaceAll(sentence, "\x00", "")
 
 	sentence = strings.ToLower(sentence)
 
@@ -163,7 +163,7 @@ func (t *Tokenizer) Fit(sentence string) {
 		t.lock.Unlock()
 	}
 
-	if len(t.wordCounts) > t.numWords*10 {
+	if len(t.wordCounts) > t.numWords*200 {
 		type kv struct {
 			k string
 			v int
@@ -181,7 +181,7 @@ func (t *Tokenizer) Fit(sentence string) {
 			return kvs[i].v > kvs[j].v
 		})
 
-		for i := t.numWords; i < len(kvs); i++ {
+		for i := t.numWords * 100; i < len(kvs); i++ {
 			delete(t.wordCounts, kvs[i].k)
 		}
 
