@@ -21,8 +21,8 @@ import (
 )
 
 type imgMetadata struct {
-	filepath string
-	category int
+	Filepath string
+	Category int
 }
 
 type ImgFolderDataset struct {
@@ -235,8 +235,8 @@ func (d *ImgFolderDataset) readFileNames() error {
 			d.Count++
 
 			d.images = append(d.images, imgMetadata{
-				filepath: imgFilePath,
-				category: categoryInt,
+				Filepath: imgFilePath,
+				Category: categoryInt,
 			})
 
 			now := time.Now().Unix()
@@ -325,7 +325,7 @@ func (d *ImgFolderDataset) getRow() (string, int, error) {
 		}
 		img := d.images[d.generatorOffset]
 		d.generatorOffset++
-		return img.filepath, img.category, nil
+		return img.Filepath, img.Category, nil
 	} else {
 		panic("Non shuffled mode not implemented")
 	}
