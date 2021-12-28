@@ -194,11 +194,11 @@ func (m *TfkgModel) Fit(
 		config.Epochs = 1
 	}
 
-	for _, met := range config.Metrics {
-		met.Init()
+	for i := range config.Metrics {
+		config.Metrics[i].Init()
 	}
-	for _, call := range config.Callbacks {
-		e := call.Init()
+	for i := range config.Callbacks {
+		e := config.Callbacks[i].Init()
 		if e != nil {
 			m.errorHandler.Error(e)
 			return
@@ -433,11 +433,11 @@ func (m *TfkgModel) Evaluate(
 	config EvaluateConfig,
 ) {
 
-	for _, met := range config.Metrics {
-		met.Init()
+	for i := range config.Metrics {
+		config.Metrics[i].Init()
 	}
-	for _, call := range config.Callbacks {
-		e := call.Init()
+	for i := range config.Callbacks {
+		e := config.Callbacks[i].Init()
 		if e != nil {
 			m.errorHandler.Error(e)
 			return

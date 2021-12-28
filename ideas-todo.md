@@ -37,8 +37,7 @@ Use a python object with differing functions for the loss types, pass the loss t
 - Save the keras model json on model creation, and load config to add correct layers into a TFKG model
 - Automatically tailor metrics to different model losses
 - When using model.Load, verify that the loaded model is in fact a compatible tfkg model
-- Add image dataset
-- Add more preprocessors: Images, Audio
+- Add more preprocessors: Video, Audio
 - Intelligent hyperparameter optimisation
 - Optionally filter out tensorflow c logs if possible
 - Log levels

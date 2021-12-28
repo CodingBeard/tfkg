@@ -19,7 +19,7 @@ REMOTE?=""
 COMMAND?=""
 DELETE?=""
 remote:
-	rsync $(DELETE) --recursive --relative --exclude=logs --exclude=node_modules --exclude=tensorflow --exclude=examples/*/training-cache * $(RSYNC_REMOTE):$(RSYNC_REMOTE_PATH) || true
+	rsync $(DELETE) --recursive --relative --exclude=logs --exclude=node_modules --exclude=tensorflow --exclude=examples/*/training-cache --exclude=examples/*/data * $(RSYNC_REMOTE):$(RSYNC_REMOTE_PATH) || true
 	ssh -t $(REMOTE) "$(COMMAND)"
 
 examples-iris:
@@ -72,6 +72,20 @@ examples-class-weights:
 examples-class-weights-raw:
 	go generate ./...
 	cd examples/class_weights && go run main.go
+
+examples-sign:
+	go generate ./...
+	docker-compose up -d tf-jupyter-golang
+	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg/examples/sign && go run main.go"
+
+examples-sign-gpu:
+	go generate ./...
+	docker-compose up -d tf-jupyter-golang-gpu
+	docker-compose exec tf-jupyter-golang-gpu sh -c "cd /go/src/tfkg/examples/sign && go run main.go"
+
+examples-sign-raw:
+	go generate ./...
+	cd examples/sign && go run main.go
 
 test-python:
 	docker-compose up -d tf-jupyter-golang

@@ -57,7 +57,7 @@ func (l *Logger) Call(event Event, mode Mode, epoch int, batch int, logs []Log) 
 			}
 		}
 		l.modeStarts[mode] = time.Now().Unix()
-		l.lastPrint = time.Now().Unix()
+		l.lastPrint = 0
 		return []Action{ActionNop}, nil
 	}
 
@@ -103,7 +103,7 @@ func (l *Logger) Call(event Event, mode Mode, epoch int, batch int, logs []Log) 
 		logType = "End"
 	}
 
-	if event == EventEnd && mode == ModeVal {
+	if event == EventEnd && (mode == ModeVal || mode == ModeTest) {
 		if verbose {
 			fmt.Print("\r")
 		}

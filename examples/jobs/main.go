@@ -273,18 +273,15 @@ func main() {
 
 	// Feed the merged input into a dense network
 	mergedDense1 := layer.Dense(100).
-		SetDtype(layer.Float32).
 		SetName("merged_dense_1").
 		SetActivation("swish").
 		SetInputs(concatenate)
 	mergedDense2 := layer.Dense(100).
-		SetDtype(layer.Float32).
 		SetName("merged_dense_2").
 		SetActivation("swish").
 		SetInputs(mergedDense1)
 
 	output := layer.Dense(1).
-		SetDtype(layer.Float32).
 		SetName("output").
 		SetActivation("sigmoid").
 		SetInputs(mergedDense2)

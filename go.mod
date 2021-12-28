@@ -28,6 +28,7 @@ require (
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/klauspost/compress v1.13.4 // indirect
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/savsgio/gotils v0.0.0-20210921075833-21a6215cb0e4 // indirect
 	github.com/twpayne/go-jsonstruct v0.0.0-20200905114252-a1027bf3a425 // indirect

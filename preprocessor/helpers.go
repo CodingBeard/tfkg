@@ -3,6 +3,10 @@ package preprocessor
 import (
 	"fmt"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
+	"image"
+	"image/color"
+	_ "image/jpeg"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -41,6 +45,63 @@ func ReadCsvInt32s(columns []string) interface{} {
 	}
 
 	return ints2d
+}
+
+func ReadJpg(columns []string) interface{} {
+	var images []image.Image
+	for _, column := range columns {
+		f, e := os.Open(column)
+		if e != nil {
+			panic(e)
+		}
+		img, _, e := image.Decode(f)
+		if e != nil {
+			panic(e)
+		}
+		images = append(images, img)
+	}
+
+	return images
+}
+
+func ConvertImageToFloat32SliceTensor(columns interface{}) (*tf.Tensor, error) {
+	images, ok := columns.([]ProcessedImage)
+	if !ok {
+		e := fmt.Errorf("could not convert columns to [][]float32 for bools input")
+		panic(e)
+		return nil, e
+	}
+	var imagesFloats [][][][]float32
+	for _, img := range images {
+		height := img.Image.Bounds().Dy()
+		width := img.Image.Bounds().Dx()
+		var imageFloats [][][]float32
+		for y := 0; y < height; y++ {
+			rowFloats := make([][]float32, width)
+			for x := 0; x < width; x++ {
+				switch offset := img.Image.At(x, y).(type) {
+				case color.Gray:
+					rowFloats[x] = append(rowFloats[x], float32(offset.Y)/255)
+				case color.RGBA:
+					rowFloats[x] = append(rowFloats[x], float32(offset.R)/255)
+					rowFloats[x] = append(rowFloats[x], float32(offset.G)/255)
+					rowFloats[x] = append(rowFloats[x], float32(offset.B)/255)
+					if img.Color == ImageColorRGBA {
+						rowFloats[x] = append(rowFloats[x], float32(offset.A)/255)
+					}
+				default:
+					panic(fmt.Sprintf("Unsupported color type: %#v", offset))
+				}
+			}
+			imageFloats = append(imageFloats, rowFloats)
+		}
+		imagesFloats = append(imagesFloats, imageFloats)
+	}
+	tensor, e := tf.NewTensor(imagesFloats)
+	if e != nil {
+		return nil, e
+	}
+	return tensor, nil
 }
 
 func ConvertDivisorToFloat32SliceTensor(columns interface{}) (*tf.Tensor, error) {

@@ -118,7 +118,6 @@ func main() {
 	// Train the model.
 	// Most of this should look familiar to anyone who has used tensorflow/keras
 	// The key points are:
-	//      The batchSize MUST match the batchSize in the call to CompileAndLoad
 	//      We pass the data through 10 times (Epochs: 10)
 	//      We enable validation, which will evaluate the model on the validation portion of the dataset above (Validation: true)
 	//      We continuously (and concurrently) pre-fetch 10 batches to speed up training, though with 150 samples this has almost no effect

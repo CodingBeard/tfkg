@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/codingbeard/cberrors"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
+	"image"
 	"os"
 	"path/filepath"
 )
@@ -18,6 +19,7 @@ type Processor struct {
 	cacheDir  string
 	divisor   *RegressionDivisor
 	tokenizer *Tokenizer
+	image     *Image
 	reader    func(column []string) interface{}
 	converter func(column interface{}) (*tf.Tensor, error)
 
@@ -31,6 +33,7 @@ type ProcessorConfig struct {
 	RequiresFit bool
 	Divisor     *RegressionDivisor
 	Tokenizer   *Tokenizer
+	Image       *Image
 	Reader      func(column []string) interface{}
 	Converter   func(column interface{}) (*tf.Tensor, error)
 }
@@ -49,6 +52,7 @@ func NewProcessor(
 		RequiresFit:  config.RequiresFit,
 		divisor:      config.Divisor,
 		tokenizer:    config.Tokenizer,
+		image:        config.Image,
 		reader:       config.Reader,
 		converter:    config.Converter,
 	}
@@ -184,6 +188,17 @@ func (p *Processor) ProcessString(columnRows []string) (*tf.Tensor, error) {
 			tokenizedStrings = append(tokenizedStrings, tokenized)
 		}
 		return p.converter(tokenizedStrings)
+	} else if p.image != nil {
+		var processedImages []ProcessedImage
+		for _, img := range read.([]image.Image) {
+			processedImage, e := p.image.Process(img)
+			if e != nil {
+				p.errorHandler.Error(e)
+				return nil, e
+			}
+			processedImages = append(processedImages, processedImage)
+		}
+		return p.converter(processedImages)
 	}
 
 	return p.converter(read)
@@ -211,6 +226,17 @@ func (p *Processor) ProcessInterface(columnRows interface{}) (*tf.Tensor, error)
 			tokenizedStrings = append(tokenizedStrings, tokenized)
 		}
 		return p.converter(tokenizedStrings)
+	} else if p.image != nil {
+		var processedImages []ProcessedImage
+		for _, img := range columnRows.([]image.Image) {
+			processedImage, e := p.image.Process(img)
+			if e != nil {
+				p.errorHandler.Error(e)
+				return nil, e
+			}
+			processedImages = append(processedImages, processedImage)
+		}
+		return p.converter(processedImages)
 	}
 
 	return p.converter(columnRows)
