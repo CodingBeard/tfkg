@@ -15,6 +15,7 @@ import (
 	"github.com/codingbeard/tfkg/optimizer"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"io/ioutil"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,6 +26,7 @@ import (
 type Loss string
 
 var (
+	Version                                = "0.2.6"
 	tempModelDir                           = "tfkg_temp_model"
 	LossBinaryCrossentropy            Loss = "binary_crossentropy"
 	LossSparseCategoricalCrossentropy Loss = "sparse_categorical_crossentropy"
@@ -109,13 +111,31 @@ func LoadModel(
 		return nil, e
 	}
 
+	tfkgSignatures := []string{
+		"learn",
+		"evaluate",
+		"predict",
+	}
+
+	found := 0
+	for signatureName := range m.Signatures {
+		for _, tfkgSignature := range tfkgSignatures {
+			if signatureName == tfkgSignature {
+				found++
+			}
+		}
+	}
+	if found != 3 {
+		e = fmt.Errorf("%s is not a TFKG model. Use model.LoadVanillaModel instead", dir)
+		errorHandler.Error(e)
+		return nil, e
+	}
+
 	pbCache, e := ioutil.ReadFile(filepath.Join(dir, "saved_model.pb"))
 	if e != nil {
 		errorHandler.Error(e)
 		return nil, e
 	}
-
-	// TODO: verify that the loaded model is in fact a compatible tfkg model
 
 	return &TfkgModel{
 		model:                  m,
@@ -123,6 +143,100 @@ func LoadModel(
 		errorHandler:           errorHandler,
 		logger:                 logger,
 		modelDefinitionSaveDir: dir,
+	}, nil
+}
+
+type vanillaPythonConfig struct {
+	ModelDir  string      `json:"model_dir"`
+	SaveDir   string      `json:"save_dir"`
+	Loss      string      `json:"loss"`
+	Optimizer interface{} `json:"optimizer"`
+}
+
+func LoadVanillaModel(
+	errorHandler *cberrors.ErrorsContainer,
+	logger *cblog.Logger,
+	dir string,
+	loss Loss,
+	optimizer optimizer.Optimizer,
+) (*TfkgModel, error) {
+	logger.InfoF("model", "Loading vanilla model. If anything goes wrong python error messages will be printed out.")
+
+	tempDir := filepath.Join(os.TempDir(), "/tfkg")
+
+	e := os.MkdirAll(tempDir, os.ModePerm)
+	if e != nil {
+		errorHandler.Error(e)
+		return nil, e
+	}
+
+	config := vanillaPythonConfig{
+		ModelDir:  dir,
+		SaveDir:   filepath.Join(tempDir, tempModelDir),
+		Loss:      string(loss),
+		Optimizer: optimizer.GetKerasLayerConfig(),
+	}
+
+	configBytes, e := json.Marshal(config)
+	if e != nil {
+		errorHandler.Error(e)
+		return nil, e
+	}
+
+	tempPythonPath := filepath.Join(tempDir, "tfkg_create_model.py")
+
+	e = ioutil.WriteFile(tempPythonPath, []byte(GetVanillaPythonCode()), os.ModePerm)
+	if e != nil {
+		errorHandler.Error(e)
+		return nil, e
+	}
+	defer os.Remove(tempPythonPath)
+
+	tempConfigPath := filepath.Join(tempDir, "tfkg_config.json")
+
+	e = ioutil.WriteFile(tempConfigPath, configBytes, os.ModePerm)
+	if e != nil {
+		errorHandler.Error(e)
+		return nil, e
+	}
+	defer os.Remove(tempPythonPath)
+
+	cmd := exec.Command("python", tempPythonPath, tempConfigPath)
+	output, e := cmd.CombinedOutput()
+	if e != nil {
+		errorHandler.Error(e)
+	}
+	fmt.Println(string(output))
+	if e != nil {
+		return nil, e
+	}
+
+	model, e := tf.LoadSavedModel(filepath.Join(tempDir, tempModelDir), []string{"serve"}, nil)
+	if e != nil {
+		errorHandler.Error(e)
+		return nil, e
+	}
+
+	pbCache, e := ioutil.ReadFile(filepath.Join(tempDir, tempModelDir, "saved_model.pb"))
+	if e != nil {
+		errorHandler.Error(e)
+		return nil, e
+	}
+
+	e = os.RemoveAll(filepath.Join(tempDir, tempModelDir))
+	if e != nil {
+		errorHandler.Error(e)
+		return nil, e
+	}
+
+	return &TfkgModel{
+		model:                  model,
+		layers:                 nil,
+		isSequential:           false,
+		pbCache:                pbCache,
+		modelDefinitionSaveDir: "",
+		errorHandler:           errorHandler,
+		logger:                 logger,
 	}, nil
 }
 
@@ -336,13 +450,6 @@ func (m *TfkgModel) Fit(
 				},
 			}
 
-			event := callback.EventDuring
-			if batch == 1 {
-				event = callback.EventStart
-			} else if batch == totalBatches {
-				event = callback.EventEnd
-			}
-
 			trainLogs = append(trainLogs, m.getMetricLogs(
 				config.Metrics,
 				"",
@@ -350,6 +457,13 @@ func (m *TfkgModel) Fit(
 				yTrue,
 				yPred,
 			)...)
+
+			event := callback.EventDuring
+			if batch == 1 {
+				event = callback.EventStart
+			} else if batch == totalBatches {
+				continue
+			}
 
 			halt, _ = m.processCallbacks(
 				config.Callbacks,
@@ -362,6 +476,14 @@ func (m *TfkgModel) Fit(
 
 			batch++
 		}
+		halt, _ = m.processCallbacks(
+			config.Callbacks,
+			callback.EventEnd,
+			callback.ModeTrain,
+			epoch,
+			batch,
+			trainLogs,
+		)
 		for i := range config.Metrics {
 			config.Metrics[i].Reset()
 		}
@@ -393,6 +515,7 @@ func (m *TfkgModel) Fit(
 				valInputOps = append(valInputOps, m.model.Graph.Operation(fmt.Sprintf("evaluate_inputs_%d", offset)).Output(0))
 			}
 
+			var valLogs []callback.Log
 			batch = 1
 			totalBatches := dataset.Len() / config.BatchSize
 			valTotalLoss := float64(0)
@@ -428,7 +551,7 @@ func (m *TfkgModel) Fit(
 
 				valTotalLoss += float64(loss)
 
-				valLogs := []callback.Log{
+				valLogs = []callback.Log{
 					{
 						Name:  callback.LoggerPrefetched,
 						Value: float64(len(generatorChan)),
@@ -444,13 +567,6 @@ func (m *TfkgModel) Fit(
 					},
 				}
 
-				event := callback.EventDuring
-				if batch == 1 {
-					event = callback.EventStart
-				} else if batch == totalBatches {
-					event = callback.EventEnd
-				}
-
 				valLogs = append(valLogs, m.getMetricLogs(
 					config.Metrics,
 					"val_",
@@ -458,6 +574,13 @@ func (m *TfkgModel) Fit(
 					yTrue,
 					yPred,
 				)...)
+
+				event := callback.EventDuring
+				if batch == 1 {
+					event = callback.EventStart
+				} else if batch == totalBatches {
+					continue
+				}
 
 				halt, _ = m.processCallbacks(
 					config.Callbacks,
@@ -470,6 +593,14 @@ func (m *TfkgModel) Fit(
 
 				batch++
 			}
+			halt, _ = m.processCallbacks(
+				config.Callbacks,
+				callback.EventEnd,
+				callback.ModeVal,
+				epoch,
+				batch,
+				append(trainLogs, valLogs...),
+			)
 			for i := range config.Metrics {
 				config.Metrics[i].Reset()
 			}
@@ -528,8 +659,15 @@ func (m *TfkgModel) Evaluate(
 		evaluateInputOps = append(evaluateInputOps, m.model.Graph.Operation(fmt.Sprintf("evaluate_inputs_%d", offset)).Output(0))
 	}
 
+	callbackMode := callback.ModeTrain
+	if mode == data.GeneratorModeVal {
+		callbackMode = callback.ModeVal
+	} else if mode == data.GeneratorModeTest {
+		callbackMode = callback.ModeTest
+	}
+	var evaluateLogs []callback.Log
 	batch := 1
-	totalBatches := dataset.Len() / config.BatchSize
+	totalBatches := int(math.Floor(float64(dataset.Len() / config.BatchSize)))
 	evaluateTotalLoss := float64(0)
 	var halt bool
 	for generatorBatch := range generatorChan {
@@ -564,7 +702,7 @@ func (m *TfkgModel) Evaluate(
 
 		evaluateTotalLoss += float64(loss)
 
-		evaluateLogs := []callback.Log{
+		evaluateLogs = []callback.Log{
 			{
 				Name:  callback.LoggerVerbose,
 				Value: float64(config.Verbose),
@@ -584,20 +722,6 @@ func (m *TfkgModel) Evaluate(
 			},
 		}
 
-		event := callback.EventDuring
-		if batch == 1 {
-			event = callback.EventStart
-		} else if batch == totalBatches {
-			event = callback.EventEnd
-		}
-
-		callbackMode := callback.ModeTrain
-		if mode == data.GeneratorModeVal {
-			callbackMode = callback.ModeVal
-		} else if mode == data.GeneratorModeTest {
-			callbackMode = callback.ModeTest
-		}
-
 		evaluateLogs = append(evaluateLogs, m.getMetricLogs(
 			config.Metrics,
 			string(mode)+"_",
@@ -605,6 +729,13 @@ func (m *TfkgModel) Evaluate(
 			yTrue,
 			yPred,
 		)...)
+
+		event := callback.EventDuring
+		if batch == 1 {
+			event = callback.EventStart
+		} else if batch == totalBatches {
+			continue
+		}
 
 		halt, _ = m.processCallbacks(
 			config.Callbacks,
@@ -617,6 +748,15 @@ func (m *TfkgModel) Evaluate(
 
 		batch++
 	}
+
+	halt, _ = m.processCallbacks(
+		config.Callbacks,
+		callback.EventEnd,
+		callbackMode,
+		1,
+		batch,
+		evaluateLogs,
+	)
 }
 
 func (m *TfkgModel) getMetricLogs(
@@ -769,6 +909,13 @@ func (m *TfkgModel) Save(dir string) error {
 		m.errorHandler.Error(e)
 		return e
 	}
+
+	e = ioutil.WriteFile(filepath.Join(dir, "tfkg-version"), []byte(Version), os.ModePerm)
+	if e != nil {
+		m.errorHandler.Error(e)
+		return e
+	}
+
 	return nil
 }
 
@@ -851,7 +998,7 @@ func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, mod
 
 	tempPythonPath := filepath.Join(tempDir, "tfkg_create_model.py")
 
-	e = ioutil.WriteFile(tempPythonPath, []byte(GetPythonCode(customDefinitions)), os.ModePerm)
+	e = ioutil.WriteFile(tempPythonPath, []byte(GetTfkgPythonCode(customDefinitions)), os.ModePerm)
 	if e != nil {
 		m.errorHandler.Error(e)
 		return e

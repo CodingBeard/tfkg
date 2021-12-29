@@ -168,6 +168,11 @@ func main() {
 		},
 	)
 
+	m, e = model.LoadModel(errorHandler, logger, saveDir)
+	if e != nil {
+		return
+	}
+
 	logger.InfoF("main", "Finished training")
 
 	// Create an inference provider, with a processor which will accept our input of [][]float32 and turn it into a tensor

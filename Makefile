@@ -101,6 +101,20 @@ examples-transfer-raw:
 	go generate ./...
 	cd examples/transfer_learning && go run main.go
 
+examples-vanilla:
+	go generate ./...
+	docker-compose up -d tf-jupyter-golang
+	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg/examples/vanilla && python generate_vanilla_model.py && go run main.go"
+
+examples-vanilla-gpu:
+	go generate ./...
+	docker-compose up -d tf-jupyter-golang-gpu
+	docker-compose exec tf-jupyter-golang-gpu sh -c "cd /go/src/tfkg/examples/vanilla && go run main.go"
+
+examples-vanilla-raw:
+	go generate ./...
+	cd examples/vanilla && go run main.go
+
 test-python:
 	docker-compose up -d tf-jupyter-golang
 	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg && python test.py"

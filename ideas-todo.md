@@ -1,7 +1,6 @@
 # Ideas
 
-### Loading and saving vanilla keras models
-- Potentially possible to load the vanilla model using python and inject it into the TFKG format saved model. This would allow further training and inference.
+### Saving vanilla keras models
 - Potentially possible to save a vanilla model as a saved_model.pb before injecting it into the TFKG format and training, then saving the trained variables alongside the vanilla saved_model.pb
 
 ### Transfer learning from vanilla tensorflow models
