@@ -3,13 +3,14 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LZeroPadding2D struct {
-	dataFormat interface{}
-	dtype      DataType
-	inputs     []Layer
-	name       string
-	padding    []interface{}
-	shape      tf.Shape
-	trainable  bool
+	dataFormat   interface{}
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	padding      []interface{}
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func ZeroPadding2D() *LZeroPadding2D {
@@ -52,6 +53,11 @@ func (l *LZeroPadding2D) SetTrainable(trainable bool) *LZeroPadding2D {
 	return l
 }
 
+func (l *LZeroPadding2D) SetLayerWeights(layerWeights interface{}) *LZeroPadding2D {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LZeroPadding2D) GetShape() tf.Shape {
 	return l.shape
 }
@@ -71,6 +77,10 @@ func (l *LZeroPadding2D) GetInputs() []Layer {
 
 func (l *LZeroPadding2D) GetName() string {
 	return l.name
+}
+
+func (l *LZeroPadding2D) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLZeroPadding2D struct {

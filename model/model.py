@@ -4,6 +4,7 @@ import logging
 import sys
 
 import tensorflow as tf
+import numpy as np
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # ERROR
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -19,11 +20,24 @@ with open(sys.argv[1], "r") as f:
 
 model = tf.keras.models.model_from_json(config["model_config"], custom_objects=custom_objects)
 
+for layer_name in config["weights"]:
+    if len(config["weights"][layer_name]) > 0:
+        print("Setting weights for: ", layer_name)
+        wb = []
+        for item in config["weights"][layer_name]:
+            wb.append(np.array(item))
+        model.get_layer(layer_name).set_weights(wb)
+
 if config["model_definition_save_dir"] != "":
     summary = []
     model.summary(print_fn=lambda x: summary.append(x))
     with open(config["model_definition_save_dir"] + "/model-summary.txt", "w") as f:
         f.write("\n".join(summary))
+    weight_names = []
+    for item in model.weights:
+        weight_names.append(item.name)
+    with open(config["model_definition_save_dir"] + "/weight_names.json", "w") as f:
+        json.dump(weight_names, f)
 
 learn_input_signature = [
     tf.TensorSpec(shape=(None, 1), dtype=tf.int32),
@@ -125,6 +139,12 @@ class GolangModel(tf.Module):
     ):
         return [self._model(list(inputs), training=False)]
 
+    @tf.function(input_signature=[])
+    def get_weights(
+            self,
+    ):
+        return self._model.weights
+
 
 print("Initialising model")
 
@@ -153,6 +173,10 @@ print("Tracing predict")
 
 gm.predict(*zero_inputs)
 
+print("Tracing get_weights")
+
+gm.get_weights()
+
 print("Saving model")
 
 tf.saved_model.save(
@@ -162,6 +186,7 @@ tf.saved_model.save(
         "learn": gm.learn,
         "evaluate": gm.evaluate,
         "predict": gm.predict,
+        "get_weights": gm.get_weights,
     },
 )
 

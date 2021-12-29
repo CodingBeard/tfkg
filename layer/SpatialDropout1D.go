@@ -3,14 +3,15 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LSpatialDropout1D struct {
-	dtype      DataType
-	inputs     []Layer
-	name       string
-	noiseShape interface{}
-	rate       float64
-	seed       interface{}
-	shape      tf.Shape
-	trainable  bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	noiseShape   interface{}
+	rate         float64
+	seed         interface{}
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func SpatialDropout1D(rate float64) *LSpatialDropout1D {
@@ -54,6 +55,11 @@ func (l *LSpatialDropout1D) SetTrainable(trainable bool) *LSpatialDropout1D {
 	return l
 }
 
+func (l *LSpatialDropout1D) SetLayerWeights(layerWeights interface{}) *LSpatialDropout1D {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LSpatialDropout1D) GetShape() tf.Shape {
 	return l.shape
 }
@@ -73,6 +79,10 @@ func (l *LSpatialDropout1D) GetInputs() []Layer {
 
 func (l *LSpatialDropout1D) GetName() string {
 	return l.name
+}
+
+func (l *LSpatialDropout1D) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLSpatialDropout1D struct {

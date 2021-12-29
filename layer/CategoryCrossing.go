@@ -3,13 +3,14 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LCategoryCrossing struct {
-	depth     interface{}
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	separator string
-	shape     tf.Shape
-	trainable bool
+	depth        interface{}
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	separator    string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func CategoryCrossing() *LCategoryCrossing {
@@ -52,6 +53,11 @@ func (l *LCategoryCrossing) SetTrainable(trainable bool) *LCategoryCrossing {
 	return l
 }
 
+func (l *LCategoryCrossing) SetLayerWeights(layerWeights interface{}) *LCategoryCrossing {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LCategoryCrossing) GetShape() tf.Shape {
 	return l.shape
 }
@@ -71,6 +77,10 @@ func (l *LCategoryCrossing) GetInputs() []Layer {
 
 func (l *LCategoryCrossing) GetName() string {
 	return l.name
+}
+
+func (l *LCategoryCrossing) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLCategoryCrossing struct {

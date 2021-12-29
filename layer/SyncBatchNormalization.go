@@ -24,6 +24,7 @@ type LSyncBatchNormalization struct {
 	scale                     bool
 	shape                     tf.Shape
 	trainable                 bool
+	layerWeights              interface{}
 }
 
 func SyncBatchNormalization() *LSyncBatchNormalization {
@@ -132,6 +133,11 @@ func (l *LSyncBatchNormalization) SetTrainable(trainable bool) *LSyncBatchNormal
 	return l
 }
 
+func (l *LSyncBatchNormalization) SetLayerWeights(layerWeights interface{}) *LSyncBatchNormalization {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LSyncBatchNormalization) GetShape() tf.Shape {
 	return l.shape
 }
@@ -151,6 +157,10 @@ func (l *LSyncBatchNormalization) GetInputs() []Layer {
 
 func (l *LSyncBatchNormalization) GetName() string {
 	return l.name
+}
+
+func (l *LSyncBatchNormalization) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLSyncBatchNormalization struct {

@@ -3,11 +3,12 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LAverage struct {
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Average() *LAverage {
@@ -38,6 +39,11 @@ func (l *LAverage) SetTrainable(trainable bool) *LAverage {
 	return l
 }
 
+func (l *LAverage) SetLayerWeights(layerWeights interface{}) *LAverage {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LAverage) GetShape() tf.Shape {
 	return l.shape
 }
@@ -57,6 +63,10 @@ func (l *LAverage) GetInputs() []Layer {
 
 func (l *LAverage) GetName() string {
 	return l.name
+}
+
+func (l *LAverage) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLAverage struct {

@@ -31,10 +31,11 @@ var (
 )
 
 type TfkgModel struct {
-	model        *tf.SavedModel
-	layers       []layer.Layer
-	isSequential bool
-	pbCache      []byte
+	model                  *tf.SavedModel
+	layers                 []layer.Layer
+	isSequential           bool
+	pbCache                []byte
+	modelDefinitionSaveDir string
 
 	errorHandler *cberrors.ErrorsContainer
 	logger       *cblog.Logger
@@ -117,11 +118,68 @@ func LoadModel(
 	// TODO: verify that the loaded model is in fact a compatible tfkg model
 
 	return &TfkgModel{
-		model:        m,
-		pbCache:      pbCache,
-		errorHandler: errorHandler,
-		logger:       logger,
+		model:                  m,
+		pbCache:                pbCache,
+		errorHandler:           errorHandler,
+		logger:                 logger,
+		modelDefinitionSaveDir: dir,
 	}, nil
+}
+
+func (m *TfkgModel) GetWeights() ([]*tf.Tensor, error) {
+	var variableOutputs []tf.Output
+	output := 0
+	for _, info := range m.model.Signatures["get_weights"].Outputs {
+		parts := strings.Split(info.Name, ":")
+		if len(parts) != 2 {
+			e := fmt.Errorf("error getting output for get_weights signature in GetWeights")
+			m.errorHandler.Error(e)
+			return nil, e
+		}
+		name := parts[0]
+		variableOutputs = append(variableOutputs, m.model.Graph.Operation(name).Output(output))
+		output++
+	}
+
+	results, e := m.model.Session.Run(
+		map[tf.Output]*tf.Tensor{},
+		variableOutputs,
+		nil,
+	)
+	if e != nil {
+		m.errorHandler.Error(e)
+		return nil, e
+	}
+
+	return results, nil
+}
+
+func (m *TfkgModel) GetNamedWeights() (map[string]*tf.Tensor, error) {
+	weightNamesFile, e := ioutil.ReadFile(filepath.Join(m.modelDefinitionSaveDir, "weight_names.json"))
+	if e != nil {
+		m.errorHandler.Error(e)
+		return nil, e
+	}
+
+	var names []string
+	e = json.Unmarshal(weightNamesFile, &names)
+
+	results, e := m.GetWeights()
+	if e != nil {
+		return nil, e
+	}
+
+	namedResults := make(map[string]*tf.Tensor)
+	for i, name := range names {
+		if i >= len(results) {
+			e = fmt.Errorf("there were not enough weights in the call to m.GetWeights for the saved weight names")
+			m.errorHandler.Error(e)
+			return nil, e
+		}
+		namedResults[name] = results[i]
+	}
+
+	return namedResults, nil
 }
 
 func (m *TfkgModel) Predict(inputs ...*tf.Tensor) (*tf.Tensor, error) {
@@ -715,15 +773,17 @@ func (m *TfkgModel) Save(dir string) error {
 }
 
 type pythonConfig struct {
-	ModelConfig            string      `json:"model_config"`
-	SaveDir                string      `json:"save_dir"`
-	ModelDefinitionSaveDir string      `json:"model_definition_save_dir"`
-	Loss                   string      `json:"loss"`
-	Optimizer              interface{} `json:"optimizer"`
+	ModelConfig            string                 `json:"model_config"`
+	SaveDir                string                 `json:"save_dir"`
+	ModelDefinitionSaveDir string                 `json:"model_definition_save_dir"`
+	Loss                   string                 `json:"loss"`
+	Optimizer              interface{}            `json:"optimizer"`
+	Weights                map[string]interface{} `json:"weights"`
 }
 
 func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, modelDefinitionSaveDir string) error {
 	m.logger.InfoF("model", "Compiling and loading model. If anything goes wrong python error messages will be printed out.")
+	m.modelDefinitionSaveDir = modelDefinitionSaveDir
 	modelConfig, e := m.generateKerasDefinitionJson()
 	if e != nil {
 		return e
@@ -750,6 +810,13 @@ func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, mod
 			return e
 		}
 	}
+	weights := make(map[string]interface{})
+	for _, l := range m.layers {
+		w := l.GetLayerWeights()
+		if w != nil {
+			weights[l.GetName()] = l.GetLayerWeights()
+		}
+	}
 
 	config := pythonConfig{
 		ModelConfig:            modelConfig,
@@ -757,6 +824,7 @@ func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, mod
 		ModelDefinitionSaveDir: modelDefinitionSaveDir,
 		Loss:                   string(loss),
 		Optimizer:              optimizer.GetKerasLayerConfig(),
+		Weights:                weights,
 	}
 
 	configBytes, e := json.Marshal(config)

@@ -3,15 +3,16 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LAveragePooling2D struct {
-	dataFormat interface{}
-	dtype      DataType
-	inputs     []Layer
-	name       string
-	padding    string
-	poolSize   []interface{}
-	shape      tf.Shape
-	strides    interface{}
-	trainable  bool
+	dataFormat   interface{}
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	padding      string
+	poolSize     []interface{}
+	shape        tf.Shape
+	strides      interface{}
+	trainable    bool
+	layerWeights interface{}
 }
 
 func AveragePooling2D() *LAveragePooling2D {
@@ -66,6 +67,11 @@ func (l *LAveragePooling2D) SetTrainable(trainable bool) *LAveragePooling2D {
 	return l
 }
 
+func (l *LAveragePooling2D) SetLayerWeights(layerWeights interface{}) *LAveragePooling2D {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LAveragePooling2D) GetShape() tf.Shape {
 	return l.shape
 }
@@ -85,6 +91,10 @@ func (l *LAveragePooling2D) GetInputs() []Layer {
 
 func (l *LAveragePooling2D) GetName() string {
 	return l.name
+}
+
+func (l *LAveragePooling2D) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLAveragePooling2D struct {

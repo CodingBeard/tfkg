@@ -362,6 +362,12 @@ func (f *fileGenerator) generate() {
 	configLines = append(configLines, "}")
 	layerDefaultGetters := ""
 	if f.object.Type == "layer" {
+		objectProperties = append(objectProperties, "layerWeights interface{}")
+		options = append(options, f.getOptionString(&parameter{
+			ObjectName: structName,
+			Name:       "layerWeights",
+			StringType: "interface{}",
+		}))
 		layerDefaultGetters = fmt.Sprintf(
 			`
 func (%s *%s) GetShape() tf.Shape {
@@ -384,6 +390,10 @@ func (%s *%s) GetInputs() []Layer {
 func (%s *%s) GetName() string {
 	return %s.name
 }
+
+func (%s *%s) GetLayerWeights() interface{} {
+	return %s.layerWeights
+}
 `,
 			reciever,
 			structName,
@@ -394,6 +404,9 @@ func (%s *%s) GetName() string {
 			reciever,
 			structName,
 			reciever,
+			reciever,
+			reciever,
+			structName,
 			reciever,
 			reciever,
 			structName,

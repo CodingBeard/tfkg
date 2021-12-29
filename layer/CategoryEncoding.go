@@ -3,14 +3,15 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LCategoryEncoding struct {
-	dtype      DataType
-	inputs     []Layer
-	name       string
-	numTokens  interface{}
-	outputMode string
-	shape      tf.Shape
-	sparse     bool
-	trainable  bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	numTokens    interface{}
+	outputMode   string
+	shape        tf.Shape
+	sparse       bool
+	trainable    bool
+	layerWeights interface{}
 }
 
 func CategoryEncoding() *LCategoryEncoding {
@@ -59,6 +60,11 @@ func (l *LCategoryEncoding) SetTrainable(trainable bool) *LCategoryEncoding {
 	return l
 }
 
+func (l *LCategoryEncoding) SetLayerWeights(layerWeights interface{}) *LCategoryEncoding {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LCategoryEncoding) GetShape() tf.Shape {
 	return l.shape
 }
@@ -78,6 +84,10 @@ func (l *LCategoryEncoding) GetInputs() []Layer {
 
 func (l *LCategoryEncoding) GetName() string {
 	return l.name
+}
+
+func (l *LCategoryEncoding) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLCategoryEncoding struct {

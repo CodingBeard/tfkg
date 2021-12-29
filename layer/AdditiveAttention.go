@@ -3,14 +3,15 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LAdditiveAttention struct {
-	causal    bool
-	dropout   float64
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	shape     tf.Shape
-	trainable bool
-	useScale  bool
+	causal       bool
+	dropout      float64
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	useScale     bool
+	layerWeights interface{}
 }
 
 func AdditiveAttention() *LAdditiveAttention {
@@ -59,6 +60,11 @@ func (l *LAdditiveAttention) SetUseScale(useScale bool) *LAdditiveAttention {
 	return l
 }
 
+func (l *LAdditiveAttention) SetLayerWeights(layerWeights interface{}) *LAdditiveAttention {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LAdditiveAttention) GetShape() tf.Shape {
 	return l.shape
 }
@@ -78,6 +84,10 @@ func (l *LAdditiveAttention) GetInputs() []Layer {
 
 func (l *LAdditiveAttention) GetName() string {
 	return l.name
+}
+
+func (l *LAdditiveAttention) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLAdditiveAttention struct {

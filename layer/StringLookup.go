@@ -18,6 +18,7 @@ type LStringLookup struct {
 	sparse         bool
 	trainable      bool
 	vocabulary     interface{}
+	layerWeights   interface{}
 }
 
 func StringLookup() *LStringLookup {
@@ -108,6 +109,11 @@ func (l *LStringLookup) SetVocabulary(vocabulary interface{}) *LStringLookup {
 	return l
 }
 
+func (l *LStringLookup) SetLayerWeights(layerWeights interface{}) *LStringLookup {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LStringLookup) GetShape() tf.Shape {
 	return l.shape
 }
@@ -127,6 +133,10 @@ func (l *LStringLookup) GetInputs() []Layer {
 
 func (l *LStringLookup) GetName() string {
 	return l.name
+}
+
+func (l *LStringLookup) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLStringLookup struct {

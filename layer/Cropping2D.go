@@ -3,13 +3,14 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LCropping2D struct {
-	cropping   []interface{}
-	dataFormat interface{}
-	dtype      DataType
-	inputs     []Layer
-	name       string
-	shape      tf.Shape
-	trainable  bool
+	cropping     []interface{}
+	dataFormat   interface{}
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Cropping2D() *LCropping2D {
@@ -52,6 +53,11 @@ func (l *LCropping2D) SetTrainable(trainable bool) *LCropping2D {
 	return l
 }
 
+func (l *LCropping2D) SetLayerWeights(layerWeights interface{}) *LCropping2D {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LCropping2D) GetShape() tf.Shape {
 	return l.shape
 }
@@ -71,6 +77,10 @@ func (l *LCropping2D) GetInputs() []Layer {
 
 func (l *LCropping2D) GetName() string {
 	return l.name
+}
+
+func (l *LCropping2D) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLCropping2D struct {

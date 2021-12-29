@@ -3,14 +3,15 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LNormalization struct {
-	axis      float64
-	dtype     DataType
-	inputs    []Layer
-	mean      interface{}
-	name      string
-	shape     tf.Shape
-	trainable bool
-	variance  interface{}
+	axis         float64
+	dtype        DataType
+	inputs       []Layer
+	mean         interface{}
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	variance     interface{}
+	layerWeights interface{}
 }
 
 func Normalization() *LNormalization {
@@ -59,6 +60,11 @@ func (l *LNormalization) SetVariance(variance interface{}) *LNormalization {
 	return l
 }
 
+func (l *LNormalization) SetLayerWeights(layerWeights interface{}) *LNormalization {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LNormalization) GetShape() tf.Shape {
 	return l.shape
 }
@@ -78,6 +84,10 @@ func (l *LNormalization) GetInputs() []Layer {
 
 func (l *LNormalization) GetName() string {
 	return l.name
+}
+
+func (l *LNormalization) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLNormalization struct {

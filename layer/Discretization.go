@@ -11,6 +11,7 @@ type LDiscretization struct {
 	numBins       interface{}
 	shape         tf.Shape
 	trainable     bool
+	layerWeights  interface{}
 }
 
 func Discretization() *LDiscretization {
@@ -59,6 +60,11 @@ func (l *LDiscretization) SetTrainable(trainable bool) *LDiscretization {
 	return l
 }
 
+func (l *LDiscretization) SetLayerWeights(layerWeights interface{}) *LDiscretization {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LDiscretization) GetShape() tf.Shape {
 	return l.shape
 }
@@ -78,6 +84,10 @@ func (l *LDiscretization) GetInputs() []Layer {
 
 func (l *LDiscretization) GetName() string {
 	return l.name
+}
+
+func (l *LDiscretization) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLDiscretization struct {

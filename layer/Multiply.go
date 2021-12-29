@@ -3,11 +3,12 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LMultiply struct {
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Multiply() *LMultiply {
@@ -38,6 +39,11 @@ func (l *LMultiply) SetTrainable(trainable bool) *LMultiply {
 	return l
 }
 
+func (l *LMultiply) SetLayerWeights(layerWeights interface{}) *LMultiply {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LMultiply) GetShape() tf.Shape {
 	return l.shape
 }
@@ -57,6 +63,10 @@ func (l *LMultiply) GetInputs() []Layer {
 
 func (l *LMultiply) GetName() string {
 	return l.name
+}
+
+func (l *LMultiply) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLMultiply struct {

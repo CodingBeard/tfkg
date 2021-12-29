@@ -3,11 +3,12 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LAdd struct {
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Add() *LAdd {
@@ -38,6 +39,11 @@ func (l *LAdd) SetTrainable(trainable bool) *LAdd {
 	return l
 }
 
+func (l *LAdd) SetLayerWeights(layerWeights interface{}) *LAdd {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LAdd) GetShape() tf.Shape {
 	return l.shape
 }
@@ -57,6 +63,10 @@ func (l *LAdd) GetInputs() []Layer {
 
 func (l *LAdd) GetName() string {
 	return l.name
+}
+
+func (l *LAdd) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLAdd struct {

@@ -3,13 +3,14 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LRandomFlip struct {
-	dtype     DataType
-	inputs    []Layer
-	mode      string
-	name      string
-	seed      interface{}
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	mode         string
+	name         string
+	seed         interface{}
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func RandomFlip() *LRandomFlip {
@@ -52,6 +53,11 @@ func (l *LRandomFlip) SetTrainable(trainable bool) *LRandomFlip {
 	return l
 }
 
+func (l *LRandomFlip) SetLayerWeights(layerWeights interface{}) *LRandomFlip {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LRandomFlip) GetShape() tf.Shape {
 	return l.shape
 }
@@ -71,6 +77,10 @@ func (l *LRandomFlip) GetInputs() []Layer {
 
 func (l *LRandomFlip) GetName() string {
 	return l.name
+}
+
+func (l *LRandomFlip) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLRandomFlip struct {

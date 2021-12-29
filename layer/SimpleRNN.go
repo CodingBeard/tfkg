@@ -32,6 +32,7 @@ type LSimpleRNN struct {
 	units                float64
 	unroll               bool
 	useBias              bool
+	layerWeights         interface{}
 }
 
 func SimpleRNN(units float64) *LSimpleRNN {
@@ -183,6 +184,11 @@ func (l *LSimpleRNN) SetUseBias(useBias bool) *LSimpleRNN {
 	return l
 }
 
+func (l *LSimpleRNN) SetLayerWeights(layerWeights interface{}) *LSimpleRNN {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LSimpleRNN) GetShape() tf.Shape {
 	return l.shape
 }
@@ -202,6 +208,10 @@ func (l *LSimpleRNN) GetInputs() []Layer {
 
 func (l *LSimpleRNN) GetName() string {
 	return l.name
+}
+
+func (l *LSimpleRNN) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLSimpleRNN struct {

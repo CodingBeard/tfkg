@@ -42,6 +42,7 @@ type Layer interface {
 	SetInputs(inputs ...Layer) Layer
 	GetInputs() []Layer
 	GetName() string
+	GetLayerWeights() interface{}
 	GetKerasLayerConfig() interface{}
 	GetCustomLayerDefinition() string
 }

@@ -3,12 +3,13 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LMasking struct {
-	dtype     DataType
-	inputs    []Layer
-	maskValue float64
-	name      string
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	maskValue    float64
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Masking() *LMasking {
@@ -45,6 +46,11 @@ func (l *LMasking) SetTrainable(trainable bool) *LMasking {
 	return l
 }
 
+func (l *LMasking) SetLayerWeights(layerWeights interface{}) *LMasking {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LMasking) GetShape() tf.Shape {
 	return l.shape
 }
@@ -64,6 +70,10 @@ func (l *LMasking) GetInputs() []Layer {
 
 func (l *LMasking) GetName() string {
 	return l.name
+}
+
+func (l *LMasking) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLMasking struct {

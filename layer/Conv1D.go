@@ -27,6 +27,7 @@ type LConv1D struct {
 	strides             float64
 	trainable           bool
 	useBias             bool
+	layerWeights        interface{}
 }
 
 func Conv1D(filters float64, kernelSize float64) *LConv1D {
@@ -143,6 +144,11 @@ func (l *LConv1D) SetUseBias(useBias bool) *LConv1D {
 	return l
 }
 
+func (l *LConv1D) SetLayerWeights(layerWeights interface{}) *LConv1D {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LConv1D) GetShape() tf.Shape {
 	return l.shape
 }
@@ -162,6 +168,10 @@ func (l *LConv1D) GetInputs() []Layer {
 
 func (l *LConv1D) GetName() string {
 	return l.name
+}
+
+func (l *LConv1D) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLConv1D struct {

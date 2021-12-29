@@ -3,13 +3,14 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LDot struct {
-	axes      float64
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	normalize bool
-	shape     tf.Shape
-	trainable bool
+	axes         float64
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	normalize    bool
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Dot(axes float64) *LDot {
@@ -47,6 +48,11 @@ func (l *LDot) SetTrainable(trainable bool) *LDot {
 	return l
 }
 
+func (l *LDot) SetLayerWeights(layerWeights interface{}) *LDot {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LDot) GetShape() tf.Shape {
 	return l.shape
 }
@@ -66,6 +72,10 @@ func (l *LDot) GetInputs() []Layer {
 
 func (l *LDot) GetName() string {
 	return l.name
+}
+
+func (l *LDot) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLDot struct {

@@ -3,11 +3,12 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LMinimum struct {
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Minimum() *LMinimum {
@@ -38,6 +39,11 @@ func (l *LMinimum) SetTrainable(trainable bool) *LMinimum {
 	return l
 }
 
+func (l *LMinimum) SetLayerWeights(layerWeights interface{}) *LMinimum {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LMinimum) GetShape() tf.Shape {
 	return l.shape
 }
@@ -57,6 +63,10 @@ func (l *LMinimum) GetInputs() []Layer {
 
 func (l *LMinimum) GetName() string {
 	return l.name
+}
+
+func (l *LMinimum) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLMinimum struct {

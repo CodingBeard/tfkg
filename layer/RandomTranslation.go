@@ -14,6 +14,7 @@ type LRandomTranslation struct {
 	shape         tf.Shape
 	trainable     bool
 	widthFactor   float64
+	layerWeights  interface{}
 }
 
 func RandomTranslation(heightFactor float64, widthFactor float64) *LRandomTranslation {
@@ -70,6 +71,11 @@ func (l *LRandomTranslation) SetTrainable(trainable bool) *LRandomTranslation {
 	return l
 }
 
+func (l *LRandomTranslation) SetLayerWeights(layerWeights interface{}) *LRandomTranslation {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LRandomTranslation) GetShape() tf.Shape {
 	return l.shape
 }
@@ -89,6 +95,10 @@ func (l *LRandomTranslation) GetInputs() []Layer {
 
 func (l *LRandomTranslation) GetName() string {
 	return l.name
+}
+
+func (l *LRandomTranslation) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLRandomTranslation struct {

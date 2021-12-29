@@ -4,7 +4,7 @@
 - Potentially possible to load the vanilla model using python and inject it into the TFKG format saved model. This would allow further training and inference.
 - Potentially possible to save a vanilla model as a saved_model.pb before injecting it into the TFKG format and training, then saving the trained variables alongside the vanilla saved_model.pb
 
-### Transfer learning
+### Transfer learning from vanilla tensorflow models
 Would be dirty, but potentially possible to load a vanilla model in python, generate a model from TFKG configs, and transfer the weights over then train.
 
 ### Processors

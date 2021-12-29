@@ -3,15 +3,16 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LMaxPooling2D struct {
-	dataFormat interface{}
-	dtype      DataType
-	inputs     []Layer
-	name       string
-	padding    string
-	poolSize   []interface{}
-	shape      tf.Shape
-	strides    interface{}
-	trainable  bool
+	dataFormat   interface{}
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	padding      string
+	poolSize     []interface{}
+	shape        tf.Shape
+	strides      interface{}
+	trainable    bool
+	layerWeights interface{}
 }
 
 func MaxPooling2D() *LMaxPooling2D {
@@ -66,6 +67,11 @@ func (l *LMaxPooling2D) SetTrainable(trainable bool) *LMaxPooling2D {
 	return l
 }
 
+func (l *LMaxPooling2D) SetLayerWeights(layerWeights interface{}) *LMaxPooling2D {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LMaxPooling2D) GetShape() tf.Shape {
 	return l.shape
 }
@@ -85,6 +91,10 @@ func (l *LMaxPooling2D) GetInputs() []Layer {
 
 func (l *LMaxPooling2D) GetName() string {
 	return l.name
+}
+
+func (l *LMaxPooling2D) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLMaxPooling2D struct {

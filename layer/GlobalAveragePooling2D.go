@@ -3,13 +3,14 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LGlobalAveragePooling2D struct {
-	dataFormat interface{}
-	dtype      DataType
-	inputs     []Layer
-	keepdims   bool
-	name       string
-	shape      tf.Shape
-	trainable  bool
+	dataFormat   interface{}
+	dtype        DataType
+	inputs       []Layer
+	keepdims     bool
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func GlobalAveragePooling2D() *LGlobalAveragePooling2D {
@@ -52,6 +53,11 @@ func (l *LGlobalAveragePooling2D) SetTrainable(trainable bool) *LGlobalAveragePo
 	return l
 }
 
+func (l *LGlobalAveragePooling2D) SetLayerWeights(layerWeights interface{}) *LGlobalAveragePooling2D {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LGlobalAveragePooling2D) GetShape() tf.Shape {
 	return l.shape
 }
@@ -71,6 +77,10 @@ func (l *LGlobalAveragePooling2D) GetInputs() []Layer {
 
 func (l *LGlobalAveragePooling2D) GetName() string {
 	return l.name
+}
+
+func (l *LGlobalAveragePooling2D) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLGlobalAveragePooling2D struct {

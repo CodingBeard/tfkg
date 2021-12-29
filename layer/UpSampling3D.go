@@ -3,13 +3,14 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LUpSampling3D struct {
-	dataFormat interface{}
-	dtype      DataType
-	inputs     []Layer
-	name       string
-	shape      tf.Shape
-	size       []interface{}
-	trainable  bool
+	dataFormat   interface{}
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	size         []interface{}
+	trainable    bool
+	layerWeights interface{}
 }
 
 func UpSampling3D() *LUpSampling3D {
@@ -52,6 +53,11 @@ func (l *LUpSampling3D) SetTrainable(trainable bool) *LUpSampling3D {
 	return l
 }
 
+func (l *LUpSampling3D) SetLayerWeights(layerWeights interface{}) *LUpSampling3D {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LUpSampling3D) GetShape() tf.Shape {
 	return l.shape
 }
@@ -71,6 +77,10 @@ func (l *LUpSampling3D) GetInputs() []Layer {
 
 func (l *LUpSampling3D) GetName() string {
 	return l.name
+}
+
+func (l *LUpSampling3D) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLUpSampling3D struct {

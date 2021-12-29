@@ -35,6 +35,7 @@ type LLSTM struct {
 	units                float64
 	unroll               bool
 	useBias              bool
+	layerWeights         interface{}
 }
 
 func LSTM(units float64) *LLSTM {
@@ -204,6 +205,11 @@ func (l *LLSTM) SetUseBias(useBias bool) *LLSTM {
 	return l
 }
 
+func (l *LLSTM) SetLayerWeights(layerWeights interface{}) *LLSTM {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LLSTM) GetShape() tf.Shape {
 	return l.shape
 }
@@ -223,6 +229,10 @@ func (l *LLSTM) GetInputs() []Layer {
 
 func (l *LLSTM) GetName() string {
 	return l.name
+}
+
+func (l *LLSTM) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLLSTM struct {

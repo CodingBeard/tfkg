@@ -34,6 +34,7 @@ type LSeparableConv2D struct {
 	strides              []interface{}
 	trainable            bool
 	useBias              bool
+	layerWeights         interface{}
 }
 
 func SeparableConv2D(filters float64, kernelSize float64) *LSeparableConv2D {
@@ -192,6 +193,11 @@ func (l *LSeparableConv2D) SetUseBias(useBias bool) *LSeparableConv2D {
 	return l
 }
 
+func (l *LSeparableConv2D) SetLayerWeights(layerWeights interface{}) *LSeparableConv2D {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LSeparableConv2D) GetShape() tf.Shape {
 	return l.shape
 }
@@ -211,6 +217,10 @@ func (l *LSeparableConv2D) GetInputs() []Layer {
 
 func (l *LSeparableConv2D) GetName() string {
 	return l.name
+}
+
+func (l *LSeparableConv2D) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLSeparableConv2D struct {

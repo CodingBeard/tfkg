@@ -225,7 +225,7 @@ func (d *SingleFileDataset) readLineOffsets() error {
 
 	lastPrint := time.Now().Unix()
 	progress, lastProgress := 0, 0
-	skippedHeaders := false
+	skippedHeaders, zeroAdded := false, false
 	swg := sizedwaitgroup.New(128)
 	var errs []error
 	for true {
@@ -238,6 +238,9 @@ func (d *SingleFileDataset) readLineOffsets() error {
 		if !skippedHeaders && d.skipHeaders {
 			skippedHeaders = true
 			continue
+		} else if !d.skipHeaders && !zeroAdded {
+			zeroAdded = true
+			d.lineOffsets = append(d.lineOffsets, 0)
 		}
 
 		if len(errs) > 0 {

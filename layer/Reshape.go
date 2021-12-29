@@ -3,12 +3,13 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LReshape struct {
-	dtype       DataType
-	inputs      []Layer
-	name        string
-	shape       tf.Shape
-	targetShape []interface{}
-	trainable   bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	targetShape  []interface{}
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Reshape(targetShape []interface{}) *LReshape {
@@ -40,6 +41,11 @@ func (l *LReshape) SetTrainable(trainable bool) *LReshape {
 	return l
 }
 
+func (l *LReshape) SetLayerWeights(layerWeights interface{}) *LReshape {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LReshape) GetShape() tf.Shape {
 	return l.shape
 }
@@ -59,6 +65,10 @@ func (l *LReshape) GetInputs() []Layer {
 
 func (l *LReshape) GetName() string {
 	return l.name
+}
+
+func (l *LReshape) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLReshape struct {

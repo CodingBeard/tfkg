@@ -3,12 +3,13 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LGaussianDropout struct {
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	rate      float64
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	rate         float64
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func GaussianDropout(rate float64) *LGaussianDropout {
@@ -40,6 +41,11 @@ func (l *LGaussianDropout) SetTrainable(trainable bool) *LGaussianDropout {
 	return l
 }
 
+func (l *LGaussianDropout) SetLayerWeights(layerWeights interface{}) *LGaussianDropout {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LGaussianDropout) GetShape() tf.Shape {
 	return l.shape
 }
@@ -59,6 +65,10 @@ func (l *LGaussianDropout) GetInputs() []Layer {
 
 func (l *LGaussianDropout) GetName() string {
 	return l.name
+}
+
+func (l *LGaussianDropout) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLGaussianDropout struct {

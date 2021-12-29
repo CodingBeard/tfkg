@@ -3,12 +3,13 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LFlatten struct {
-	dataFormat interface{}
-	dtype      DataType
-	inputs     []Layer
-	name       string
-	shape      tf.Shape
-	trainable  bool
+	dataFormat   interface{}
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Flatten() *LFlatten {
@@ -45,6 +46,11 @@ func (l *LFlatten) SetTrainable(trainable bool) *LFlatten {
 	return l
 }
 
+func (l *LFlatten) SetLayerWeights(layerWeights interface{}) *LFlatten {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LFlatten) GetShape() tf.Shape {
 	return l.shape
 }
@@ -64,6 +70,10 @@ func (l *LFlatten) GetInputs() []Layer {
 
 func (l *LFlatten) GetName() string {
 	return l.name
+}
+
+func (l *LFlatten) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLFlatten struct {

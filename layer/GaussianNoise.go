@@ -3,12 +3,13 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LGaussianNoise struct {
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	shape     tf.Shape
-	stddev    float64
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	stddev       float64
+	trainable    bool
+	layerWeights interface{}
 }
 
 func GaussianNoise(stddev float64) *LGaussianNoise {
@@ -40,6 +41,11 @@ func (l *LGaussianNoise) SetTrainable(trainable bool) *LGaussianNoise {
 	return l
 }
 
+func (l *LGaussianNoise) SetLayerWeights(layerWeights interface{}) *LGaussianNoise {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LGaussianNoise) GetShape() tf.Shape {
 	return l.shape
 }
@@ -59,6 +65,10 @@ func (l *LGaussianNoise) GetInputs() []Layer {
 
 func (l *LGaussianNoise) GetName() string {
 	return l.name
+}
+
+func (l *LGaussianNoise) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLGaussianNoise struct {

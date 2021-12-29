@@ -11,6 +11,7 @@ type LRandomHeight struct {
 	seed          interface{}
 	shape         tf.Shape
 	trainable     bool
+	layerWeights  interface{}
 }
 
 func RandomHeight(factor float64) *LRandomHeight {
@@ -54,6 +55,11 @@ func (l *LRandomHeight) SetTrainable(trainable bool) *LRandomHeight {
 	return l
 }
 
+func (l *LRandomHeight) SetLayerWeights(layerWeights interface{}) *LRandomHeight {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LRandomHeight) GetShape() tf.Shape {
 	return l.shape
 }
@@ -73,6 +79,10 @@ func (l *LRandomHeight) GetInputs() []Layer {
 
 func (l *LRandomHeight) GetName() string {
 	return l.name
+}
+
+func (l *LRandomHeight) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLRandomHeight struct {

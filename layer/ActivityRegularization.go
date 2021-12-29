@@ -3,13 +3,14 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LActivityRegularization struct {
-	dtype     DataType
-	inputs    []Layer
-	l1        float64
-	l2        float64
-	name      string
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	l1           float64
+	l2           float64
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func ActivityRegularization() *LActivityRegularization {
@@ -52,6 +53,11 @@ func (l *LActivityRegularization) SetTrainable(trainable bool) *LActivityRegular
 	return l
 }
 
+func (l *LActivityRegularization) SetLayerWeights(layerWeights interface{}) *LActivityRegularization {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LActivityRegularization) GetShape() tf.Shape {
 	return l.shape
 }
@@ -71,6 +77,10 @@ func (l *LActivityRegularization) GetInputs() []Layer {
 
 func (l *LActivityRegularization) GetName() string {
 	return l.name
+}
+
+func (l *LActivityRegularization) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLActivityRegularization struct {

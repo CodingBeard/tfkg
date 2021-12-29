@@ -3,12 +3,13 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LRepeatVector struct {
-	dtype     DataType
-	inputs    []Layer
-	n         float64
-	name      string
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	n            float64
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func RepeatVector(n float64) *LRepeatVector {
@@ -40,6 +41,11 @@ func (l *LRepeatVector) SetTrainable(trainable bool) *LRepeatVector {
 	return l
 }
 
+func (l *LRepeatVector) SetLayerWeights(layerWeights interface{}) *LRepeatVector {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LRepeatVector) GetShape() tf.Shape {
 	return l.shape
 }
@@ -59,6 +65,10 @@ func (l *LRepeatVector) GetInputs() []Layer {
 
 func (l *LRepeatVector) GetName() string {
 	return l.name
+}
+
+func (l *LRepeatVector) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLRepeatVector struct {

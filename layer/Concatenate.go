@@ -3,12 +3,13 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LConcatenate struct {
-	axis      float64
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	shape     tf.Shape
-	trainable bool
+	axis         float64
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Concatenate() *LConcatenate {
@@ -45,6 +46,11 @@ func (l *LConcatenate) SetTrainable(trainable bool) *LConcatenate {
 	return l
 }
 
+func (l *LConcatenate) SetLayerWeights(layerWeights interface{}) *LConcatenate {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LConcatenate) GetShape() tf.Shape {
 	return l.shape
 }
@@ -64,6 +70,10 @@ func (l *LConcatenate) GetInputs() []Layer {
 
 func (l *LConcatenate) GetName() string {
 	return l.name
+}
+
+func (l *LConcatenate) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLConcatenate struct {

@@ -3,11 +3,12 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LSubtract struct {
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Subtract() *LSubtract {
@@ -38,6 +39,11 @@ func (l *LSubtract) SetTrainable(trainable bool) *LSubtract {
 	return l
 }
 
+func (l *LSubtract) SetLayerWeights(layerWeights interface{}) *LSubtract {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LSubtract) GetShape() tf.Shape {
 	return l.shape
 }
@@ -57,6 +63,10 @@ func (l *LSubtract) GetInputs() []Layer {
 
 func (l *LSubtract) GetName() string {
 	return l.name
+}
+
+func (l *LSubtract) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLSubtract struct {

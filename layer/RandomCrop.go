@@ -3,14 +3,15 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LRandomCrop struct {
-	dtype     DataType
-	height    float64
-	inputs    []Layer
-	name      string
-	seed      interface{}
-	shape     tf.Shape
-	trainable bool
-	width     float64
+	dtype        DataType
+	height       float64
+	inputs       []Layer
+	name         string
+	seed         interface{}
+	shape        tf.Shape
+	trainable    bool
+	width        float64
+	layerWeights interface{}
 }
 
 func RandomCrop(height float64, width float64) *LRandomCrop {
@@ -49,6 +50,11 @@ func (l *LRandomCrop) SetTrainable(trainable bool) *LRandomCrop {
 	return l
 }
 
+func (l *LRandomCrop) SetLayerWeights(layerWeights interface{}) *LRandomCrop {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LRandomCrop) GetShape() tf.Shape {
 	return l.shape
 }
@@ -68,6 +74,10 @@ func (l *LRandomCrop) GetInputs() []Layer {
 
 func (l *LRandomCrop) GetName() string {
 	return l.name
+}
+
+func (l *LRandomCrop) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLRandomCrop struct {

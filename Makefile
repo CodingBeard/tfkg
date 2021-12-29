@@ -87,6 +87,20 @@ examples-sign-raw:
 	go generate ./...
 	cd examples/sign && go run main.go
 
+examples-transfer:
+	go generate ./...
+	docker-compose up -d tf-jupyter-golang
+	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg/examples/transfer_learning && go run main.go"
+
+examples-transfer-gpu:
+	go generate ./...
+	docker-compose up -d tf-jupyter-golang-gpu
+	docker-compose exec tf-jupyter-golang-gpu sh -c "cd /go/src/tfkg/examples/transfer_learning && go run main.go"
+
+examples-transfer-raw:
+	go generate ./...
+	cd examples/transfer_learning && go run main.go
+
 test-python:
 	docker-compose up -d tf-jupyter-golang
 	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg && python test.py"

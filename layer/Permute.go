@@ -3,12 +3,13 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LPermute struct {
-	dims      []interface{}
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	shape     tf.Shape
-	trainable bool
+	dims         []interface{}
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Permute(dims []interface{}) *LPermute {
@@ -40,6 +41,11 @@ func (l *LPermute) SetTrainable(trainable bool) *LPermute {
 	return l
 }
 
+func (l *LPermute) SetLayerWeights(layerWeights interface{}) *LPermute {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LPermute) GetShape() tf.Shape {
 	return l.shape
 }
@@ -59,6 +65,10 @@ func (l *LPermute) GetInputs() []Layer {
 
 func (l *LPermute) GetName() string {
 	return l.name
+}
+
+func (l *LPermute) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLPermute struct {

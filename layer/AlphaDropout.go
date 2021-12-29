@@ -3,14 +3,15 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LAlphaDropout struct {
-	dtype      DataType
-	inputs     []Layer
-	name       string
-	noiseShape interface{}
-	rate       float64
-	seed       interface{}
-	shape      tf.Shape
-	trainable  bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	noiseShape   interface{}
+	rate         float64
+	seed         interface{}
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func AlphaDropout(rate float64) *LAlphaDropout {
@@ -54,6 +55,11 @@ func (l *LAlphaDropout) SetTrainable(trainable bool) *LAlphaDropout {
 	return l
 }
 
+func (l *LAlphaDropout) SetLayerWeights(layerWeights interface{}) *LAlphaDropout {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LAlphaDropout) GetShape() tf.Shape {
 	return l.shape
 }
@@ -73,6 +79,10 @@ func (l *LAlphaDropout) GetInputs() []Layer {
 
 func (l *LAlphaDropout) GetName() string {
 	return l.name
+}
+
+func (l *LAlphaDropout) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLAlphaDropout struct {

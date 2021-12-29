@@ -3,12 +3,13 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LTimeDistributed struct {
-	dtype     DataType
-	inputs    []Layer
-	layer     interface{}
-	name      string
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	layer        interface{}
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func TimeDistributed(layer interface{}) *LTimeDistributed {
@@ -40,6 +41,11 @@ func (l *LTimeDistributed) SetTrainable(trainable bool) *LTimeDistributed {
 	return l
 }
 
+func (l *LTimeDistributed) SetLayerWeights(layerWeights interface{}) *LTimeDistributed {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LTimeDistributed) GetShape() tf.Shape {
 	return l.shape
 }
@@ -59,6 +65,10 @@ func (l *LTimeDistributed) GetInputs() []Layer {
 
 func (l *LTimeDistributed) GetName() string {
 	return l.name
+}
+
+func (l *LTimeDistributed) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLTimeDistributed struct {

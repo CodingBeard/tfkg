@@ -3,13 +3,14 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LCenterCrop struct {
-	dtype     DataType
-	height    float64
-	inputs    []Layer
-	name      string
-	shape     tf.Shape
-	trainable bool
-	width     float64
+	dtype        DataType
+	height       float64
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	width        float64
+	layerWeights interface{}
 }
 
 func CenterCrop(height float64, width float64) *LCenterCrop {
@@ -42,6 +43,11 @@ func (l *LCenterCrop) SetTrainable(trainable bool) *LCenterCrop {
 	return l
 }
 
+func (l *LCenterCrop) SetLayerWeights(layerWeights interface{}) *LCenterCrop {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LCenterCrop) GetShape() tf.Shape {
 	return l.shape
 }
@@ -61,6 +67,10 @@ func (l *LCenterCrop) GetInputs() []Layer {
 
 func (l *LCenterCrop) GetName() string {
 	return l.name
+}
+
+func (l *LCenterCrop) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLCenterCrop struct {

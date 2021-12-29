@@ -12,6 +12,7 @@ type LBidirectional struct {
 	shape         tf.Shape
 	trainable     bool
 	weights       interface{}
+	layerWeights  interface{}
 }
 
 func Bidirectional(layer interface{}) *LBidirectional {
@@ -61,6 +62,11 @@ func (l *LBidirectional) SetWeights(weights interface{}) *LBidirectional {
 	return l
 }
 
+func (l *LBidirectional) SetLayerWeights(layerWeights interface{}) *LBidirectional {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LBidirectional) GetShape() tf.Shape {
 	return l.shape
 }
@@ -80,6 +86,10 @@ func (l *LBidirectional) GetInputs() []Layer {
 
 func (l *LBidirectional) GetName() string {
 	return l.name
+}
+
+func (l *LBidirectional) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLBidirectional struct {

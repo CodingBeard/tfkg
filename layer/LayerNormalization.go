@@ -21,6 +21,7 @@ type LLayerNormalization struct {
 	scale            bool
 	shape            tf.Shape
 	trainable        bool
+	layerWeights     interface{}
 }
 
 func LayerNormalization() *LLayerNormalization {
@@ -111,6 +112,11 @@ func (l *LLayerNormalization) SetTrainable(trainable bool) *LLayerNormalization 
 	return l
 }
 
+func (l *LLayerNormalization) SetLayerWeights(layerWeights interface{}) *LLayerNormalization {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LLayerNormalization) GetShape() tf.Shape {
 	return l.shape
 }
@@ -130,6 +136,10 @@ func (l *LLayerNormalization) GetInputs() []Layer {
 
 func (l *LLayerNormalization) GetName() string {
 	return l.name
+}
+
+func (l *LLayerNormalization) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLLayerNormalization struct {

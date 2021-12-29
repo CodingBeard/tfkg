@@ -128,23 +128,25 @@ func NewImgFolderDataset(
 		},
 	}
 
-	e = os.MkdirAll(config.CacheDir, os.ModePerm)
-	if e != nil && e != os.ErrExist {
-		errorHandler.Error(e)
-		return nil, e
-	}
-
-	if _, e := os.Stat(filepath.Join(config.CacheDir, "category-tokenizer.json")); e == nil {
-		d.categoryTokenizer = preprocessor.NewTokenizer(
-			errorHandler,
-			1,
-			-1,
-			preprocessor.TokenizerConfig{IsCategoryTokenizer: true, DisableFiltering: true},
-		)
-		e = d.categoryTokenizer.Load(filepath.Join(config.CacheDir, "category-tokenizer.json"))
-		if e != nil {
+	if config.CacheDir != "" {
+		e = os.MkdirAll(config.CacheDir, os.ModePerm)
+		if e != nil && e != os.ErrExist {
 			errorHandler.Error(e)
 			return nil, e
+		}
+
+		if _, e := os.Stat(filepath.Join(config.CacheDir, "category-tokenizer.json")); e == nil {
+			d.categoryTokenizer = preprocessor.NewTokenizer(
+				errorHandler,
+				1,
+				-1,
+				preprocessor.TokenizerConfig{IsCategoryTokenizer: true, DisableFiltering: true},
+			)
+			e = d.categoryTokenizer.Load(filepath.Join(config.CacheDir, "category-tokenizer.json"))
+			if e != nil {
+				errorHandler.Error(e)
+				return nil, e
+			}
 		}
 	}
 
@@ -169,11 +171,16 @@ type imgStatsCache struct {
 
 func (d *ImgFolderDataset) readFileNames() error {
 	cacheFileName := "file-stats.json"
-	cacheFileBytes, e := ioutil.ReadFile(filepath.Join(d.cacheDir, cacheFileName))
-	if e != nil && !errors.Is(e, os.ErrNotExist) {
-		d.errorHandler.Error(e)
-		return e
-	} else if e == nil {
+	var cacheFileBytes []byte
+	var e error
+	if d.cacheDir != "" {
+		cacheFileBytes, e = ioutil.ReadFile(filepath.Join(d.cacheDir, cacheFileName))
+		if e != nil && !errors.Is(e, os.ErrNotExist) {
+			d.errorHandler.Error(e)
+			return e
+		}
+	}
+	if len(cacheFileBytes) > 0 {
 		var cache imgStatsCache
 		e = json.Unmarshal(cacheFileBytes, &cache)
 		if e != nil {

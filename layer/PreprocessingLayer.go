@@ -3,11 +3,12 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LPreprocessingLayer struct {
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func PreprocessingLayer() *LPreprocessingLayer {
@@ -38,6 +39,11 @@ func (l *LPreprocessingLayer) SetTrainable(trainable bool) *LPreprocessingLayer 
 	return l
 }
 
+func (l *LPreprocessingLayer) SetLayerWeights(layerWeights interface{}) *LPreprocessingLayer {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LPreprocessingLayer) GetShape() tf.Shape {
 	return l.shape
 }
@@ -57,6 +63,10 @@ func (l *LPreprocessingLayer) GetInputs() []Layer {
 
 func (l *LPreprocessingLayer) GetName() string {
 	return l.name
+}
+
+func (l *LPreprocessingLayer) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLPreprocessingLayer struct {

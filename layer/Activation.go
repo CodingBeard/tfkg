@@ -3,12 +3,13 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LActivation struct {
-	activation string
-	dtype      DataType
-	inputs     []Layer
-	name       string
-	shape      tf.Shape
-	trainable  bool
+	activation   string
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Activation(activation string) *LActivation {
@@ -40,6 +41,11 @@ func (l *LActivation) SetTrainable(trainable bool) *LActivation {
 	return l
 }
 
+func (l *LActivation) SetLayerWeights(layerWeights interface{}) *LActivation {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LActivation) GetShape() tf.Shape {
 	return l.shape
 }
@@ -59,6 +65,10 @@ func (l *LActivation) GetInputs() []Layer {
 
 func (l *LActivation) GetName() string {
 	return l.name
+}
+
+func (l *LActivation) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLActivation struct {

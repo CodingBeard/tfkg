@@ -3,13 +3,14 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LRescaling struct {
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	offset    float64
-	scale     float64
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	offset       float64
+	scale        float64
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Rescaling(scale float64) *LRescaling {
@@ -47,6 +48,11 @@ func (l *LRescaling) SetTrainable(trainable bool) *LRescaling {
 	return l
 }
 
+func (l *LRescaling) SetLayerWeights(layerWeights interface{}) *LRescaling {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LRescaling) GetShape() tf.Shape {
 	return l.shape
 }
@@ -66,6 +72,10 @@ func (l *LRescaling) GetInputs() []Layer {
 
 func (l *LRescaling) GetName() string {
 	return l.name
+}
+
+func (l *LRescaling) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLRescaling struct {

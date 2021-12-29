@@ -3,14 +3,15 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LHashing struct {
-	dtype     DataType
-	inputs    []Layer
-	maskValue interface{}
-	name      string
-	numBins   float64
-	salt      interface{}
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	maskValue    interface{}
+	name         string
+	numBins      float64
+	salt         interface{}
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Hashing(numBins float64) *LHashing {
@@ -54,6 +55,11 @@ func (l *LHashing) SetTrainable(trainable bool) *LHashing {
 	return l
 }
 
+func (l *LHashing) SetLayerWeights(layerWeights interface{}) *LHashing {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LHashing) GetShape() tf.Shape {
 	return l.shape
 }
@@ -73,6 +79,10 @@ func (l *LHashing) GetInputs() []Layer {
 
 func (l *LHashing) GetName() string {
 	return l.name
+}
+
+func (l *LHashing) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLHashing struct {

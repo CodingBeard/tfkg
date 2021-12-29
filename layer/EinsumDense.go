@@ -22,6 +22,7 @@ type LEinsumDense struct {
 	outputShape         float64
 	shape               tf.Shape
 	trainable           bool
+	layerWeights        interface{}
 }
 
 func EinsumDense(equation float64, outputShape float64) *LEinsumDense {
@@ -108,6 +109,11 @@ func (l *LEinsumDense) SetTrainable(trainable bool) *LEinsumDense {
 	return l
 }
 
+func (l *LEinsumDense) SetLayerWeights(layerWeights interface{}) *LEinsumDense {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LEinsumDense) GetShape() tf.Shape {
 	return l.shape
 }
@@ -127,6 +133,10 @@ func (l *LEinsumDense) GetInputs() []Layer {
 
 func (l *LEinsumDense) GetName() string {
 	return l.name
+}
+
+func (l *LEinsumDense) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLEinsumDense struct {

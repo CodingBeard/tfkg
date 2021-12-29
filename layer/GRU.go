@@ -35,6 +35,7 @@ type LGRU struct {
 	units                float64
 	unroll               bool
 	useBias              bool
+	layerWeights         interface{}
 }
 
 func GRU(units float64) *LGRU {
@@ -204,6 +205,11 @@ func (l *LGRU) SetUseBias(useBias bool) *LGRU {
 	return l
 }
 
+func (l *LGRU) SetLayerWeights(layerWeights interface{}) *LGRU {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LGRU) GetShape() tf.Shape {
 	return l.shape
 }
@@ -223,6 +229,10 @@ func (l *LGRU) GetInputs() []Layer {
 
 func (l *LGRU) GetName() string {
 	return l.name
+}
+
+func (l *LGRU) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLGRU struct {

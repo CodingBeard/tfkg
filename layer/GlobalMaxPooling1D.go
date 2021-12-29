@@ -3,13 +3,14 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LGlobalMaxPooling1D struct {
-	dataFormat string
-	dtype      DataType
-	inputs     []Layer
-	keepdims   bool
-	name       string
-	shape      tf.Shape
-	trainable  bool
+	dataFormat   string
+	dtype        DataType
+	inputs       []Layer
+	keepdims     bool
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func GlobalMaxPooling1D() *LGlobalMaxPooling1D {
@@ -52,6 +53,11 @@ func (l *LGlobalMaxPooling1D) SetTrainable(trainable bool) *LGlobalMaxPooling1D 
 	return l
 }
 
+func (l *LGlobalMaxPooling1D) SetLayerWeights(layerWeights interface{}) *LGlobalMaxPooling1D {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LGlobalMaxPooling1D) GetShape() tf.Shape {
 	return l.shape
 }
@@ -71,6 +77,10 @@ func (l *LGlobalMaxPooling1D) GetInputs() []Layer {
 
 func (l *LGlobalMaxPooling1D) GetName() string {
 	return l.name
+}
+
+func (l *LGlobalMaxPooling1D) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLGlobalMaxPooling1D struct {

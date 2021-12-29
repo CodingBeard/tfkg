@@ -3,13 +3,14 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LRandomContrast struct {
-	dtype     DataType
-	factor    float64
-	inputs    []Layer
-	name      string
-	seed      interface{}
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	factor       float64
+	inputs       []Layer
+	name         string
+	seed         interface{}
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func RandomContrast(factor float64) *LRandomContrast {
@@ -47,6 +48,11 @@ func (l *LRandomContrast) SetTrainable(trainable bool) *LRandomContrast {
 	return l
 }
 
+func (l *LRandomContrast) SetLayerWeights(layerWeights interface{}) *LRandomContrast {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LRandomContrast) GetShape() tf.Shape {
 	return l.shape
 }
@@ -66,6 +72,10 @@ func (l *LRandomContrast) GetInputs() []Layer {
 
 func (l *LRandomContrast) GetName() string {
 	return l.name
+}
+
+func (l *LRandomContrast) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLRandomContrast struct {

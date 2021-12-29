@@ -3,11 +3,12 @@ package layer
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
 type LMaximum struct {
-	dtype     DataType
-	inputs    []Layer
-	name      string
-	shape     tf.Shape
-	trainable bool
+	dtype        DataType
+	inputs       []Layer
+	name         string
+	shape        tf.Shape
+	trainable    bool
+	layerWeights interface{}
 }
 
 func Maximum() *LMaximum {
@@ -38,6 +39,11 @@ func (l *LMaximum) SetTrainable(trainable bool) *LMaximum {
 	return l
 }
 
+func (l *LMaximum) SetLayerWeights(layerWeights interface{}) *LMaximum {
+	l.layerWeights = layerWeights
+	return l
+}
+
 func (l *LMaximum) GetShape() tf.Shape {
 	return l.shape
 }
@@ -57,6 +63,10 @@ func (l *LMaximum) GetInputs() []Layer {
 
 func (l *LMaximum) GetName() string {
 	return l.name
+}
+
+func (l *LMaximum) GetLayerWeights() interface{} {
+	return l.layerWeights
 }
 
 type jsonConfigLMaximum struct {

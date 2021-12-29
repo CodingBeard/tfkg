@@ -11,6 +11,7 @@ type LInput struct {
 	inputTensor interface{}
 	sparse      bool
 	ragged      bool
+	weights     interface{}
 }
 
 func Input() *LInput {
@@ -77,6 +78,10 @@ func (i *LInput) GetInputs() []Layer {
 
 func (i *LInput) GetName() string {
 	return i.name
+}
+
+func (i *LInput) GetLayerWeights() interface{} {
+	return i.weights
 }
 
 type jsonConfigInput struct {
