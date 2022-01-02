@@ -24,7 +24,7 @@ type LBatchNormalization struct {
 	scale                     bool
 	shape                     tf.Shape
 	trainable                 bool
-	layerWeights              interface{}
+	layerWeights              []*tf.Tensor
 }
 
 func BatchNormalization() *LBatchNormalization {
@@ -133,7 +133,7 @@ func (l *LBatchNormalization) SetTrainable(trainable bool) *LBatchNormalization 
 	return l
 }
 
-func (l *LBatchNormalization) SetLayerWeights(layerWeights interface{}) *LBatchNormalization {
+func (l *LBatchNormalization) SetLayerWeights(layerWeights []*tf.Tensor) *LBatchNormalization {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -159,7 +159,7 @@ func (l *LBatchNormalization) GetName() string {
 	return l.name
 }
 
-func (l *LBatchNormalization) GetLayerWeights() interface{} {
+func (l *LBatchNormalization) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

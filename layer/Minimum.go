@@ -8,7 +8,7 @@ type LMinimum struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Minimum() *LMinimum {
@@ -39,7 +39,7 @@ func (l *LMinimum) SetTrainable(trainable bool) *LMinimum {
 	return l
 }
 
-func (l *LMinimum) SetLayerWeights(layerWeights interface{}) *LMinimum {
+func (l *LMinimum) SetLayerWeights(layerWeights []*tf.Tensor) *LMinimum {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -65,7 +65,7 @@ func (l *LMinimum) GetName() string {
 	return l.name
 }
 
-func (l *LMinimum) GetLayerWeights() interface{} {
+func (l *LMinimum) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

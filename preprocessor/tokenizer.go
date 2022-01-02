@@ -53,7 +53,7 @@ func NewTokenizer(
 		config = configs[0]
 	}
 	if config.IsCategoryTokenizer {
-		numWords = 1000000
+		numWords = -1
 	}
 	if config.Filters == "" {
 		config.Filters = "!\"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n"
@@ -163,7 +163,7 @@ func (t *Tokenizer) Fit(sentence string) {
 		t.lock.Unlock()
 	}
 
-	if len(t.wordCounts) > t.numWords*200 {
+	if t.numWords != -1 && len(t.wordCounts) > t.numWords*200 {
 		type kv struct {
 			k string
 			v int
@@ -234,7 +234,7 @@ func (t *Tokenizer) FinishFit() {
 	})
 
 	totalWords := len(kvs)
-	if t.numWords < totalWords {
+	if t.numWords != -1 && t.numWords < totalWords {
 		totalWords = t.numWords
 	}
 

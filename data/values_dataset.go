@@ -10,6 +10,7 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 	"math"
 	"math/rand"
+	"runtime"
 	"time"
 )
 
@@ -18,23 +19,24 @@ type ValuesDataset struct {
 	ClassWeights map[int]float32
 	Count        int
 
-	shuffled          bool
-	generatorOffset   int
-	cacheDir          string
-	columnProcessors  []*preprocessor.Processor
-	trainPercent      float32
-	valPercent        float32
-	testPercent       float32
-	trainCount        int
-	valCount          int
-	testCount         int
-	mode              GeneratorMode
-	offsets           []int
-	offset            int
-	limit             int
-	categoryTokenizer *preprocessor.Tokenizer
-	xValues           [][]interface{}
-	yValues           []interface{}
+	shuffled         bool
+	generatorOffset  int
+	cacheDir         string
+	yProcessor       *preprocessor.Processor
+	isCategorical    bool
+	columnProcessors []*preprocessor.Processor
+	trainPercent     float32
+	valPercent       float32
+	testPercent      float32
+	trainCount       int
+	valCount         int
+	testCount        int
+	mode             GeneratorMode
+	offsets          []int
+	offset           int
+	limit            int
+	xValues          [][]interface{}
+	yValues          []interface{}
 
 	logger       *cblog.Logger
 	errorHandler *cberrors.ErrorsContainer
@@ -51,6 +53,7 @@ func NewValuesDataset(
 	logger *cblog.Logger,
 	errorHandler *cberrors.ErrorsContainer,
 	config ValuesDatasetConfig,
+	yProcessor *preprocessor.Processor,
 	columnProcessors ...*preprocessor.Processor,
 ) (*ValuesDataset, error) {
 
@@ -59,6 +62,7 @@ func NewValuesDataset(
 	d := &ValuesDataset{
 		logger:           logger,
 		errorHandler:     errorHandler,
+		yProcessor:       yProcessor,
 		columnProcessors: columnProcessors,
 		trainPercent:     config.TrainPercent,
 		valPercent:       config.ValPercent,
@@ -89,23 +93,27 @@ func (d *ValuesDataset) SetValues(yValues []interface{}, xValues ...[]interface{
 		d.offsets = append(d.offsets, i)
 	}
 
+	d.isCategorical = false
 	for _, value := range yValues {
 		intValue, ok := value.(int32)
 		if ok {
+			d.isCategorical = true
 			count := d.ClassCounts[int(intValue)]
 			count++
 			d.ClassCounts[int(intValue)] = count
 		}
 	}
 
-	majorClassCount := 0
-	for _, count := range d.ClassCounts {
-		if count > majorClassCount {
-			majorClassCount = count
+	if d.isCategorical {
+		majorClassCount := 0
+		for _, count := range d.ClassCounts {
+			if count > majorClassCount {
+				majorClassCount = count
+			}
 		}
-	}
-	for class, count := range d.ClassCounts {
-		d.ClassWeights[class] = float32(majorClassCount) / float32(count)
+		for class, count := range d.ClassCounts {
+			d.ClassWeights[class] = float32(majorClassCount) / float32(count)
+		}
 	}
 
 	d.yValues = yValues
@@ -294,25 +302,30 @@ func (d *ValuesDataset) GeneratorChan(batchSize int, preFetch int) chan Batch {
 	generatorChan := make(chan Batch, preFetch)
 
 	go func() {
-		for true {
-			x, y, classWeights, e := d.Generate(batchSize)
+		swg := sizedwaitgroup.New(runtime.NumCPU())
+		for i := 0; i < d.limit/batchSize; i++ {
+			swg.Add()
+			go func() {
+				defer swg.Done()
+				x, y, classWeights, e := d.Generate(batchSize)
 
-			if errors.Is(e, ErrGeneratorEnd) {
-				close(generatorChan)
-				break
-			}
-			if e != nil && !errors.Is(e, ErrGeneratorEnd) {
-				d.errorHandler.Error(e)
-				close(generatorChan)
-				break
-			}
+				if errors.Is(e, ErrGeneratorEnd) {
+					return
+				}
+				if e != nil && !errors.Is(e, ErrGeneratorEnd) {
+					d.errorHandler.Error(e)
+					return
+				}
 
-			generatorChan <- Batch{
-				X:            x,
-				Y:            y,
-				ClassWeights: classWeights,
-			}
+				generatorChan <- Batch{
+					X:            x,
+					Y:            y,
+					ClassWeights: classWeights,
+				}
+			}()
 		}
+		swg.Wait()
+		close(generatorChan)
 	}()
 
 	return generatorChan
@@ -322,7 +335,7 @@ func (d *ValuesDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, *tf.T
 	var x []*tf.Tensor
 
 	xRaw := make([][]interface{}, len(d.columnProcessors))
-	var yInts [][]int32
+	var yRaw []interface{}
 
 	for true {
 		xInterfaces, yInterface, e := d.getRow()
@@ -338,23 +351,9 @@ func (d *ValuesDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, *tf.T
 			xRaw[i] = append(xRaw[i], xInterfaces[i])
 		}
 
-		var yInt int32
+		yRaw = append(yRaw, yInterface)
 
-		if d.categoryTokenizer != nil {
-			yInt = d.categoryTokenizer.Tokenize(yInterface.(string))[0]
-		} else {
-			var ok bool
-			yInt, ok = yInterface.(int32)
-			if !ok {
-				e = fmt.Errorf("y was not castable to int")
-				d.errorHandler.Error(e)
-				return nil, nil, nil, e
-			}
-		}
-
-		yInts = append(yInts, []int32{yInt})
-
-		if len(yInts) >= batchSize {
+		if len(yRaw) >= batchSize {
 			break
 		}
 	}
@@ -368,18 +367,25 @@ func (d *ValuesDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, *tf.T
 		x = append(x, process)
 	}
 
-	var classWeights []float32
-	for _, yInt32 := range yInts {
-		classWeights = append(classWeights, d.ClassWeights[int(yInt32[0])])
-	}
-
-	classWeightsTensor, e := tf.NewTensor(classWeights)
+	y, e := d.yProcessor.ProcessInterface(yRaw)
 	if e != nil {
 		d.errorHandler.Error(e)
 		return nil, nil, nil, e
 	}
 
-	y, e := tf.NewTensor(yInts)
+	var classWeights []float32
+	categoricalY, ok := y.Value().([][]int32)
+	if ok {
+		for _, yInt32 := range categoricalY {
+			classWeights = append(classWeights, d.ClassWeights[int(yInt32[0])])
+		}
+	} else {
+		for range yRaw {
+			classWeights = append(classWeights, 1)
+		}
+	}
+
+	classWeightsTensor, e := tf.NewTensor(classWeights)
 	if e != nil {
 		d.errorHandler.Error(e)
 		return nil, nil, nil, e

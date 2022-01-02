@@ -11,7 +11,7 @@ type LHashing struct {
 	salt         interface{}
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Hashing(numBins float64) *LHashing {
@@ -55,7 +55,7 @@ func (l *LHashing) SetTrainable(trainable bool) *LHashing {
 	return l
 }
 
-func (l *LHashing) SetLayerWeights(layerWeights interface{}) *LHashing {
+func (l *LHashing) SetLayerWeights(layerWeights []*tf.Tensor) *LHashing {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -81,7 +81,7 @@ func (l *LHashing) GetName() string {
 	return l.name
 }
 
-func (l *LHashing) GetLayerWeights() interface{} {
+func (l *LHashing) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

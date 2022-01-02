@@ -16,7 +16,7 @@ type LTextVectorization struct {
 	standardize          string
 	trainable            bool
 	vocabulary           interface{}
-	layerWeights         interface{}
+	layerWeights         []*tf.Tensor
 }
 
 func TextVectorization() *LTextVectorization {
@@ -95,7 +95,7 @@ func (l *LTextVectorization) SetVocabulary(vocabulary interface{}) *LTextVectori
 	return l
 }
 
-func (l *LTextVectorization) SetLayerWeights(layerWeights interface{}) *LTextVectorization {
+func (l *LTextVectorization) SetLayerWeights(layerWeights []*tf.Tensor) *LTextVectorization {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -121,7 +121,7 @@ func (l *LTextVectorization) GetName() string {
 	return l.name
 }
 
-func (l *LTextVectorization) GetLayerWeights() interface{} {
+func (l *LTextVectorization) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

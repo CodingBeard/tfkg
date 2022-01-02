@@ -9,7 +9,7 @@ type LConcatenate struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Concatenate() *LConcatenate {
@@ -46,7 +46,7 @@ func (l *LConcatenate) SetTrainable(trainable bool) *LConcatenate {
 	return l
 }
 
-func (l *LConcatenate) SetLayerWeights(layerWeights interface{}) *LConcatenate {
+func (l *LConcatenate) SetLayerWeights(layerWeights []*tf.Tensor) *LConcatenate {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -72,7 +72,7 @@ func (l *LConcatenate) GetName() string {
 	return l.name
 }
 
-func (l *LConcatenate) GetLayerWeights() interface{} {
+func (l *LConcatenate) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

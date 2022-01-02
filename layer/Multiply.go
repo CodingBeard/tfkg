@@ -8,7 +8,7 @@ type LMultiply struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Multiply() *LMultiply {
@@ -39,7 +39,7 @@ func (l *LMultiply) SetTrainable(trainable bool) *LMultiply {
 	return l
 }
 
-func (l *LMultiply) SetLayerWeights(layerWeights interface{}) *LMultiply {
+func (l *LMultiply) SetLayerWeights(layerWeights []*tf.Tensor) *LMultiply {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -65,7 +65,7 @@ func (l *LMultiply) GetName() string {
 	return l.name
 }
 
-func (l *LMultiply) GetLayerWeights() interface{} {
+func (l *LMultiply) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

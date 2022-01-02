@@ -8,7 +8,7 @@ type LSubtract struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Subtract() *LSubtract {
@@ -39,7 +39,7 @@ func (l *LSubtract) SetTrainable(trainable bool) *LSubtract {
 	return l
 }
 
-func (l *LSubtract) SetLayerWeights(layerWeights interface{}) *LSubtract {
+func (l *LSubtract) SetLayerWeights(layerWeights []*tf.Tensor) *LSubtract {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -65,7 +65,7 @@ func (l *LSubtract) GetName() string {
 	return l.name
 }
 
-func (l *LSubtract) GetLayerWeights() interface{} {
+func (l *LSubtract) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

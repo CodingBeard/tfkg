@@ -20,7 +20,7 @@ type LEmbedding struct {
 	outputDim             float64
 	shape                 tf.Shape
 	trainable             bool
-	layerWeights          interface{}
+	layerWeights          []*tf.Tensor
 }
 
 func Embedding(inputDim float64, outputDim float64) *LEmbedding {
@@ -95,7 +95,7 @@ func (l *LEmbedding) SetTrainable(trainable bool) *LEmbedding {
 	return l
 }
 
-func (l *LEmbedding) SetLayerWeights(layerWeights interface{}) *LEmbedding {
+func (l *LEmbedding) SetLayerWeights(layerWeights []*tf.Tensor) *LEmbedding {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -121,7 +121,7 @@ func (l *LEmbedding) GetName() string {
 	return l.name
 }
 
-func (l *LEmbedding) GetLayerWeights() interface{} {
+func (l *LEmbedding) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

@@ -11,7 +11,7 @@ type LInput struct {
 	inputTensor interface{}
 	sparse      bool
 	ragged      bool
-	weights     interface{}
+	weights     []*tf.Tensor
 }
 
 func Input() *LInput {
@@ -80,7 +80,7 @@ func (i *LInput) GetName() string {
 	return i.name
 }
 
-func (i *LInput) GetLayerWeights() interface{} {
+func (i *LInput) GetLayerWeights() []*tf.Tensor {
 	return i.weights
 }
 

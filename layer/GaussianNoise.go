@@ -9,7 +9,7 @@ type LGaussianNoise struct {
 	shape        tf.Shape
 	stddev       float64
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func GaussianNoise(stddev float64) *LGaussianNoise {
@@ -41,7 +41,7 @@ func (l *LGaussianNoise) SetTrainable(trainable bool) *LGaussianNoise {
 	return l
 }
 
-func (l *LGaussianNoise) SetLayerWeights(layerWeights interface{}) *LGaussianNoise {
+func (l *LGaussianNoise) SetLayerWeights(layerWeights []*tf.Tensor) *LGaussianNoise {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -67,7 +67,7 @@ func (l *LGaussianNoise) GetName() string {
 	return l.name
 }
 
-func (l *LGaussianNoise) GetLayerWeights() interface{} {
+func (l *LGaussianNoise) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

@@ -21,7 +21,7 @@ type LDense struct {
 	trainable           bool
 	units               float64
 	useBias             bool
-	layerWeights        interface{}
+	layerWeights        []*tf.Tensor
 }
 
 func Dense(units float64) *LDense {
@@ -107,7 +107,7 @@ func (l *LDense) SetUseBias(useBias bool) *LDense {
 	return l
 }
 
-func (l *LDense) SetLayerWeights(layerWeights interface{}) *LDense {
+func (l *LDense) SetLayerWeights(layerWeights []*tf.Tensor) *LDense {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -133,7 +133,7 @@ func (l *LDense) GetName() string {
 	return l.name
 }
 
-func (l *LDense) GetLayerWeights() interface{} {
+func (l *LDense) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

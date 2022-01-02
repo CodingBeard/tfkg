@@ -12,7 +12,7 @@ type LBidirectional struct {
 	shape         tf.Shape
 	trainable     bool
 	weights       interface{}
-	layerWeights  interface{}
+	layerWeights  []*tf.Tensor
 }
 
 func Bidirectional(layer interface{}) *LBidirectional {
@@ -62,7 +62,7 @@ func (l *LBidirectional) SetWeights(weights interface{}) *LBidirectional {
 	return l
 }
 
-func (l *LBidirectional) SetLayerWeights(layerWeights interface{}) *LBidirectional {
+func (l *LBidirectional) SetLayerWeights(layerWeights []*tf.Tensor) *LBidirectional {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -88,7 +88,7 @@ func (l *LBidirectional) GetName() string {
 	return l.name
 }
 
-func (l *LBidirectional) GetLayerWeights() interface{} {
+func (l *LBidirectional) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

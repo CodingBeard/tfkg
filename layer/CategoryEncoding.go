@@ -11,7 +11,7 @@ type LCategoryEncoding struct {
 	shape        tf.Shape
 	sparse       bool
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func CategoryEncoding() *LCategoryEncoding {
@@ -60,7 +60,7 @@ func (l *LCategoryEncoding) SetTrainable(trainable bool) *LCategoryEncoding {
 	return l
 }
 
-func (l *LCategoryEncoding) SetLayerWeights(layerWeights interface{}) *LCategoryEncoding {
+func (l *LCategoryEncoding) SetLayerWeights(layerWeights []*tf.Tensor) *LCategoryEncoding {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -86,7 +86,7 @@ func (l *LCategoryEncoding) GetName() string {
 	return l.name
 }
 
-func (l *LCategoryEncoding) GetLayerWeights() interface{} {
+func (l *LCategoryEncoding) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

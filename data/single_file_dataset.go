@@ -19,7 +19,6 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -42,7 +41,7 @@ type SingleFileDataset struct {
 	generatorOffset     *int32
 	generatorOffsetLock *sync.Mutex
 	cacheDir            string
-	categoryOffset      int
+	yProcessor          *preprocessor.Processor
 	columnProcessors    []*preprocessor.Processor
 	lineOffsets         []int64
 	trainPercent        float32
@@ -65,7 +64,6 @@ type SingleFileDataset struct {
 type SingleFileDatasetConfig struct {
 	FilePath               string
 	CacheDir               string
-	CategoryOffset         int
 	TrainPercent           float32
 	ValPercent             float32
 	TestPercent            float32
@@ -81,6 +79,7 @@ func NewSingleFileDataset(
 	logger *cblog.Logger,
 	errorHandler *cberrors.ErrorsContainer,
 	config SingleFileDatasetConfig,
+	yProcessor *preprocessor.Processor,
 	columnProcessors ...*preprocessor.Processor,
 ) (*SingleFileDataset, error) {
 
@@ -113,7 +112,7 @@ func NewSingleFileDataset(
 		skipHeaders:         config.SkipHeaders,
 		ignoreParseErrors:   config.IgnoreParseErrors,
 		cacheDir:            config.CacheDir,
-		categoryOffset:      config.CategoryOffset,
+		yProcessor:          yProcessor,
 		columnProcessors:    columnProcessors,
 		trainPercent:        config.TrainPercent,
 		valPercent:          config.ValPercent,
@@ -150,19 +149,7 @@ func NewSingleFileDataset(
 		return nil, e
 	}
 
-	if _, e := os.Stat(filepath.Join(config.CacheDir, "category-tokenizer.json")); e == nil {
-		d.categoryTokenizer = preprocessor.NewTokenizer(
-			errorHandler,
-			1,
-			-1,
-			preprocessor.TokenizerConfig{IsCategoryTokenizer: true, DisableFiltering: true},
-		)
-		e = d.categoryTokenizer.Load(filepath.Join(config.CacheDir, "category-tokenizer.json"))
-		if e != nil {
-			errorHandler.Error(e)
-			return nil, e
-		}
-	}
+	_ = yProcessor.Load()
 
 	e = d.readLineOffsets()
 	if e != nil {
@@ -270,11 +257,11 @@ func (d *SingleFileDataset) readLineOffsets() error {
 					return
 				}
 			}
-			if len(line) < d.categoryOffset {
+			if len(line) < d.yProcessor.LineOffset {
 				if d.ignoreParseErrors {
 					return
 				}
-				e = fmt.Errorf("len(line) (%d) < d.categoryOffset (%d)", len(line), d.categoryOffset)
+				e = fmt.Errorf("len(line) (%d) < d.yProcessor.LineOffset (%d)", len(line), d.yProcessor.LineOffset)
 				d.errorHandler.Error(e)
 				errs = append(errs, e)
 				return
@@ -283,28 +270,36 @@ func (d *SingleFileDataset) readLineOffsets() error {
 			d.lineOffsets = append(d.lineOffsets, offset)
 			d.Count++
 
-			category := line[d.categoryOffset]
-
-			categoryInt, e := strconv.Atoi(category)
-			// TODO: this magical behaviour could be nicer
-			if e != nil {
-				if d.categoryTokenizer == nil {
-					d.categoryTokenizer = preprocessor.NewTokenizer(
-						d.errorHandler,
-						1,
-						-1,
-						preprocessor.TokenizerConfig{IsCategoryTokenizer: true, DisableFiltering: true},
-					)
+			if d.yProcessor.RequiresFit {
+				e = d.yProcessor.FitString([]string{line[d.yProcessor.LineOffset]})
+				if e != nil {
+					if d.ignoreParseErrors {
+						return
+					}
+					d.errorHandler.Error(e)
+					errs = append(errs, e)
+					return
 				}
-				d.categoryTokenizer.Fit(category)
-				categoryInt = int(d.categoryTokenizer.Tokenize(category)[0])
 			}
 
-			d.classCountsLock.Lock()
-			count := d.ClassCounts[categoryInt]
-			count++
-			d.ClassCounts[categoryInt] = count
-			d.classCountsLock.Unlock()
+			category, e := d.yProcessor.ProcessString([]string{line[d.yProcessor.LineOffset]})
+			if e != nil {
+				if d.ignoreParseErrors {
+					return
+				}
+				d.errorHandler.Error(e)
+				errs = append(errs, e)
+				return
+			}
+
+			categoryInt, isInt := category.Value().([][]int32)
+			if isInt {
+				d.classCountsLock.Lock()
+				count := d.ClassCounts[int(categoryInt[0][0])]
+				count++
+				d.ClassCounts[int(categoryInt[0][0])] = count
+				d.classCountsLock.Unlock()
+			}
 		}(readBytes, offset)
 
 		now := time.Now().Unix()
@@ -641,7 +636,7 @@ func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, *
 	var x []*tf.Tensor
 
 	xStrings := make([][]string, len(d.columnProcessors))
-	var yInts [][]int32
+	var yRaw []string
 
 	for true {
 		row, e := d.getRow()
@@ -687,33 +682,18 @@ func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, *
 			return nil, nil, nil, e
 		}
 
-		if len(row) <= d.categoryOffset {
+		if len(row) <= d.yProcessor.LineOffset {
 			if d.ignoreParseErrors {
 				continue
 			}
-			e = fmt.Errorf("row did not contain enough columns for categoryOffset at %d", d.categoryOffset)
+			e = fmt.Errorf("row did not contain enough columns for categoryOffset at %d", d.yProcessor.LineOffset)
 			d.errorHandler.Error(e)
 			return nil, nil, nil, e
 		}
 
-		var yInt int
+		yRaw = append(yRaw, row[d.yProcessor.LineOffset])
 
-		if d.categoryTokenizer != nil {
-			yInt = int(d.categoryTokenizer.Tokenize(row[d.categoryOffset])[0])
-		} else {
-			yInt, e = strconv.Atoi(row[d.categoryOffset])
-			if e != nil {
-				if d.ignoreParseErrors {
-					continue
-				}
-				d.errorHandler.Error(e)
-				return nil, nil, nil, e
-			}
-		}
-
-		yInts = append(yInts, []int32{int32(yInt)})
-
-		if len(yInts) >= batchSize {
+		if len(yRaw) >= batchSize {
 			break
 		}
 	}
@@ -727,18 +707,24 @@ func (d *SingleFileDataset) Generate(batchSize int) ([]*tf.Tensor, *tf.Tensor, *
 		x = append(x, process)
 	}
 
-	var classWeights []float32
-	for _, yInt32 := range yInts {
-		classWeights = append(classWeights, d.ClassWeights[int(yInt32[0])])
-	}
-
-	classWeightsTensor, e := tf.NewTensor(classWeights)
+	y, e := d.yProcessor.ProcessString(yRaw)
 	if e != nil {
-		d.errorHandler.Error(e)
 		return nil, nil, nil, e
 	}
 
-	y, e := tf.NewTensor(yInts)
+	var classWeights []float32
+	yInts, isInt := y.Value().([][]int32)
+	if isInt {
+		for _, yInt32 := range yInts {
+			classWeights = append(classWeights, d.ClassWeights[int(yInt32[0])])
+		}
+	} else {
+		for range yRaw {
+			classWeights = append(classWeights, 1)
+		}
+	}
+
+	classWeightsTensor, e := tf.NewTensor(classWeights)
 	if e != nil {
 		d.errorHandler.Error(e)
 		return nil, nil, nil, e
@@ -767,6 +753,10 @@ func (d *SingleFileDataset) SaveProcessors(saveDir string) error {
 		if e != nil {
 			return e
 		}
+	}
+	e = d.yProcessor.Save(saveDir)
+	if e != nil {
+		return e
 	}
 	return nil
 }

@@ -11,7 +11,7 @@ type LAttention struct {
 	shape        tf.Shape
 	trainable    bool
 	useScale     bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Attention() *LAttention {
@@ -60,7 +60,7 @@ func (l *LAttention) SetUseScale(useScale bool) *LAttention {
 	return l
 }
 
-func (l *LAttention) SetLayerWeights(layerWeights interface{}) *LAttention {
+func (l *LAttention) SetLayerWeights(layerWeights []*tf.Tensor) *LAttention {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -86,7 +86,7 @@ func (l *LAttention) GetName() string {
 	return l.name
 }
 
-func (l *LAttention) GetLayerWeights() interface{} {
+func (l *LAttention) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

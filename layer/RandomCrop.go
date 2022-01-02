@@ -11,7 +11,7 @@ type LRandomCrop struct {
 	shape        tf.Shape
 	trainable    bool
 	width        float64
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func RandomCrop(height float64, width float64) *LRandomCrop {
@@ -50,7 +50,7 @@ func (l *LRandomCrop) SetTrainable(trainable bool) *LRandomCrop {
 	return l
 }
 
-func (l *LRandomCrop) SetLayerWeights(layerWeights interface{}) *LRandomCrop {
+func (l *LRandomCrop) SetLayerWeights(layerWeights []*tf.Tensor) *LRandomCrop {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -76,7 +76,7 @@ func (l *LRandomCrop) GetName() string {
 	return l.name
 }
 
-func (l *LRandomCrop) GetLayerWeights() interface{} {
+func (l *LRandomCrop) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

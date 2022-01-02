@@ -10,7 +10,7 @@ type LGlobalAveragePooling1D struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func GlobalAveragePooling1D() *LGlobalAveragePooling1D {
@@ -53,7 +53,7 @@ func (l *LGlobalAveragePooling1D) SetTrainable(trainable bool) *LGlobalAveragePo
 	return l
 }
 
-func (l *LGlobalAveragePooling1D) SetLayerWeights(layerWeights interface{}) *LGlobalAveragePooling1D {
+func (l *LGlobalAveragePooling1D) SetLayerWeights(layerWeights []*tf.Tensor) *LGlobalAveragePooling1D {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -79,7 +79,7 @@ func (l *LGlobalAveragePooling1D) GetName() string {
 	return l.name
 }
 
-func (l *LGlobalAveragePooling1D) GetLayerWeights() interface{} {
+func (l *LGlobalAveragePooling1D) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

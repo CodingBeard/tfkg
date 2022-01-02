@@ -42,7 +42,7 @@ type Layer interface {
 	SetInputs(inputs ...Layer) Layer
 	GetInputs() []Layer
 	GetName() string
-	GetLayerWeights() interface{}
+	GetLayerWeights() []*tf.Tensor
 	GetKerasLayerConfig() interface{}
 	GetCustomLayerDefinition() string
 }

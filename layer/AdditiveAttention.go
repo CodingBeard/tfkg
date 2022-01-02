@@ -11,7 +11,7 @@ type LAdditiveAttention struct {
 	shape        tf.Shape
 	trainable    bool
 	useScale     bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func AdditiveAttention() *LAdditiveAttention {
@@ -60,7 +60,7 @@ func (l *LAdditiveAttention) SetUseScale(useScale bool) *LAdditiveAttention {
 	return l
 }
 
-func (l *LAdditiveAttention) SetLayerWeights(layerWeights interface{}) *LAdditiveAttention {
+func (l *LAdditiveAttention) SetLayerWeights(layerWeights []*tf.Tensor) *LAdditiveAttention {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -86,7 +86,7 @@ func (l *LAdditiveAttention) GetName() string {
 	return l.name
 }
 
-func (l *LAdditiveAttention) GetLayerWeights() interface{} {
+func (l *LAdditiveAttention) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

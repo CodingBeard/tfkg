@@ -9,7 +9,7 @@ type LRepeatVector struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func RepeatVector(n float64) *LRepeatVector {
@@ -41,7 +41,7 @@ func (l *LRepeatVector) SetTrainable(trainable bool) *LRepeatVector {
 	return l
 }
 
-func (l *LRepeatVector) SetLayerWeights(layerWeights interface{}) *LRepeatVector {
+func (l *LRepeatVector) SetLayerWeights(layerWeights []*tf.Tensor) *LRepeatVector {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -67,7 +67,7 @@ func (l *LRepeatVector) GetName() string {
 	return l.name
 }
 
-func (l *LRepeatVector) GetLayerWeights() interface{} {
+func (l *LRepeatVector) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

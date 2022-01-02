@@ -8,7 +8,7 @@ type LMaximum struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Maximum() *LMaximum {
@@ -39,7 +39,7 @@ func (l *LMaximum) SetTrainable(trainable bool) *LMaximum {
 	return l
 }
 
-func (l *LMaximum) SetLayerWeights(layerWeights interface{}) *LMaximum {
+func (l *LMaximum) SetLayerWeights(layerWeights []*tf.Tensor) *LMaximum {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -65,7 +65,7 @@ func (l *LMaximum) GetName() string {
 	return l.name
 }
 
-func (l *LMaximum) GetLayerWeights() interface{} {
+func (l *LMaximum) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

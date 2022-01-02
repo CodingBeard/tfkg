@@ -9,7 +9,7 @@ type LActivation struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Activation(activation string) *LActivation {
@@ -41,7 +41,7 @@ func (l *LActivation) SetTrainable(trainable bool) *LActivation {
 	return l
 }
 
-func (l *LActivation) SetLayerWeights(layerWeights interface{}) *LActivation {
+func (l *LActivation) SetLayerWeights(layerWeights []*tf.Tensor) *LActivation {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -67,7 +67,7 @@ func (l *LActivation) GetName() string {
 	return l.name
 }
 
-func (l *LActivation) GetLayerWeights() interface{} {
+func (l *LActivation) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

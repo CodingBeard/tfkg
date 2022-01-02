@@ -69,12 +69,16 @@ func main() {
 		data.SingleFileDatasetConfig{
 			FilePath:          "data/iris.data",
 			CacheDir:          cacheDir,
-			CategoryOffset:    4,
 			TrainPercent:      0.8,
 			ValPercent:        0.1,
 			TestPercent:       0.1,
 			IgnoreParseErrors: true,
 		},
+		preprocessor.NewSparseCategoricalTokenizingYProcessor(
+			errorHandler,
+			cacheDir,
+			4,
+		),
 		preprocessor.NewProcessor(
 			errorHandler,
 			"petal_sizes",
@@ -176,8 +180,18 @@ func main() {
 
 	logger.InfoF("main", "Finished training")
 
-	// Get the weights and biases from the trained model, there are no names attached to these tensors due to the tensorflow c library's implementation
-	weightsTensors, e := m.GetNamedWeights()
+	// Get the weights and biases from the trained model
+	dense1Weights, e := m.GetLayerWeights("dense_1")
+	if e != nil {
+		errorHandler.Error(e)
+		return
+	}
+	dense2Weights, e := m.GetLayerWeights("dense_2")
+	if e != nil {
+		errorHandler.Error(e)
+		return
+	}
+	dense3Weights, e := m.GetLayerWeights("dense_3")
 	if e != nil {
 		errorHandler.Error(e)
 		return
@@ -189,23 +203,17 @@ func main() {
 		errorHandler,
 		layer.Input().SetInputShape(tf.MakeShape(-1, 4)).SetDtype(layer.Float32),
 		layer.Dense(100).
+			SetName("dense_1").
 			SetActivation("swish").
-			SetLayerWeights([]interface{}{
-				weightsTensors["dense_1/kernel:0"].Value().([][]float32),
-				weightsTensors["dense_1/bias:0"].Value().([]float32),
-			}),
+			SetLayerWeights(dense1Weights),
 		layer.Dense(100).
+			SetName("dense_2").
 			SetActivation("swish").
-			SetLayerWeights([]interface{}{
-				weightsTensors["dense_2/kernel:0"].Value().([][]float32),
-				weightsTensors["dense_2/bias:0"].Value().([]float32),
-			}),
+			SetLayerWeights(dense2Weights),
 		layer.Dense(float64(dataset.NumCategoricalClasses())).
+			SetName("dense_3").
 			SetActivation("softmax").
-			SetLayerWeights([]interface{}{
-				weightsTensors["dense_3/kernel:0"].Value().([][]float32),
-				weightsTensors["dense_3/bias:0"].Value().([]float32),
-			}),
+			SetLayerWeights(dense3Weights),
 	)
 
 	// Compile the transfer model, the weights will be set during this step
@@ -279,9 +287,6 @@ func main() {
 			2021-12-29 17:45:16.563 : logger.go:110 : End 10 5/5 (0s/0s) loss: 0.1033 acc: 0.9750 val_loss: 0.0222 val_acc: 1.0000
 			2021-12-29 17:45:16.566 : main.go:177 : Finished training
 			2021-12-29 17:45:16.712 : model.go:785 : Compiling and loading model. If anything goes wrong python error messages will be printed out.
-			Setting weights for:  dense_4
-			Setting weights for:  dense_5
-			Setting weights for:  dense_6
 			Initialising model
 			Tracing learn
 			Tracing evaluate

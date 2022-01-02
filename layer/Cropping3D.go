@@ -10,7 +10,7 @@ type LCropping3D struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Cropping3D() *LCropping3D {
@@ -53,7 +53,7 @@ func (l *LCropping3D) SetTrainable(trainable bool) *LCropping3D {
 	return l
 }
 
-func (l *LCropping3D) SetLayerWeights(layerWeights interface{}) *LCropping3D {
+func (l *LCropping3D) SetLayerWeights(layerWeights []*tf.Tensor) *LCropping3D {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -79,7 +79,7 @@ func (l *LCropping3D) GetName() string {
 	return l.name
 }
 
-func (l *LCropping3D) GetLayerWeights() interface{} {
+func (l *LCropping3D) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

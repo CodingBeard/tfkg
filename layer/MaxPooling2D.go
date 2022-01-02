@@ -12,7 +12,7 @@ type LMaxPooling2D struct {
 	shape        tf.Shape
 	strides      interface{}
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func MaxPooling2D() *LMaxPooling2D {
@@ -67,7 +67,7 @@ func (l *LMaxPooling2D) SetTrainable(trainable bool) *LMaxPooling2D {
 	return l
 }
 
-func (l *LMaxPooling2D) SetLayerWeights(layerWeights interface{}) *LMaxPooling2D {
+func (l *LMaxPooling2D) SetLayerWeights(layerWeights []*tf.Tensor) *LMaxPooling2D {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -93,7 +93,7 @@ func (l *LMaxPooling2D) GetName() string {
 	return l.name
 }
 
-func (l *LMaxPooling2D) GetLayerWeights() interface{} {
+func (l *LMaxPooling2D) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

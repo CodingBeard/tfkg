@@ -12,7 +12,7 @@ type LAveragePooling2D struct {
 	shape        tf.Shape
 	strides      interface{}
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func AveragePooling2D() *LAveragePooling2D {
@@ -67,7 +67,7 @@ func (l *LAveragePooling2D) SetTrainable(trainable bool) *LAveragePooling2D {
 	return l
 }
 
-func (l *LAveragePooling2D) SetLayerWeights(layerWeights interface{}) *LAveragePooling2D {
+func (l *LAveragePooling2D) SetLayerWeights(layerWeights []*tf.Tensor) *LAveragePooling2D {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -93,7 +93,7 @@ func (l *LAveragePooling2D) GetName() string {
 	return l.name
 }
 
-func (l *LAveragePooling2D) GetLayerWeights() interface{} {
+func (l *LAveragePooling2D) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

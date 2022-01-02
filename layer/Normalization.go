@@ -11,7 +11,7 @@ type LNormalization struct {
 	shape        tf.Shape
 	trainable    bool
 	variance     interface{}
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Normalization() *LNormalization {
@@ -60,7 +60,7 @@ func (l *LNormalization) SetVariance(variance interface{}) *LNormalization {
 	return l
 }
 
-func (l *LNormalization) SetLayerWeights(layerWeights interface{}) *LNormalization {
+func (l *LNormalization) SetLayerWeights(layerWeights []*tf.Tensor) *LNormalization {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -86,7 +86,7 @@ func (l *LNormalization) GetName() string {
 	return l.name
 }
 
-func (l *LNormalization) GetLayerWeights() interface{} {
+func (l *LNormalization) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

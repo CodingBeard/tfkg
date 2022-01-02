@@ -28,7 +28,7 @@ type LConv2DTranspose struct {
 	strides             []interface{}
 	trainable           bool
 	useBias             bool
-	layerWeights        interface{}
+	layerWeights        []*tf.Tensor
 }
 
 func Conv2DTranspose(filters float64, kernelSize float64) *LConv2DTranspose {
@@ -151,7 +151,7 @@ func (l *LConv2DTranspose) SetUseBias(useBias bool) *LConv2DTranspose {
 	return l
 }
 
-func (l *LConv2DTranspose) SetLayerWeights(layerWeights interface{}) *LConv2DTranspose {
+func (l *LConv2DTranspose) SetLayerWeights(layerWeights []*tf.Tensor) *LConv2DTranspose {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -177,7 +177,7 @@ func (l *LConv2DTranspose) GetName() string {
 	return l.name
 }
 
-func (l *LConv2DTranspose) GetLayerWeights() interface{} {
+func (l *LConv2DTranspose) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

@@ -11,7 +11,7 @@ type LSpatialDropout1D struct {
 	seed         interface{}
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func SpatialDropout1D(rate float64) *LSpatialDropout1D {
@@ -55,7 +55,7 @@ func (l *LSpatialDropout1D) SetTrainable(trainable bool) *LSpatialDropout1D {
 	return l
 }
 
-func (l *LSpatialDropout1D) SetLayerWeights(layerWeights interface{}) *LSpatialDropout1D {
+func (l *LSpatialDropout1D) SetLayerWeights(layerWeights []*tf.Tensor) *LSpatialDropout1D {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -81,7 +81,7 @@ func (l *LSpatialDropout1D) GetName() string {
 	return l.name
 }
 
-func (l *LSpatialDropout1D) GetLayerWeights() interface{} {
+func (l *LSpatialDropout1D) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

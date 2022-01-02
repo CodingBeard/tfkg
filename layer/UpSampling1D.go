@@ -9,7 +9,7 @@ type LUpSampling1D struct {
 	shape        tf.Shape
 	size         float64
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func UpSampling1D() *LUpSampling1D {
@@ -46,7 +46,7 @@ func (l *LUpSampling1D) SetTrainable(trainable bool) *LUpSampling1D {
 	return l
 }
 
-func (l *LUpSampling1D) SetLayerWeights(layerWeights interface{}) *LUpSampling1D {
+func (l *LUpSampling1D) SetLayerWeights(layerWeights []*tf.Tensor) *LUpSampling1D {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -72,7 +72,7 @@ func (l *LUpSampling1D) GetName() string {
 	return l.name
 }
 
-func (l *LUpSampling1D) GetLayerWeights() interface{} {
+func (l *LUpSampling1D) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

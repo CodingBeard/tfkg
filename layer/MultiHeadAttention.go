@@ -28,7 +28,7 @@ type LMultiHeadAttention struct {
 	useBias             bool
 	valueDim            interface{}
 	valueShape          interface{}
-	layerWeights        interface{}
+	layerWeights        []*tf.Tensor
 }
 
 func MultiHeadAttention(keyDim float64, numHeads float64) *LMultiHeadAttention {
@@ -151,7 +151,7 @@ func (l *LMultiHeadAttention) SetValueShape(valueShape interface{}) *LMultiHeadA
 	return l
 }
 
-func (l *LMultiHeadAttention) SetLayerWeights(layerWeights interface{}) *LMultiHeadAttention {
+func (l *LMultiHeadAttention) SetLayerWeights(layerWeights []*tf.Tensor) *LMultiHeadAttention {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -177,7 +177,7 @@ func (l *LMultiHeadAttention) GetName() string {
 	return l.name
 }
 
-func (l *LMultiHeadAttention) GetLayerWeights() interface{} {
+func (l *LMultiHeadAttention) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

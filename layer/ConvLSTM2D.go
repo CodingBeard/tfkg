@@ -39,7 +39,7 @@ type LConvLSTM2D struct {
 	unitForgetBias       bool
 	unroll               bool
 	useBias              bool
-	layerWeights         interface{}
+	layerWeights         []*tf.Tensor
 }
 
 func ConvLSTM2D(filters float64, kernelSize float64) *LConvLSTM2D {
@@ -228,7 +228,7 @@ func (l *LConvLSTM2D) SetUseBias(useBias bool) *LConvLSTM2D {
 	return l
 }
 
-func (l *LConvLSTM2D) SetLayerWeights(layerWeights interface{}) *LConvLSTM2D {
+func (l *LConvLSTM2D) SetLayerWeights(layerWeights []*tf.Tensor) *LConvLSTM2D {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -254,7 +254,7 @@ func (l *LConvLSTM2D) GetName() string {
 	return l.name
 }
 
-func (l *LConvLSTM2D) GetLayerWeights() interface{} {
+func (l *LConvLSTM2D) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

@@ -17,7 +17,7 @@ type LIntegerLookup struct {
 	sparse         bool
 	trainable      bool
 	vocabulary     interface{}
-	layerWeights   interface{}
+	layerWeights   []*tf.Tensor
 }
 
 func IntegerLookup() *LIntegerLookup {
@@ -102,7 +102,7 @@ func (l *LIntegerLookup) SetVocabulary(vocabulary interface{}) *LIntegerLookup {
 	return l
 }
 
-func (l *LIntegerLookup) SetLayerWeights(layerWeights interface{}) *LIntegerLookup {
+func (l *LIntegerLookup) SetLayerWeights(layerWeights []*tf.Tensor) *LIntegerLookup {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -128,7 +128,7 @@ func (l *LIntegerLookup) GetName() string {
 	return l.name
 }
 
-func (l *LIntegerLookup) GetLayerWeights() interface{} {
+func (l *LIntegerLookup) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

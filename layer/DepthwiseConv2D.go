@@ -27,7 +27,7 @@ type LDepthwiseConv2D struct {
 	strides              []interface{}
 	trainable            bool
 	useBias              bool
-	layerWeights         interface{}
+	layerWeights         []*tf.Tensor
 }
 
 func DepthwiseConv2D(kernelSize float64) *LDepthwiseConv2D {
@@ -149,7 +149,7 @@ func (l *LDepthwiseConv2D) SetUseBias(useBias bool) *LDepthwiseConv2D {
 	return l
 }
 
-func (l *LDepthwiseConv2D) SetLayerWeights(layerWeights interface{}) *LDepthwiseConv2D {
+func (l *LDepthwiseConv2D) SetLayerWeights(layerWeights []*tf.Tensor) *LDepthwiseConv2D {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -175,7 +175,7 @@ func (l *LDepthwiseConv2D) GetName() string {
 	return l.name
 }
 
-func (l *LDepthwiseConv2D) GetLayerWeights() interface{} {
+func (l *LDepthwiseConv2D) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

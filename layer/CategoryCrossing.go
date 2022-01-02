@@ -10,7 +10,7 @@ type LCategoryCrossing struct {
 	separator    string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func CategoryCrossing() *LCategoryCrossing {
@@ -53,7 +53,7 @@ func (l *LCategoryCrossing) SetTrainable(trainable bool) *LCategoryCrossing {
 	return l
 }
 
-func (l *LCategoryCrossing) SetLayerWeights(layerWeights interface{}) *LCategoryCrossing {
+func (l *LCategoryCrossing) SetLayerWeights(layerWeights []*tf.Tensor) *LCategoryCrossing {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -79,7 +79,7 @@ func (l *LCategoryCrossing) GetName() string {
 	return l.name
 }
 
-func (l *LCategoryCrossing) GetLayerWeights() interface{} {
+func (l *LCategoryCrossing) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

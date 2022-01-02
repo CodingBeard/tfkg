@@ -9,7 +9,7 @@ type LMasking struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Masking() *LMasking {
@@ -46,7 +46,7 @@ func (l *LMasking) SetTrainable(trainable bool) *LMasking {
 	return l
 }
 
-func (l *LMasking) SetLayerWeights(layerWeights interface{}) *LMasking {
+func (l *LMasking) SetLayerWeights(layerWeights []*tf.Tensor) *LMasking {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -72,7 +72,7 @@ func (l *LMasking) GetName() string {
 	return l.name
 }
 
-func (l *LMasking) GetLayerWeights() interface{} {
+func (l *LMasking) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

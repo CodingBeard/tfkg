@@ -10,7 +10,7 @@ type LActivityRegularization struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func ActivityRegularization() *LActivityRegularization {
@@ -53,7 +53,7 @@ func (l *LActivityRegularization) SetTrainable(trainable bool) *LActivityRegular
 	return l
 }
 
-func (l *LActivityRegularization) SetLayerWeights(layerWeights interface{}) *LActivityRegularization {
+func (l *LActivityRegularization) SetLayerWeights(layerWeights []*tf.Tensor) *LActivityRegularization {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -79,7 +79,7 @@ func (l *LActivityRegularization) GetName() string {
 	return l.name
 }
 
-func (l *LActivityRegularization) GetLayerWeights() interface{} {
+func (l *LActivityRegularization) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

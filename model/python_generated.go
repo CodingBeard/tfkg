@@ -28,13 +28,9 @@ with open(sys.argv[1], "r") as f:
 
 model = tf.keras.models.model_from_json(config["model_config"], custom_objects=custom_objects)
 
-for layer_name in config["weights"]:
-    if len(config["weights"][layer_name]) > 0:
-        print("Setting weights for: ", layer_name)
-        wb = []
-        for item in config["weights"][layer_name]:
-            wb.append(np.array(item))
-        model.get_layer(layer_name).set_weights(wb)
+weights_spec = []
+for item in model.weights:
+    weights_spec.append(tf.TensorSpec(shape=item.shape, dtype=item.dtype))
 
 if config["model_definition_save_dir"] != "":
     summary = []
@@ -153,6 +149,16 @@ class GolangModel(tf.Module):
     ):
         return self._model.weights
 
+    @tf.function(input_signature=weights_spec)
+    def set_weights(
+            self,
+            *weights,
+    ):
+        for i in range(0, len(self._model.weights)):
+            self._model.weights[i].assign(weights[i])
+
+        return weights
+
 
 print("Initialising model")
 
@@ -183,7 +189,11 @@ gm.predict(*zero_inputs)
 
 print("Tracing get_weights")
 
-gm.get_weights()
+ws = gm.get_weights()
+
+print("Tracing set_weights")
+
+gm.set_weights(*ws)
 
 print("Saving model")
 
@@ -195,6 +205,7 @@ tf.saved_model.save(
         "evaluate": gm.evaluate,
         "predict": gm.predict,
         "get_weights": gm.get_weights,
+        "set_weights": gm.set_weights,
     },
 )
 
@@ -217,6 +228,8 @@ logging.disable(logging.WARNING)
 
 with open(sys.argv[1], "r") as f:
     config = json.load(f)
+
+print("Loading Vanilla model")
 
 model = tf.keras.models.load_model(config["model_dir"])
 
@@ -323,8 +336,6 @@ class GolangModel(tf.Module):
     ):
         return self._model.weights
 
-
-print("Initialising model")
 
 gm = GolangModel()
 

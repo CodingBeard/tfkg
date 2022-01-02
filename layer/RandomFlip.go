@@ -10,7 +10,7 @@ type LRandomFlip struct {
 	seed         interface{}
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func RandomFlip() *LRandomFlip {
@@ -53,7 +53,7 @@ func (l *LRandomFlip) SetTrainable(trainable bool) *LRandomFlip {
 	return l
 }
 
-func (l *LRandomFlip) SetLayerWeights(layerWeights interface{}) *LRandomFlip {
+func (l *LRandomFlip) SetLayerWeights(layerWeights []*tf.Tensor) *LRandomFlip {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -79,7 +79,7 @@ func (l *LRandomFlip) GetName() string {
 	return l.name
 }
 
-func (l *LRandomFlip) GetLayerWeights() interface{} {
+func (l *LRandomFlip) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

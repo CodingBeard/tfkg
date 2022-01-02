@@ -58,6 +58,72 @@ func NewProcessor(
 	}
 }
 
+func NewSparseCategoricalTokenizingYProcessor(
+	errorHandler *cberrors.ErrorsContainer,
+	cacheDir string,
+	lineOffset int,
+) *Processor {
+	return &Processor{
+		errorHandler: errorHandler,
+		Name:         "y",
+		cacheDir:     cacheDir,
+		LineOffset:   lineOffset,
+		RequiresFit:  true,
+		tokenizer:    NewTokenizer(errorHandler, 1, -1, TokenizerConfig{IsCategoryTokenizer: true}),
+		reader:       ReadStringNop,
+		converter:    ConvertTokenizerToInt32SliceTensor,
+	}
+}
+
+func NewSparseCategoricalYProcessor(
+	errorHandler *cberrors.ErrorsContainer,
+	cacheDir string,
+	lineOffset int,
+) *Processor {
+	return &Processor{
+		errorHandler: errorHandler,
+		Name:         "y",
+		cacheDir:     cacheDir,
+		LineOffset:   lineOffset,
+		RequiresFit:  false,
+		reader:       ReadCsvInt32s,
+		converter:    ConvertInt32SliceToTensor,
+	}
+}
+
+func NewBinaryTokenizingYProcessor(
+	errorHandler *cberrors.ErrorsContainer,
+	cacheDir string,
+	lineOffset int,
+) *Processor {
+	return &Processor{
+		errorHandler: errorHandler,
+		Name:         "y",
+		cacheDir:     cacheDir,
+		LineOffset:   lineOffset,
+		RequiresFit:  true,
+		tokenizer:    NewTokenizer(errorHandler, 1, -1, TokenizerConfig{IsCategoryTokenizer: true}),
+		reader:       ReadStringNop,
+		converter:    ConvertTokenizerToInt32SliceTensor,
+	}
+}
+
+func NewBinaryYProcessor(
+	errorHandler *cberrors.ErrorsContainer,
+	cacheDir string,
+	lineOffset int,
+) *Processor {
+	return &Processor{
+		errorHandler: errorHandler,
+		Name:         "y",
+		cacheDir:     cacheDir,
+		LineOffset:   lineOffset,
+		RequiresFit:  false,
+		reader:       ReadCsvInt32s,
+		converter:    ConvertInt32SliceToTensor,
+	}
+}
+
 func (p *Processor) Tokenizer() *Tokenizer {
 	return p.tokenizer
 }
@@ -210,31 +276,63 @@ func (p *Processor) ProcessInterface(columnRows interface{}) (*tf.Tensor, error)
 	}
 	if p.divisor != nil {
 		var dividedRows [][]float32
-		for _, columnRow := range columnRows.([][]float32) {
-			divided, e := p.divisor.Divide(columnRow)
-			if e != nil {
-				p.errorHandler.Error(e)
-				return nil, e
+		literalType, ok := columnRows.([][]float32)
+		if ok {
+			for _, columnRow := range literalType {
+				divided, e := p.divisor.Divide(columnRow)
+				if e != nil {
+					p.errorHandler.Error(e)
+					return nil, e
+				}
+				dividedRows = append(dividedRows, divided)
 			}
-			dividedRows = append(dividedRows, divided)
+		} else {
+			for _, columnRow := range columnRows.([]interface{}) {
+				divided, e := p.divisor.Divide(columnRow.([]float32))
+				if e != nil {
+					p.errorHandler.Error(e)
+					return nil, e
+				}
+				dividedRows = append(dividedRows, divided)
+			}
 		}
 		return p.converter(dividedRows)
 	} else if p.tokenizer != nil {
 		var tokenizedStrings [][]int32
-		for _, columnRow := range columnRows.([]string) {
-			tokenized := p.tokenizer.Tokenize(columnRow)
-			tokenizedStrings = append(tokenizedStrings, tokenized)
+		literalType, ok := columnRows.([]string)
+		if ok {
+			for _, columnRow := range literalType {
+				tokenized := p.tokenizer.Tokenize(columnRow)
+				tokenizedStrings = append(tokenizedStrings, tokenized)
+			}
+		} else {
+			for _, columnRow := range columnRows.([]interface{}) {
+				tokenized := p.tokenizer.Tokenize(columnRow.(string))
+				tokenizedStrings = append(tokenizedStrings, tokenized)
+			}
 		}
 		return p.converter(tokenizedStrings)
 	} else if p.image != nil {
 		var processedImages []ProcessedImage
-		for _, img := range columnRows.([]image.Image) {
-			processedImage, e := p.image.Process(img)
-			if e != nil {
-				p.errorHandler.Error(e)
-				return nil, e
+		literalType, ok := columnRows.([]image.Image)
+		if ok {
+			for _, img := range literalType {
+				processedImage, e := p.image.Process(img)
+				if e != nil {
+					p.errorHandler.Error(e)
+					return nil, e
+				}
+				processedImages = append(processedImages, processedImage)
 			}
-			processedImages = append(processedImages, processedImage)
+		} else {
+			for _, img := range columnRows.([]interface{}) {
+				processedImage, e := p.image.Process(img.(image.Image))
+				if e != nil {
+					p.errorHandler.Error(e)
+					return nil, e
+				}
+				processedImages = append(processedImages, processedImage)
+			}
 		}
 		return p.converter(processedImages)
 	}

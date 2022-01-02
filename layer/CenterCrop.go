@@ -10,7 +10,7 @@ type LCenterCrop struct {
 	shape        tf.Shape
 	trainable    bool
 	width        float64
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func CenterCrop(height float64, width float64) *LCenterCrop {
@@ -43,7 +43,7 @@ func (l *LCenterCrop) SetTrainable(trainable bool) *LCenterCrop {
 	return l
 }
 
-func (l *LCenterCrop) SetLayerWeights(layerWeights interface{}) *LCenterCrop {
+func (l *LCenterCrop) SetLayerWeights(layerWeights []*tf.Tensor) *LCenterCrop {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -69,7 +69,7 @@ func (l *LCenterCrop) GetName() string {
 	return l.name
 }
 
-func (l *LCenterCrop) GetLayerWeights() interface{} {
+func (l *LCenterCrop) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

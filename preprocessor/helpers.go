@@ -131,6 +131,40 @@ func ConvertInt32SliceToTensor(columns interface{}) (*tf.Tensor, error) {
 	return tensor, nil
 }
 
+func ConvertInterfaceToInt32SliceTensor(columns interface{}) (*tf.Tensor, error) {
+	columnsInterfaces, ok := columns.([]interface{})
+	if !ok {
+		e := fmt.Errorf("could not convert columns to []int32")
+		return nil, e
+	}
+	var columnInts [][]int32
+	for _, columnInterface := range columnsInterfaces {
+		columnInts = append(columnInts, []int32{columnInterface.(int32)})
+	}
+	tensor, e := tf.NewTensor(columnInts)
+	if e != nil {
+		return nil, e
+	}
+	return tensor, nil
+}
+
+func ConvertInterfaceToFloat32SliceTensor(columns interface{}) (*tf.Tensor, error) {
+	columnsInterfaces, ok := columns.([]interface{})
+	if !ok {
+		e := fmt.Errorf("could not convert columns to []int32")
+		return nil, e
+	}
+	var columnInts [][]float32
+	for _, columnInterface := range columnsInterfaces {
+		columnInts = append(columnInts, []float32{columnInterface.(float32)})
+	}
+	tensor, e := tf.NewTensor(columnInts)
+	if e != nil {
+		return nil, e
+	}
+	return tensor, nil
+}
+
 func ConvertInterfaceFloat32SliceToTensor(columns interface{}) (*tf.Tensor, error) {
 	interfaceSlice, ok := columns.([]interface{})
 	if !ok {

@@ -54,10 +54,16 @@ func main() {
 		},
 		preprocessor.NewProcessor(
 			errorHandler,
+			"y",
+			preprocessor.ProcessorConfig{
+				Converter: preprocessor.ConvertInterfaceToInt32SliceTensor,
+			},
+		),
+		preprocessor.NewProcessor(
+			errorHandler,
 			"floats",
 			preprocessor.ProcessorConfig{
-				LineOffset: 0,
-				Converter:  preprocessor.ConvertInterfaceFloat32SliceToTensor,
+				Converter: preprocessor.ConvertInterfaceFloat32SliceToTensor,
 			},
 		),
 	)

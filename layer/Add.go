@@ -8,7 +8,7 @@ type LAdd struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Add() *LAdd {
@@ -39,7 +39,7 @@ func (l *LAdd) SetTrainable(trainable bool) *LAdd {
 	return l
 }
 
-func (l *LAdd) SetLayerWeights(layerWeights interface{}) *LAdd {
+func (l *LAdd) SetLayerWeights(layerWeights []*tf.Tensor) *LAdd {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -65,7 +65,7 @@ func (l *LAdd) GetName() string {
 	return l.name
 }
 
-func (l *LAdd) GetLayerWeights() interface{} {
+func (l *LAdd) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

@@ -13,7 +13,7 @@ type LRandomRotation struct {
 	seed          interface{}
 	shape         tf.Shape
 	trainable     bool
-	layerWeights  interface{}
+	layerWeights  []*tf.Tensor
 }
 
 func RandomRotation(factor float64) *LRandomRotation {
@@ -69,7 +69,7 @@ func (l *LRandomRotation) SetTrainable(trainable bool) *LRandomRotation {
 	return l
 }
 
-func (l *LRandomRotation) SetLayerWeights(layerWeights interface{}) *LRandomRotation {
+func (l *LRandomRotation) SetLayerWeights(layerWeights []*tf.Tensor) *LRandomRotation {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -95,7 +95,7 @@ func (l *LRandomRotation) GetName() string {
 	return l.name
 }
 
-func (l *LRandomRotation) GetLayerWeights() interface{} {
+func (l *LRandomRotation) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

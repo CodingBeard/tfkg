@@ -8,7 +8,7 @@ type LPreprocessingLayer struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func PreprocessingLayer() *LPreprocessingLayer {
@@ -39,7 +39,7 @@ func (l *LPreprocessingLayer) SetTrainable(trainable bool) *LPreprocessingLayer 
 	return l
 }
 
-func (l *LPreprocessingLayer) SetLayerWeights(layerWeights interface{}) *LPreprocessingLayer {
+func (l *LPreprocessingLayer) SetLayerWeights(layerWeights []*tf.Tensor) *LPreprocessingLayer {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -65,7 +65,7 @@ func (l *LPreprocessingLayer) GetName() string {
 	return l.name
 }
 
-func (l *LPreprocessingLayer) GetLayerWeights() interface{} {
+func (l *LPreprocessingLayer) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

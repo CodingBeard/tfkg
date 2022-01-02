@@ -11,7 +11,7 @@ type LRandomWidth struct {
 	seed          interface{}
 	shape         tf.Shape
 	trainable     bool
-	layerWeights  interface{}
+	layerWeights  []*tf.Tensor
 }
 
 func RandomWidth(factor float64) *LRandomWidth {
@@ -55,7 +55,7 @@ func (l *LRandomWidth) SetTrainable(trainable bool) *LRandomWidth {
 	return l
 }
 
-func (l *LRandomWidth) SetLayerWeights(layerWeights interface{}) *LRandomWidth {
+func (l *LRandomWidth) SetLayerWeights(layerWeights []*tf.Tensor) *LRandomWidth {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -81,7 +81,7 @@ func (l *LRandomWidth) GetName() string {
 	return l.name
 }
 
-func (l *LRandomWidth) GetLayerWeights() interface{} {
+func (l *LRandomWidth) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

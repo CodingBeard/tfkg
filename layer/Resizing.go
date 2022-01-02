@@ -12,7 +12,7 @@ type LResizing struct {
 	shape             tf.Shape
 	trainable         bool
 	width             float64
-	layerWeights      interface{}
+	layerWeights      []*tf.Tensor
 }
 
 func Resizing(height float64, width float64) *LResizing {
@@ -57,7 +57,7 @@ func (l *LResizing) SetTrainable(trainable bool) *LResizing {
 	return l
 }
 
-func (l *LResizing) SetLayerWeights(layerWeights interface{}) *LResizing {
+func (l *LResizing) SetLayerWeights(layerWeights []*tf.Tensor) *LResizing {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -83,7 +83,7 @@ func (l *LResizing) GetName() string {
 	return l.name
 }
 
-func (l *LResizing) GetLayerWeights() interface{} {
+func (l *LResizing) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

@@ -8,7 +8,7 @@ type LAverage struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Average() *LAverage {
@@ -39,7 +39,7 @@ func (l *LAverage) SetTrainable(trainable bool) *LAverage {
 	return l
 }
 
-func (l *LAverage) SetLayerWeights(layerWeights interface{}) *LAverage {
+func (l *LAverage) SetLayerWeights(layerWeights []*tf.Tensor) *LAverage {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -65,7 +65,7 @@ func (l *LAverage) GetName() string {
 	return l.name
 }
 
-func (l *LAverage) GetLayerWeights() interface{} {
+func (l *LAverage) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

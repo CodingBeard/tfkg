@@ -14,7 +14,7 @@ type LRandomZoom struct {
 	shape         tf.Shape
 	trainable     bool
 	widthFactor   interface{}
-	layerWeights  interface{}
+	layerWeights  []*tf.Tensor
 }
 
 func RandomZoom(heightFactor float64) *LRandomZoom {
@@ -76,7 +76,7 @@ func (l *LRandomZoom) SetWidthFactor(widthFactor interface{}) *LRandomZoom {
 	return l
 }
 
-func (l *LRandomZoom) SetLayerWeights(layerWeights interface{}) *LRandomZoom {
+func (l *LRandomZoom) SetLayerWeights(layerWeights []*tf.Tensor) *LRandomZoom {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -102,7 +102,7 @@ func (l *LRandomZoom) GetName() string {
 	return l.name
 }
 
-func (l *LRandomZoom) GetLayerWeights() interface{} {
+func (l *LRandomZoom) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

@@ -10,7 +10,7 @@ type LGlobalMaxPooling3D struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func GlobalMaxPooling3D() *LGlobalMaxPooling3D {
@@ -53,7 +53,7 @@ func (l *LGlobalMaxPooling3D) SetTrainable(trainable bool) *LGlobalMaxPooling3D 
 	return l
 }
 
-func (l *LGlobalMaxPooling3D) SetLayerWeights(layerWeights interface{}) *LGlobalMaxPooling3D {
+func (l *LGlobalMaxPooling3D) SetLayerWeights(layerWeights []*tf.Tensor) *LGlobalMaxPooling3D {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -79,7 +79,7 @@ func (l *LGlobalMaxPooling3D) GetName() string {
 	return l.name
 }
 
-func (l *LGlobalMaxPooling3D) GetLayerWeights() interface{} {
+func (l *LGlobalMaxPooling3D) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

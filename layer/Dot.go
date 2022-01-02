@@ -10,7 +10,7 @@ type LDot struct {
 	normalize    bool
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Dot(axes float64) *LDot {
@@ -48,7 +48,7 @@ func (l *LDot) SetTrainable(trainable bool) *LDot {
 	return l
 }
 
-func (l *LDot) SetLayerWeights(layerWeights interface{}) *LDot {
+func (l *LDot) SetLayerWeights(layerWeights []*tf.Tensor) *LDot {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -74,7 +74,7 @@ func (l *LDot) GetName() string {
 	return l.name
 }
 
-func (l *LDot) GetLayerWeights() interface{} {
+func (l *LDot) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

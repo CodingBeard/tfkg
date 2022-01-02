@@ -9,7 +9,7 @@ type LTimeDistributed struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func TimeDistributed(layer interface{}) *LTimeDistributed {
@@ -41,7 +41,7 @@ func (l *LTimeDistributed) SetTrainable(trainable bool) *LTimeDistributed {
 	return l
 }
 
-func (l *LTimeDistributed) SetLayerWeights(layerWeights interface{}) *LTimeDistributed {
+func (l *LTimeDistributed) SetLayerWeights(layerWeights []*tf.Tensor) *LTimeDistributed {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -67,7 +67,7 @@ func (l *LTimeDistributed) GetName() string {
 	return l.name
 }
 
-func (l *LTimeDistributed) GetLayerWeights() interface{} {
+func (l *LTimeDistributed) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

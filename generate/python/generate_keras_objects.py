@@ -89,6 +89,7 @@ objects = [
     {"type": "layer", "class": k.layers.Subtract, "args": []},
     {"type": "layer", "class": k.layers.Multiply, "args": []},
     {"type": "layer", "class": k.layers.Dot, "args": []},
+    {"type": "layer", "class": k.layers.LeakyReLU, "args": []},
     {"type": "layer", "class": k.layers.experimental.preprocessing.CategoryCrossing, "args": []},
     {"type": "layer", "class": k.layers.experimental.preprocessing.CategoryEncoding, "args": []},
     {"type": "layer", "class": k.layers.experimental.preprocessing.CenterCrop, "args": []},

@@ -10,7 +10,7 @@ type LRandomContrast struct {
 	seed         interface{}
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func RandomContrast(factor float64) *LRandomContrast {
@@ -48,7 +48,7 @@ func (l *LRandomContrast) SetTrainable(trainable bool) *LRandomContrast {
 	return l
 }
 
-func (l *LRandomContrast) SetLayerWeights(layerWeights interface{}) *LRandomContrast {
+func (l *LRandomContrast) SetLayerWeights(layerWeights []*tf.Tensor) *LRandomContrast {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -74,7 +74,7 @@ func (l *LRandomContrast) GetName() string {
 	return l.name
 }
 
-func (l *LRandomContrast) GetLayerWeights() interface{} {
+func (l *LRandomContrast) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

@@ -30,6 +30,7 @@ var (
 	tempModelDir                           = "tfkg_temp_model"
 	LossBinaryCrossentropy            Loss = "binary_crossentropy"
 	LossSparseCategoricalCrossentropy Loss = "sparse_categorical_crossentropy"
+	LossMSE                           Loss = "mse"
 )
 
 type TfkgModel struct {
@@ -240,19 +241,15 @@ func LoadVanillaModel(
 	}, nil
 }
 
-func (m *TfkgModel) GetWeights() ([]*tf.Tensor, error) {
+func (m *TfkgModel) GetModelWeights() ([]*tf.Tensor, error) {
 	var variableOutputs []tf.Output
-	output := 0
-	for _, info := range m.model.Signatures["get_weights"].Outputs {
-		parts := strings.Split(info.Name, ":")
-		if len(parts) != 2 {
-			e := fmt.Errorf("error getting output for get_weights signature in GetWeights")
-			m.errorHandler.Error(e)
-			return nil, e
+
+	for _, l := range m.layers {
+		for _, operation := range m.model.Graph.Operations() {
+			if strings.HasPrefix(operation.Name(), l.GetName()) && operation.Type() == "ReadVariableOp" {
+				variableOutputs = append(variableOutputs, m.model.Graph.Operation(operation.Name()).Output(0))
+			}
 		}
-		name := parts[0]
-		variableOutputs = append(variableOutputs, m.model.Graph.Operation(name).Output(output))
-		output++
 	}
 
 	results, e := m.model.Session.Run(
@@ -268,32 +265,73 @@ func (m *TfkgModel) GetWeights() ([]*tf.Tensor, error) {
 	return results, nil
 }
 
-func (m *TfkgModel) GetNamedWeights() (map[string]*tf.Tensor, error) {
-	weightNamesFile, e := ioutil.ReadFile(filepath.Join(m.modelDefinitionSaveDir, "weight_names.json"))
+func (m *TfkgModel) GetLayerWeights(layerName string) ([]*tf.Tensor, error) {
+	var variableOutputs []tf.Output
+
+	found := false
+	for _, l := range m.layers {
+		if l.GetName() != layerName {
+			continue
+		}
+		found = true
+		for _, operation := range m.model.Graph.Operations() {
+			if strings.HasPrefix(operation.Name(), l.GetName()) && operation.Type() == "ReadVariableOp" {
+				variableOutputs = append(variableOutputs, m.model.Graph.Operation(operation.Name()).Output(0))
+			}
+		}
+	}
+	if !found {
+		e := fmt.Errorf("layer %s not found in the model", layerName)
+		return nil, e
+	}
+
+	results, e := m.model.Session.Run(
+		map[tf.Output]*tf.Tensor{},
+		variableOutputs,
+		nil,
+	)
+	if e != nil {
+		return nil, e
+	}
+
+	return results, nil
+}
+
+func (m *TfkgModel) SetModelWeights(weights []*tf.Tensor) error {
+	var variableOutputs []tf.Output
+	output := 0
+	for _, info := range m.model.Signatures["set_weights"].Outputs {
+		parts := strings.Split(info.Name, ":")
+		if len(parts) != 2 {
+			e := fmt.Errorf("error getting output for set_weights signature in SetModelWeights")
+			m.errorHandler.Error(e)
+			return e
+		}
+		name := parts[0]
+		variableOutputs = append(variableOutputs, m.model.Graph.Operation(name).Output(output))
+		output++
+	}
+	var inputOps []tf.Output
+	for offset := range weights {
+		inputOps = append(inputOps, m.model.Graph.Operation(fmt.Sprintf("set_weights_weights_%d", offset)).Output(0))
+	}
+
+	inputs := map[tf.Output]*tf.Tensor{}
+
+	for i, inputOp := range inputOps {
+		inputs[inputOp] = weights[i]
+	}
+	_, e := m.model.Session.Run(
+		inputs,
+		variableOutputs,
+		nil,
+	)
 	if e != nil {
 		m.errorHandler.Error(e)
-		return nil, e
+		return e
 	}
 
-	var names []string
-	e = json.Unmarshal(weightNamesFile, &names)
-
-	results, e := m.GetWeights()
-	if e != nil {
-		return nil, e
-	}
-
-	namedResults := make(map[string]*tf.Tensor)
-	for i, name := range names {
-		if i >= len(results) {
-			e = fmt.Errorf("there were not enough weights in the call to m.GetWeights for the saved weight names")
-			m.errorHandler.Error(e)
-			return nil, e
-		}
-		namedResults[name] = results[i]
-	}
-
-	return namedResults, nil
+	return nil
 }
 
 func (m *TfkgModel) Predict(inputs ...*tf.Tensor) (*tf.Tensor, error) {
@@ -425,8 +463,8 @@ func (m *TfkgModel) Fit(
 			}
 
 			loss := result[0].Value().(float32)
-			yTrue := y.Value().([][]int32)
-			yPred := result[1].Value().([][]float32)
+			yTrue := y.Value()
+			yPred := result[1].Value()
 
 			trainTotalLoss += float64(loss)
 
@@ -545,9 +583,9 @@ func (m *TfkgModel) Fit(
 					return
 				}
 
-				yTrue := y.Value().([][]int32)
+				yTrue := y.Value()
 				loss := result[0].Value().(float32)
-				yPred := result[1].Value().([][]float32)
+				yPred := result[1].Value()
 
 				valTotalLoss += float64(loss)
 
@@ -696,9 +734,9 @@ func (m *TfkgModel) Evaluate(
 			return
 		}
 
-		yTrue := y.Value().([][]int32)
+		yTrue := y.Value()
 		loss := result[0].Value().(float32)
-		yPred := result[1].Value().([][]float32)
+		yPred := result[1].Value()
 
 		evaluateTotalLoss += float64(loss)
 
@@ -920,12 +958,11 @@ func (m *TfkgModel) Save(dir string) error {
 }
 
 type pythonConfig struct {
-	ModelConfig            string                 `json:"model_config"`
-	SaveDir                string                 `json:"save_dir"`
-	ModelDefinitionSaveDir string                 `json:"model_definition_save_dir"`
-	Loss                   string                 `json:"loss"`
-	Optimizer              interface{}            `json:"optimizer"`
-	Weights                map[string]interface{} `json:"weights"`
+	ModelConfig            string      `json:"model_config"`
+	SaveDir                string      `json:"save_dir"`
+	ModelDefinitionSaveDir string      `json:"model_definition_save_dir"`
+	Loss                   string      `json:"loss"`
+	Optimizer              interface{} `json:"optimizer"`
 }
 
 func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, modelDefinitionSaveDir string) error {
@@ -957,13 +994,6 @@ func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, mod
 			return e
 		}
 	}
-	weights := make(map[string]interface{})
-	for _, l := range m.layers {
-		w := l.GetLayerWeights()
-		if w != nil {
-			weights[l.GetName()] = l.GetLayerWeights()
-		}
-	}
 
 	config := pythonConfig{
 		ModelConfig:            modelConfig,
@@ -971,7 +1001,6 @@ func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, mod
 		ModelDefinitionSaveDir: modelDefinitionSaveDir,
 		Loss:                   string(loss),
 		Optimizer:              optimizer.GetKerasLayerConfig(),
-		Weights:                weights,
 	}
 
 	configBytes, e := json.Marshal(config)
@@ -1040,6 +1069,33 @@ func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, mod
 	if e != nil {
 		m.errorHandler.Error(e)
 		return e
+	}
+
+	hasCustomWeights := false
+	for _, l := range m.layers {
+		if len(l.GetLayerWeights()) > 0 {
+			hasCustomWeights = true
+			break
+		}
+	}
+
+	if hasCustomWeights {
+		var modelWeights []*tf.Tensor
+		for _, l := range m.layers {
+			if len(l.GetLayerWeights()) > 0 {
+				modelWeights = append(modelWeights, l.GetLayerWeights()...)
+			} else {
+				weights, e := m.GetLayerWeights(l.GetName())
+				if e != nil {
+					continue
+				}
+				modelWeights = append(modelWeights, weights...)
+			}
+		}
+		e = m.SetModelWeights(modelWeights)
+		if e != nil {
+			return e
+		}
 	}
 
 	return nil

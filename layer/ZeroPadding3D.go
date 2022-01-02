@@ -10,7 +10,7 @@ type LZeroPadding3D struct {
 	padding      []interface{}
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func ZeroPadding3D() *LZeroPadding3D {
@@ -53,7 +53,7 @@ func (l *LZeroPadding3D) SetTrainable(trainable bool) *LZeroPadding3D {
 	return l
 }
 
-func (l *LZeroPadding3D) SetLayerWeights(layerWeights interface{}) *LZeroPadding3D {
+func (l *LZeroPadding3D) SetLayerWeights(layerWeights []*tf.Tensor) *LZeroPadding3D {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -79,7 +79,7 @@ func (l *LZeroPadding3D) GetName() string {
 	return l.name
 }
 
-func (l *LZeroPadding3D) GetLayerWeights() interface{} {
+func (l *LZeroPadding3D) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

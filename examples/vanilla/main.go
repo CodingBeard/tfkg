@@ -63,10 +63,14 @@ func main() {
 		data.SingleFileDatasetConfig{
 			FilePath:          "data/iris.data",
 			CacheDir:          cacheDir,
-			CategoryOffset:    4,
 			TestPercent:       1,
 			IgnoreParseErrors: true,
 		},
+		preprocessor.NewSparseCategoricalTokenizingYProcessor(
+			errorHandler,
+			cacheDir,
+			4,
+		),
 		preprocessor.NewProcessor(
 			errorHandler,
 			"petal_sizes",

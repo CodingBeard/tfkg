@@ -9,7 +9,7 @@ type LReshape struct {
 	shape        tf.Shape
 	targetShape  []interface{}
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Reshape(targetShape []interface{}) *LReshape {
@@ -41,7 +41,7 @@ func (l *LReshape) SetTrainable(trainable bool) *LReshape {
 	return l
 }
 
-func (l *LReshape) SetLayerWeights(layerWeights interface{}) *LReshape {
+func (l *LReshape) SetLayerWeights(layerWeights []*tf.Tensor) *LReshape {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -67,7 +67,7 @@ func (l *LReshape) GetName() string {
 	return l.name
 }
 
-func (l *LReshape) GetLayerWeights() interface{} {
+func (l *LReshape) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

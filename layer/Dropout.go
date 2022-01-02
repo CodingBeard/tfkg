@@ -11,7 +11,7 @@ type LDropout struct {
 	seed         interface{}
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Dropout(rate float64) *LDropout {
@@ -55,7 +55,7 @@ func (l *LDropout) SetTrainable(trainable bool) *LDropout {
 	return l
 }
 
-func (l *LDropout) SetLayerWeights(layerWeights interface{}) *LDropout {
+func (l *LDropout) SetLayerWeights(layerWeights []*tf.Tensor) *LDropout {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -81,7 +81,7 @@ func (l *LDropout) GetName() string {
 	return l.name
 }
 
-func (l *LDropout) GetLayerWeights() interface{} {
+func (l *LDropout) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

@@ -9,7 +9,7 @@ type LFlatten struct {
 	name         string
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func Flatten() *LFlatten {
@@ -46,7 +46,7 @@ func (l *LFlatten) SetTrainable(trainable bool) *LFlatten {
 	return l
 }
 
-func (l *LFlatten) SetLayerWeights(layerWeights interface{}) *LFlatten {
+func (l *LFlatten) SetLayerWeights(layerWeights []*tf.Tensor) *LFlatten {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -72,7 +72,7 @@ func (l *LFlatten) GetName() string {
 	return l.name
 }
 
-func (l *LFlatten) GetLayerWeights() interface{} {
+func (l *LFlatten) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

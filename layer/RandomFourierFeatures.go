@@ -11,7 +11,7 @@ type LRandomFourierFeatures struct {
 	scale             interface{}
 	shape             tf.Shape
 	trainable         bool
-	layerWeights      interface{}
+	layerWeights      []*tf.Tensor
 }
 
 func RandomFourierFeatures(outputDim float64) *LRandomFourierFeatures {
@@ -55,7 +55,7 @@ func (l *LRandomFourierFeatures) SetTrainable(trainable bool) *LRandomFourierFea
 	return l
 }
 
-func (l *LRandomFourierFeatures) SetLayerWeights(layerWeights interface{}) *LRandomFourierFeatures {
+func (l *LRandomFourierFeatures) SetLayerWeights(layerWeights []*tf.Tensor) *LRandomFourierFeatures {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -81,7 +81,7 @@ func (l *LRandomFourierFeatures) GetName() string {
 	return l.name
 }
 
-func (l *LRandomFourierFeatures) GetLayerWeights() interface{} {
+func (l *LRandomFourierFeatures) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 

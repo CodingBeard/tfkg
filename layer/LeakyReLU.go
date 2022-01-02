@@ -2,8 +2,8 @@ package layer
 
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
-type LPermute struct {
-	dims         []interface{}
+type LLeakyReLU struct {
+	alpha        float64
 	dtype        DataType
 	inputs       []Layer
 	name         string
@@ -12,73 +12,78 @@ type LPermute struct {
 	layerWeights []*tf.Tensor
 }
 
-func Permute(dims []interface{}) *LPermute {
-	return &LPermute{
-		dims:      dims,
+func LeakyReLU() *LLeakyReLU {
+	return &LLeakyReLU{
+		alpha:     0.3,
 		dtype:     Float32,
-		name:      UniqueName("permute"),
+		name:      UniqueName("leaky_re_lu"),
 		trainable: true,
 	}
 }
 
-func (l *LPermute) SetDtype(dtype DataType) *LPermute {
+func (l *LLeakyReLU) SetAlpha(alpha float64) *LLeakyReLU {
+	l.alpha = alpha
+	return l
+}
+
+func (l *LLeakyReLU) SetDtype(dtype DataType) *LLeakyReLU {
 	l.dtype = dtype
 	return l
 }
 
-func (l *LPermute) SetName(name string) *LPermute {
+func (l *LLeakyReLU) SetName(name string) *LLeakyReLU {
 	l.name = name
 	return l
 }
 
-func (l *LPermute) SetShape(shape tf.Shape) *LPermute {
+func (l *LLeakyReLU) SetShape(shape tf.Shape) *LLeakyReLU {
 	l.shape = shape
 	return l
 }
 
-func (l *LPermute) SetTrainable(trainable bool) *LPermute {
+func (l *LLeakyReLU) SetTrainable(trainable bool) *LLeakyReLU {
 	l.trainable = trainable
 	return l
 }
 
-func (l *LPermute) SetLayerWeights(layerWeights []*tf.Tensor) *LPermute {
+func (l *LLeakyReLU) SetLayerWeights(layerWeights []*tf.Tensor) *LLeakyReLU {
 	l.layerWeights = layerWeights
 	return l
 }
 
-func (l *LPermute) GetShape() tf.Shape {
+func (l *LLeakyReLU) GetShape() tf.Shape {
 	return l.shape
 }
 
-func (l *LPermute) GetDtype() DataType {
+func (l *LLeakyReLU) GetDtype() DataType {
 	return l.dtype
 }
 
-func (l *LPermute) SetInputs(inputs ...Layer) Layer {
+func (l *LLeakyReLU) SetInputs(inputs ...Layer) Layer {
 	l.inputs = inputs
 	return l
 }
 
-func (l *LPermute) GetInputs() []Layer {
+func (l *LLeakyReLU) GetInputs() []Layer {
 	return l.inputs
 }
 
-func (l *LPermute) GetName() string {
+func (l *LLeakyReLU) GetName() string {
 	return l.name
 }
 
-func (l *LPermute) GetLayerWeights() []*tf.Tensor {
+func (l *LLeakyReLU) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 
-type jsonConfigLPermute struct {
+type jsonConfigLLeakyReLU struct {
 	ClassName    string                 `json:"class_name"`
 	Name         string                 `json:"name"`
 	Config       map[string]interface{} `json:"config"`
 	InboundNodes [][][]interface{}      `json:"inbound_nodes"`
 }
 
-func (l *LPermute) GetKerasLayerConfig() interface{} {
+func (l *LLeakyReLU) GetKerasLayerConfig() interface{} {
 	inboundNodes := [][][]interface{}{
 		{},
 	}
@@ -90,11 +95,11 @@ func (l *LPermute) GetKerasLayerConfig() interface{} {
 			map[string]bool{},
 		})
 	}
-	return jsonConfigLPermute{
-		ClassName: "Permute",
+	return jsonConfigLLeakyReLU{
+		ClassName: "LeakyReLU",
 		Name:      l.name,
 		Config: map[string]interface{}{
-			"dims":      l.dims,
+			"alpha":     l.alpha,
 			"dtype":     l.dtype.String(),
 			"name":      l.name,
 			"trainable": l.trainable,
@@ -103,6 +108,6 @@ func (l *LPermute) GetKerasLayerConfig() interface{} {
 	}
 }
 
-func (l *LPermute) GetCustomLayerDefinition() string {
+func (l *LLeakyReLU) GetCustomLayerDefinition() string {
 	return ``
 }

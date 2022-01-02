@@ -9,7 +9,7 @@ type LGaussianDropout struct {
 	rate         float64
 	shape        tf.Shape
 	trainable    bool
-	layerWeights interface{}
+	layerWeights []*tf.Tensor
 }
 
 func GaussianDropout(rate float64) *LGaussianDropout {
@@ -41,7 +41,7 @@ func (l *LGaussianDropout) SetTrainable(trainable bool) *LGaussianDropout {
 	return l
 }
 
-func (l *LGaussianDropout) SetLayerWeights(layerWeights interface{}) *LGaussianDropout {
+func (l *LGaussianDropout) SetLayerWeights(layerWeights []*tf.Tensor) *LGaussianDropout {
 	l.layerWeights = layerWeights
 	return l
 }
@@ -67,7 +67,7 @@ func (l *LGaussianDropout) GetName() string {
 	return l.name
 }
 
-func (l *LGaussianDropout) GetLayerWeights() interface{} {
+func (l *LGaussianDropout) GetLayerWeights() []*tf.Tensor {
 	return l.layerWeights
 }
 
