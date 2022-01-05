@@ -1,7 +1,6 @@
 package layer
 
 import "github.com/codingbeard/tfkg/layer/constraint"
-import "github.com/codingbeard/tfkg/layer/initializer"
 import "github.com/codingbeard/tfkg/layer/regularizer"
 import tf "github.com/galeone/tensorflow/tensorflow/go"
 
@@ -10,7 +9,7 @@ type LEmbedding struct {
 	batchInputShape       []interface{}
 	dtype                 DataType
 	embeddingsConstraint  constraint.Constraint
-	embeddingsInitializer initializer.Initializer
+	embeddingsInitializer string
 	embeddingsRegularizer regularizer.Regularizer
 	inputDim              float64
 	inputLength           interface{}
@@ -29,7 +28,7 @@ func Embedding(inputDim float64, outputDim float64) *LEmbedding {
 		batchInputShape:       []interface{}{interface{}(nil), interface{}(nil)},
 		dtype:                 Float32,
 		embeddingsConstraint:  &constraint.NilConstraint{},
-		embeddingsInitializer: initializer.RandomUniform(),
+		embeddingsInitializer: "uniform",
 		embeddingsRegularizer: &regularizer.NilRegularizer{},
 		inputDim:              inputDim,
 		inputLength:           nil,
@@ -60,7 +59,7 @@ func (l *LEmbedding) SetEmbeddingsConstraint(embeddingsConstraint constraint.Con
 	return l
 }
 
-func (l *LEmbedding) SetEmbeddingsInitializer(embeddingsInitializer initializer.Initializer) *LEmbedding {
+func (l *LEmbedding) SetEmbeddingsInitializer(embeddingsInitializer string) *LEmbedding {
 	l.embeddingsInitializer = embeddingsInitializer
 	return l
 }
@@ -152,7 +151,7 @@ func (l *LEmbedding) GetKerasLayerConfig() interface{} {
 			"batch_input_shape":      l.batchInputShape,
 			"dtype":                  l.dtype.String(),
 			"embeddings_constraint":  l.embeddingsConstraint.GetKerasLayerConfig(),
-			"embeddings_initializer": l.embeddingsInitializer.GetKerasLayerConfig(),
+			"embeddings_initializer": l.embeddingsInitializer,
 			"embeddings_regularizer": l.embeddingsRegularizer.GetKerasLayerConfig(),
 			"input_dim":              l.inputDim,
 			"input_length":           l.inputLength,

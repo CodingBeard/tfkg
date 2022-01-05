@@ -44,18 +44,20 @@ model_config = json.loads(config["model_config"])
 
 for model_layer in model_config["config"]["layers"]:
     if model_layer["class_name"] == "InputLayer":
-        input_shape = [1]
+        input_shape = [config["batch_size"]]
+        predict_input_shape = [None]
         for dim in model_layer["config"]["batch_input_shape"][1:]:
             input_shape.append(dim)
+            predict_input_shape.append(dim)
         zero_inputs.append(
             tf.zeros(shape=input_shape, dtype=model_layer["config"]["dtype"])
         )
         learn_signature.append(tf.TensorSpec(
-            shape=model_layer["config"]["batch_input_shape"],
+            shape=input_shape,
             dtype=model_layer["config"]["dtype"],
         ))
         predict_input_signature.append(tf.TensorSpec(
-            shape=model_layer["config"]["batch_input_shape"],
+            shape=predict_input_shape,
             dtype=model_layer["config"]["dtype"],
         ))
 
@@ -66,11 +68,11 @@ y_shape = model.output.shape
 
 if config["loss"] == "binary_crossentropy" or config["loss"] == "sparse_categorical_crossentropy":
     y_dtype = tf.int32
-    y_shape = [None, 1]
+    y_shape = [config["batch_size"], 1]
 
 learn_input_signature = [
     tf.TensorSpec(shape=y_shape, dtype=y_dtype),
-    tf.TensorSpec(shape=None, dtype=tf.float32),
+    tf.TensorSpec(shape=config["batch_size"], dtype=tf.float32),
 ]
 for sig in learn_signature:
     learn_input_signature.append(sig)
@@ -117,11 +119,6 @@ class GolangModel(tf.Module):
 
             self._loss = loss
 
-        def loss_no_class_weight(y_true, y_pred, class_weights):
-            return tf.reduce_mean(loss_func(y_true, y_pred))
-
-        self._loss_no_class_weight = loss_no_class_weight
-
     @tf.function(input_signature=learn_input_signature)
     def learn(
             self,
@@ -131,18 +128,12 @@ class GolangModel(tf.Module):
     ):
         self._global_step.assign_add(1)
         with tf.GradientTape() as tape:
-            logits = self._model(list(inputs), training=True)
+            logits = self._model(inputs, training=True)
             loss = self._loss(y, logits, class_weights)
 
-        gradient = tape.gradient(
-            loss,
-            self._model.trainable_variables
-        )
-        self._optimizer.apply_gradients(
-            zip(gradient, self._model.trainable_variables)
-        )
+        self._optimizer.minimize(loss, self._model.trainable_variables, tape=tape)
         return [
-            self._loss_no_class_weight(y, logits, class_weights),
+            loss,
             logits
         ]
 
@@ -154,7 +145,7 @@ class GolangModel(tf.Module):
             *inputs
     ):
         logits = self._model(list(inputs), training=False)
-        loss = self._loss_no_class_weight(y, logits, class_weights)
+        loss = self._loss(y, logits, class_weights)
 
         return [
             loss,
@@ -189,12 +180,12 @@ print("Initialising model")
 
 gm = GolangModel()
 
-output_shape = [1]
+output_shape = [config["batch_size"]]
 for dim in y_shape[1:]:
     output_shape.append(dim)
 
 y_zeros = tf.zeros(shape=output_shape, dtype=y_dtype)
-class_weights_ones = tf.ones(shape=1, dtype=tf.float32)
+class_weights_ones = tf.ones(shape=config["batch_size"], dtype=tf.float32)
 
 print("Tracing learn")
 

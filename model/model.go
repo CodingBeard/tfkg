@@ -14,13 +14,18 @@ import (
 	"github.com/codingbeard/tfkg/metric"
 	"github.com/codingbeard/tfkg/optimizer"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
+	"github.com/galeone/tensorflow/tensorflow/go/core/protobuf/for_core_protos_go_proto"
+	"github.com/golang/protobuf/proto"
+	"github.com/remeh/sizedwaitgroup"
 	"io/ioutil"
 	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
+	"sync"
 )
 
 type Loss string
@@ -106,7 +111,15 @@ func LoadModel(
 	logger *cblog.Logger,
 	dir string,
 ) (*TfkgModel, error) {
-	m, e := tf.LoadSavedModel(dir, []string{"serve"}, nil)
+	tfConfig := &for_core_protos_go_proto.ConfigProto{}
+	tfConfigBytes, e := proto.Marshal(tfConfig)
+	if e != nil {
+		errorHandler.Error(e)
+		return nil, e
+	}
+	m, e := tf.LoadSavedModel(dir, []string{"serve"}, &tf.SessionOptions{
+		Config: tfConfigBytes,
+	})
 	if e != nil {
 		errorHandler.Error(e)
 		return nil, e
@@ -212,7 +225,16 @@ func LoadVanillaModel(
 		return nil, e
 	}
 
-	model, e := tf.LoadSavedModel(filepath.Join(tempDir, tempModelDir), []string{"serve"}, nil)
+	tfConfig := &for_core_protos_go_proto.ConfigProto{}
+	tfConfigBytes, e := proto.Marshal(tfConfig)
+	if e != nil {
+		errorHandler.Error(e)
+		return nil, e
+	}
+
+	model, e := tf.LoadSavedModel(filepath.Join(tempDir, tempModelDir), []string{"serve"}, &tf.SessionOptions{
+		Config: tfConfigBytes,
+	})
 	if e != nil {
 		errorHandler.Error(e)
 		return nil, e
@@ -436,84 +458,94 @@ func (m *TfkgModel) Fit(
 		batch := 1
 		totalBatches := dataset.Len() / config.BatchSize
 		trainTotalLoss := float64(0)
+		swg := sizedwaitgroup.New(runtime.NumCPU())
+		modelLock := &sync.Mutex{}
 		for generatorBatch := range generatorChan {
 			if halt {
 				break
 			}
 
-			x, y, classWeights := generatorBatch.X, generatorBatch.Y, generatorBatch.ClassWeights
+			swg.Add()
+			go func(generatorBatch data.Batch) {
+				defer swg.Done()
 
-			inputs := map[tf.Output]*tf.Tensor{
-				labelOp:       y,
-				classWeightOp: classWeights,
-			}
+				x, y, classWeights := generatorBatch.X, generatorBatch.Y, generatorBatch.ClassWeights
 
-			for offset, op := range inputOps {
-				inputs[op] = x[offset]
-			}
+				inputs := map[tf.Output]*tf.Tensor{
+					labelOp:       y,
+					classWeightOp: classWeights,
+				}
 
-			result, e := m.model.Session.Run(
-				inputs,
-				trainOutputs,
-				nil,
-			)
-			if e != nil {
-				m.errorHandler.Error(e)
-				return
-			}
+				for offset, op := range inputOps {
+					inputs[op] = x[offset]
+				}
 
-			loss := result[0].Value().(float32)
-			yTrue := y.Value()
-			yPred := result[1].Value()
+				modelLock.Lock()
+				result, e := m.model.Session.Run(
+					inputs,
+					trainOutputs,
+					nil,
+				)
+				modelLock.Unlock()
+				if e != nil {
+					m.errorHandler.Error(e)
+					return
+				}
 
-			trainTotalLoss += float64(loss)
+				loss := result[0].Value().(float32)
+				yTrue := y.Value()
+				yPred := result[1].Value()
 
-			trainLogs = []callback.Log{
-				{
-					Name:  callback.LoggerVerbose,
-					Value: float64(config.Verbose),
-				},
-				{
-					Name:  callback.LoggerTotalBatches,
-					Value: float64(totalBatches),
-				},
-				{
-					Name:  callback.LoggerPrefetched,
-					Value: float64(len(generatorChan)),
-				},
-				{
-					Name:      "loss",
-					Value:     trainTotalLoss / float64(batch),
-					Precision: 4,
-				},
-			}
+				trainTotalLoss += float64(loss)
 
-			trainLogs = append(trainLogs, m.getMetricLogs(
-				config.Metrics,
-				"",
-				batch == totalBatches,
-				yTrue,
-				yPred,
-			)...)
+				trainLogs = []callback.Log{
+					{
+						Name:  callback.LoggerVerbose,
+						Value: float64(config.Verbose),
+					},
+					{
+						Name:  callback.LoggerTotalBatches,
+						Value: float64(totalBatches),
+					},
+					{
+						Name:  callback.LoggerPrefetched,
+						Value: float64(len(generatorChan)),
+					},
+					{
+						Name:      "loss",
+						Value:     trainTotalLoss / float64(batch),
+						Precision: 4,
+					},
+				}
 
-			event := callback.EventDuring
-			if batch == 1 {
-				event = callback.EventStart
-			} else if batch == totalBatches {
-				continue
-			}
+				trainLogs = append(trainLogs, m.getMetricLogs(
+					config.Metrics,
+					"",
+					batch == totalBatches,
+					yTrue,
+					yPred,
+				)...)
 
-			halt, _ = m.processCallbacks(
-				config.Callbacks,
-				event,
-				callback.ModeTrain,
-				epoch,
-				batch,
-				trainLogs,
-			)
+				event := callback.EventDuring
+				if batch == 1 {
+					event = callback.EventStart
+				} else if batch == totalBatches {
+					return
+				}
 
-			batch++
+				halt, _ = m.processCallbacks(
+					config.Callbacks,
+					event,
+					callback.ModeTrain,
+					epoch,
+					batch,
+					trainLogs,
+				)
+
+				batch++
+			}(generatorBatch)
 		}
+		swg.Wait()
 		halt, _ = m.processCallbacks(
 			config.Callbacks,
 			callback.EventEnd,
@@ -562,75 +594,80 @@ func (m *TfkgModel) Fit(
 					break
 				}
 
-				x, y, classWeights := generatorBatch.X, generatorBatch.Y, generatorBatch.ClassWeights
+				swg.Add()
+				go func(generatorBatch data.Batch) {
+					defer swg.Done()
+					x, y, classWeights := generatorBatch.X, generatorBatch.Y, generatorBatch.ClassWeights
 
-				inputs := map[tf.Output]*tf.Tensor{
-					valLabelOp:    y,
-					classWeightOp: classWeights,
-				}
+					inputs := map[tf.Output]*tf.Tensor{
+						valLabelOp:    y,
+						classWeightOp: classWeights,
+					}
 
-				for offset, op := range valInputOps {
-					inputs[op] = x[offset]
-				}
+					for offset, op := range valInputOps {
+						inputs[op] = x[offset]
+					}
 
-				result, e := m.model.Session.Run(
-					inputs,
-					valOutputs,
-					nil,
-				)
-				if e != nil {
-					m.errorHandler.Error(e)
-					return
-				}
+					result, e := m.model.Session.Run(
+						inputs,
+						valOutputs,
+						nil,
+					)
+					if e != nil {
+						m.errorHandler.Error(e)
+						return
+					}
 
-				yTrue := y.Value()
-				loss := result[0].Value().(float32)
-				yPred := result[1].Value()
+					yTrue := y.Value()
+					loss := result[0].Value().(float32)
+					yPred := result[1].Value()
 
-				valTotalLoss += float64(loss)
+					valTotalLoss += float64(loss)
 
-				valLogs = []callback.Log{
-					{
-						Name:  callback.LoggerPrefetched,
-						Value: float64(len(generatorChan)),
-					},
-					{
-						Name:  callback.LoggerTotalBatches,
-						Value: float64(totalBatches),
-					},
-					{
-						Name:      "val_loss",
-						Value:     valTotalLoss / float64(batch),
-						Precision: 4,
-					},
-				}
+					valLogs = []callback.Log{
+						{
+							Name:  callback.LoggerPrefetched,
+							Value: float64(len(generatorChan)),
+						},
+						{
+							Name:  callback.LoggerTotalBatches,
+							Value: float64(totalBatches),
+						},
+						{
+							Name:      "val_loss",
+							Value:     valTotalLoss / float64(batch),
+							Precision: 4,
+						},
+					}
 
-				valLogs = append(valLogs, m.getMetricLogs(
-					config.Metrics,
-					"val_",
-					batch == totalBatches,
-					yTrue,
-					yPred,
-				)...)
+					valLogs = append(valLogs, m.getMetricLogs(
+						config.Metrics,
+						"val_",
+						batch == totalBatches,
+						yTrue,
+						yPred,
+					)...)
 
-				event := callback.EventDuring
-				if batch == 1 {
-					event = callback.EventStart
-				} else if batch == totalBatches {
-					continue
-				}
+					event := callback.EventDuring
+					if batch == 1 {
+						event = callback.EventStart
+					} else if batch == totalBatches {
+						return
+					}
 
-				halt, _ = m.processCallbacks(
-					config.Callbacks,
-					event,
-					callback.ModeVal,
-					epoch,
-					batch,
-					append(trainLogs, valLogs...),
-				)
+					halt, _ = m.processCallbacks(
+						config.Callbacks,
+						event,
+						callback.ModeVal,
+						epoch,
+						batch,
+						append(trainLogs, valLogs...),
+					)
 
-				batch++
+					batch++
+				}(generatorBatch)
 			}
+			swg.Wait()
 			halt, _ = m.processCallbacks(
 				config.Callbacks,
 				callback.EventEnd,
@@ -963,11 +1000,28 @@ type pythonConfig struct {
 	ModelDefinitionSaveDir string      `json:"model_definition_save_dir"`
 	Loss                   string      `json:"loss"`
 	Optimizer              interface{} `json:"optimizer"`
+	BatchSize              int         `json:"batch_size"`
 }
 
-func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, modelDefinitionSaveDir string) error {
+type CompileConfig struct {
+	Loss             Loss
+	Optimizer        optimizer.Optimizer
+	ModelInfoSaveDir string
+	BatchSize        int
+}
+
+func (m *TfkgModel) CompileAndLoad(config CompileConfig) error {
+	if config.Loss == "" {
+		config.Loss = LossMSE
+	}
+	if config.Optimizer == nil {
+		config.Optimizer = optimizer.Adam()
+	}
+	if config.BatchSize == 0 {
+		config.BatchSize = 1
+	}
 	m.logger.InfoF("model", "Compiling and loading model. If anything goes wrong python error messages will be printed out.")
-	m.modelDefinitionSaveDir = modelDefinitionSaveDir
+	m.modelDefinitionSaveDir = config.ModelInfoSaveDir
 	modelConfig, e := m.generateKerasDefinitionJson()
 	if e != nil {
 		return e
@@ -981,29 +1035,30 @@ func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, mod
 		return e
 	}
 
-	if modelDefinitionSaveDir != "" {
+	if config.ModelInfoSaveDir != "" {
 		indentedJson := bytes.NewBuffer([]byte{})
 		e = json.Indent(indentedJson, []byte(modelConfig), "", "  ")
 		if e != nil {
 			m.errorHandler.Error(e)
 			return e
 		}
-		e = ioutil.WriteFile(filepath.Join(modelDefinitionSaveDir, "model.json"), indentedJson.Bytes(), os.ModePerm)
+		e = ioutil.WriteFile(filepath.Join(config.ModelInfoSaveDir, "model.json"), indentedJson.Bytes(), os.ModePerm)
 		if e != nil {
 			m.errorHandler.Error(e)
 			return e
 		}
 	}
 
-	config := pythonConfig{
+	pConfig := pythonConfig{
 		ModelConfig:            modelConfig,
 		SaveDir:                filepath.Join(tempDir, tempModelDir),
-		ModelDefinitionSaveDir: modelDefinitionSaveDir,
-		Loss:                   string(loss),
-		Optimizer:              optimizer.GetKerasLayerConfig(),
+		ModelDefinitionSaveDir: config.ModelInfoSaveDir,
+		Loss:                   string(config.Loss),
+		Optimizer:              config.Optimizer.GetKerasLayerConfig(),
+		BatchSize:              config.BatchSize,
 	}
 
-	configBytes, e := json.Marshal(config)
+	configBytes, e := json.Marshal(pConfig)
 	if e != nil {
 		m.errorHandler.Error(e)
 		return e
@@ -1053,7 +1108,15 @@ func (m *TfkgModel) CompileAndLoad(loss Loss, optimizer optimizer.Optimizer, mod
 		return e
 	}
 
-	m.model, e = tf.LoadSavedModel(filepath.Join(tempDir, tempModelDir), []string{"serve"}, nil)
+	tfConfig := &for_core_protos_go_proto.ConfigProto{}
+	tfConfigBytes, e := proto.Marshal(tfConfig)
+	if e != nil {
+		m.errorHandler.Error(e)
+		return e
+	}
+	m.model, e = tf.LoadSavedModel(filepath.Join(tempDir, tempModelDir), []string{"serve"}, &tf.SessionOptions{
+		Config: tfConfigBytes,
+	})
 	if e != nil {
 		m.errorHandler.Error(e)
 		return e

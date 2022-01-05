@@ -115,6 +115,20 @@ examples-vanilla-raw:
 	go generate ./...
 	cd examples/vanilla && python generate_vanilla_model.py && go run main.go
 
+examples-bench:
+	go generate ./...
+	docker-compose up -d tf-jupyter-golang
+	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg/examples/bench && go run main.go && python bench_python.py"
+
+examples-bench-gpu:
+	go generate ./...
+	docker-compose up -d tf-jupyter-golang-gpu
+	docker-compose exec tf-jupyter-golang-gpu sh -c "cd /go/src/tfkg/examples/bench && go run main.go && python bench_python.py"
+
+examples-bench-raw:
+	go generate ./...
+	cd examples/bench && go run main.go && python bench_python.py
+
 test-python:
 	docker-compose up -d tf-jupyter-golang
 	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg && python test.py"

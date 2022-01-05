@@ -69,9 +69,12 @@ func NewSparseCategoricalTokenizingYProcessor(
 		cacheDir:     cacheDir,
 		LineOffset:   lineOffset,
 		RequiresFit:  true,
-		tokenizer:    NewTokenizer(errorHandler, 1, -1, TokenizerConfig{IsCategoryTokenizer: true}),
-		reader:       ReadStringNop,
-		converter:    ConvertTokenizerToInt32SliceTensor,
+		tokenizer: NewTokenizer(errorHandler, 1, -1, TokenizerConfig{
+			IsCategoryTokenizer: true,
+			DisableFiltering:    true,
+		}),
+		reader:    ReadStringNop,
+		converter: ConvertTokenizerToInt32SliceTensor,
 	}
 }
 
@@ -102,9 +105,12 @@ func NewBinaryTokenizingYProcessor(
 		cacheDir:     cacheDir,
 		LineOffset:   lineOffset,
 		RequiresFit:  true,
-		tokenizer:    NewTokenizer(errorHandler, 1, -1, TokenizerConfig{IsCategoryTokenizer: true}),
-		reader:       ReadStringNop,
-		converter:    ConvertTokenizerToInt32SliceTensor,
+		tokenizer: NewTokenizer(errorHandler, 1, -1, TokenizerConfig{
+			IsCategoryTokenizer: true,
+			DisableFiltering:    true,
+		}),
+		reader:    ReadStringNop,
+		converter: ConvertTokenizerToInt32SliceTensor,
 	}
 }
 

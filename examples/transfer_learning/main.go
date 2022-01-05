@@ -120,7 +120,14 @@ func main() {
 
 	// This part is pretty nasty under the hood. Effectively it will generate some python code for our model and execute it to save the model in a format we can load and train
 	// A python binary must be available to use for this to work
-	e = m.CompileAndLoad(model.LossSparseCategoricalCrossentropy, optimizer.Adam(), saveDir)
+	// The batchSize used in CompileAndLoad must match the BatchSize used in Fit
+	batchSize := 3
+	e = m.CompileAndLoad(model.CompileConfig{
+		Loss:             model.LossSparseCategoricalCrossentropy,
+		Optimizer:        optimizer.Adam(),
+		ModelInfoSaveDir: saveDir,
+		BatchSize:        batchSize,
+	})
 	if e != nil {
 		return
 	}
@@ -141,7 +148,7 @@ func main() {
 		model.FitConfig{
 			Epochs:     10,
 			Validation: true,
-			BatchSize:  3,
+			BatchSize:  batchSize,
 			PreFetch:   10,
 			Verbose:    1,
 			Metrics: []metric.Metric{
@@ -217,7 +224,12 @@ func main() {
 	)
 
 	// Compile the transfer model, the weights will be set during this step
-	e = transferred.CompileAndLoad(model.LossSparseCategoricalCrossentropy, optimizer.Adam(), transferredSaveDir)
+	e = transferred.CompileAndLoad(model.CompileConfig{
+		Loss:             model.LossSparseCategoricalCrossentropy,
+		Optimizer:        optimizer.Adam(),
+		ModelInfoSaveDir: transferredSaveDir,
+		BatchSize:        batchSize,
+	})
 	if e != nil {
 		return
 	}
@@ -227,7 +239,7 @@ func main() {
 		data.GeneratorModeTest,
 		dataset,
 		model.EvaluateConfig{
-			BatchSize: 3,
+			BatchSize: batchSize,
 			PreFetch:  10,
 			Verbose:   1,
 			Metrics: []metric.Metric{

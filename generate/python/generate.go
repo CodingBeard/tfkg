@@ -135,7 +135,7 @@ func (p *parameter) getGolangType() string {
 	stringValue := ""
 	if strings.HasSuffix(p.Name, "constraint") {
 		stringValue = "constraint.Constraint"
-	} else if strings.HasSuffix(p.Name, "initializer") && p.ObjectName != "LRandomFourierFeatures" {
+	} else if strings.HasSuffix(p.Name, "initializer") && p.ObjectName != "LRandomFourierFeatures" && p.ObjectName != "LEmbedding" {
 		stringValue = "initializer.Initializer"
 	} else if strings.HasSuffix(p.Name, "regularizer") {
 		stringValue = "regularizer.Regularizer"
@@ -167,8 +167,6 @@ func (p *parameter) getStringDefaultValue() string {
 	}
 	if p.Name == "activation" && stringValue == "nil" {
 		stringValue = `"linear"`
-	} else if p.Name == "embeddings_initializer" && fmt.Sprint(p.Default) == "uniform" {
-		stringValue = "initializer.RandomUniform()"
 	} else if strings.HasSuffix(p.Name, "constraint") {
 		if stringValue != "nil" {
 			if config, ok := p.Default.(map[string]interface{}); ok {
@@ -179,7 +177,7 @@ func (p *parameter) getStringDefaultValue() string {
 		} else {
 			stringValue = "&constraint.NilConstraint{}"
 		}
-	} else if strings.HasSuffix(p.Name, "initializer") && p.ObjectName != "LRandomFourierFeatures" {
+	} else if strings.HasSuffix(p.Name, "initializer") && p.ObjectName != "LRandomFourierFeatures" && p.ObjectName != "LEmbedding" {
 		if stringValue != "nil" {
 			if config, ok := p.Default.(map[string]interface{}); ok {
 				stringValue = fmt.Sprintf("initializer.%s()", config["class_name"])
@@ -347,7 +345,7 @@ func (f *fileGenerator) generate() {
 				getter = "dtype.String()"
 			}
 			if strings.HasSuffix(param.Name, "constraint") ||
-				(strings.HasSuffix(param.Name, "initializer") && structName != "LRandomFourierFeatures") ||
+				(strings.HasSuffix(param.Name, "initializer") && structName != "LRandomFourierFeatures" && structName != "LEmbedding") ||
 				strings.HasSuffix(param.Name, "regularizer") {
 				getter += ".GetKerasLayerConfig()"
 			}

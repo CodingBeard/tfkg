@@ -54,7 +54,6 @@ type SingleFileDataset struct {
 	offset              int32
 	limit               int32
 	filter              func(line []string) bool
-	categoryTokenizer   *preprocessor.Tokenizer
 	maxRowsForFit       int
 
 	logger       *cblog.Logger
@@ -149,8 +148,6 @@ func NewSingleFileDataset(
 		return nil, e
 	}
 
-	_ = yProcessor.Load()
-
 	e = d.readLineOffsets()
 	if e != nil {
 		return nil, e
@@ -176,12 +173,13 @@ type fileStatsCache struct {
 }
 
 func (d *SingleFileDataset) readLineOffsets() error {
+	yProcessorError := d.yProcessor.Load()
 	cacheFileName := "file-stats.json"
 	cacheFileBytes, e := ioutil.ReadFile(filepath.Join(d.cacheDir, cacheFileName))
 	if e != nil && !errors.Is(e, os.ErrNotExist) {
 		d.errorHandler.Error(e)
 		return e
-	} else if e == nil {
+	} else if e == nil && yProcessorError == nil {
 		var cache fileStatsCache
 		e = json.Unmarshal(cacheFileBytes, &cache)
 		if e != nil {
@@ -336,10 +334,9 @@ func (d *SingleFileDataset) readLineOffsets() error {
 		return e
 	}
 
-	if d.categoryTokenizer != nil {
-		e = d.categoryTokenizer.Save(filepath.Join(d.cacheDir, "category-tokenizer.json"))
+	if d.yProcessor.RequiresFit {
+		e := d.yProcessor.FinishFit()
 		if e != nil {
-			d.errorHandler.Error(e)
 			return e
 		}
 	}

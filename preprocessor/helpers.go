@@ -187,6 +187,28 @@ func ConvertInterfaceFloat32SliceToTensor(columns interface{}) (*tf.Tensor, erro
 	return tensor, nil
 }
 
+func ConvertInterfaceInt32SliceToTensor(columns interface{}) (*tf.Tensor, error) {
+	interfaceSlice, ok := columns.([]interface{})
+	if !ok {
+		e := fmt.Errorf("could not convert columns to []interface{}")
+		return nil, e
+	}
+	var columnsFloats [][]int32
+	for _, iSlice := range interfaceSlice {
+		floatSlice, ok := iSlice.([]int32)
+		if !ok {
+			e := fmt.Errorf("could not convert sub slice to []int32")
+			return nil, e
+		}
+		columnsFloats = append(columnsFloats, floatSlice)
+	}
+	tensor, e := tf.NewTensor(columnsFloats)
+	if e != nil {
+		return nil, e
+	}
+	return tensor, nil
+}
+
 func ReadStringNop(columns []string) interface{} {
 	return columns
 }

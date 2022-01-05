@@ -43,10 +43,7 @@ if config["model_definition_save_dir"] != "":
     with open(config["model_definition_save_dir"] + "/weight_names.json", "w") as f:
         json.dump(weight_names, f)
 
-learn_input_signature = [
-    tf.TensorSpec(shape=(None, 1), dtype=tf.int32),
-    tf.TensorSpec(shape=None, dtype=tf.float32),
-]
+learn_signature = []
 predict_input_signature = []
 
 zero_inputs = []
@@ -55,20 +52,38 @@ model_config = json.loads(config["model_config"])
 
 for model_layer in model_config["config"]["layers"]:
     if model_layer["class_name"] == "InputLayer":
-        input_shape = [1]
+        input_shape = [config["batch_size"]]
+        predict_input_shape = [None]
         for dim in model_layer["config"]["batch_input_shape"][1:]:
             input_shape.append(dim)
+            predict_input_shape.append(dim)
         zero_inputs.append(
             tf.zeros(shape=input_shape, dtype=model_layer["config"]["dtype"])
         )
-        learn_input_signature.append(tf.TensorSpec(
-            shape=model_layer["config"]["batch_input_shape"],
+        learn_signature.append(tf.TensorSpec(
+            shape=input_shape,
             dtype=model_layer["config"]["dtype"],
         ))
         predict_input_signature.append(tf.TensorSpec(
-            shape=model_layer["config"]["batch_input_shape"],
+            shape=predict_input_shape,
             dtype=model_layer["config"]["dtype"],
         ))
+
+last_layer = model_config["config"]["layers"][-1]
+
+y_dtype = model.output.dtype
+y_shape = model.output.shape
+
+if config["loss"] == "binary_crossentropy" or config["loss"] == "sparse_categorical_crossentropy":
+    y_dtype = tf.int32
+    y_shape = [config["batch_size"], 1]
+
+learn_input_signature = [
+    tf.TensorSpec(shape=y_shape, dtype=y_dtype),
+    tf.TensorSpec(shape=None, dtype=tf.float32),
+]
+for sig in learn_signature:
+    learn_input_signature.append(sig)
 
 evaluate_input_signature = learn_input_signature
 
@@ -82,20 +97,35 @@ class GolangModel(tf.Module):
         self._global_step = tf.Variable(0, dtype=tf.int32, trainable=False)
         opt = tf.keras.optimizers.get(config["optimizer"]["class_name"])
         self._optimizer = opt.from_config(config["optimizer"]["config"])
-        loss_func = None
         if config["loss"] == "binary_crossentropy":
             loss_func = tf.keras.losses.BinaryCrossentropy(reduction="none")
+
+            def loss(y_true, y_pred, class_weights):
+                weighted_loss = tf.multiply(
+                    loss_func(y_true, y_pred),
+                    class_weights
+                )
+                return tf.reduce_mean(weighted_loss)
+
+            self._loss = loss
         elif config["loss"] == "sparse_categorical_crossentropy":
             loss_func = tf.keras.losses.SparseCategoricalCrossentropy(reduction="none")
 
-        def loss(y_true, y_pred, class_weights):
-            weighted_loss = tf.multiply(
-                loss_func(y_true, y_pred),
-                class_weights
-            )
-            return tf.reduce_mean(weighted_loss)
+            def loss(y_true, y_pred, class_weights):
+                weighted_loss = tf.multiply(
+                    loss_func(y_true, y_pred),
+                    class_weights
+                )
+                return tf.reduce_mean(weighted_loss)
 
-        self._loss = loss
+            self._loss = loss
+        elif config["loss"] == "mse":
+            loss_func = tf.keras.losses.MeanSquaredError(reduction="none")
+
+            def loss(y_true, y_pred, class_weights):
+                return tf.reduce_mean(loss_func(y_true, y_pred))
+
+            self._loss = loss
 
     @tf.function(input_signature=learn_input_signature)
     def learn(
@@ -164,7 +194,11 @@ print("Initialising model")
 
 gm = GolangModel()
 
-y_zeros = tf.zeros(shape=[1, 1], dtype=tf.int32)
+output_shape = [config["batch_size"]]
+for dim in y_shape[1:]:
+    output_shape.append(dim)
+
+y_zeros = tf.zeros(shape=output_shape, dtype=y_dtype)
 class_weights_ones = tf.ones(shape=1, dtype=tf.float32)
 
 print("Tracing learn")
@@ -187,12 +221,9 @@ print("Tracing predict")
 
 gm.predict(*zero_inputs)
 
-print("Tracing get_weights")
-
-ws = gm.get_weights()
-
 print("Tracing set_weights")
 
+ws = gm.get_weights()
 gm.set_weights(*ws)
 
 print("Saving model")
@@ -204,7 +235,6 @@ tf.saved_model.save(
         "learn": gm.learn,
         "evaluate": gm.evaluate,
         "predict": gm.predict,
-        "get_weights": gm.get_weights,
         "set_weights": gm.set_weights,
     },
 )
