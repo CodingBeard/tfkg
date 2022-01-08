@@ -187,7 +187,7 @@ func main() {
 		SetName("title_embedding").
 		SetInputs(titleInput)
 
-	titleLSTM := layer.LSTM(32).
+	titleLSTM := layer.CuDNNLSTM(32).
 		SetName("title_lstm").
 		SetInputs(titleEmbedding)
 
@@ -203,7 +203,7 @@ func main() {
 		SetName("location_embedding").
 		SetInputs(locationInput)
 
-	locationLSTM := layer.LSTM(32).
+	locationLSTM := layer.CuDNNLSTM(32).
 		SetName("location_lstm").
 		SetInputs(locationEmbedding)
 
@@ -219,7 +219,7 @@ func main() {
 		SetName("department_embedding").
 		SetInputs(departmentInput)
 
-	departmentLSTM := layer.LSTM(32).
+	departmentLSTM := layer.CuDNNLSTM(32).
 		SetName("department_lstm").
 		SetInputs(departmentEmbedding)
 
@@ -235,7 +235,7 @@ func main() {
 		SetName("company_profile_embedding").
 		SetInputs(companyProfileInput)
 
-	companyProfileLSTM := layer.LSTM(32).
+	companyProfileLSTM := layer.CuDNNLSTM(32).
 		SetName("company_profile_lstm").
 		SetInputs(companyProfileEmbedding)
 
@@ -251,7 +251,7 @@ func main() {
 		SetName("description_embedding").
 		SetInputs(descriptionInput)
 
-	descriptionLSTM := layer.LSTM(32).
+	descriptionLSTM := layer.CuDNNLSTM(32).
 		SetName("description_lstm").
 		SetInputs(descriptionEmbedding)
 
@@ -267,7 +267,7 @@ func main() {
 		SetName("requirements_embedding").
 		SetInputs(requirementsInput)
 
-	requirementsLSTM := layer.LSTM(32).
+	requirementsLSTM := layer.CuDNNLSTM(32).
 		SetName("requirements_lstm").
 		SetInputs(requirementsEmbedding)
 

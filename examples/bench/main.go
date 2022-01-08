@@ -98,7 +98,7 @@ func main() {
 		errorHandler,
 		layer.Input().SetInputShape(tf.MakeShape(-1, 1000)).SetDtype(layer.Float32),
 		layer.Embedding(1000, 32).SetBatchInputShape([]interface{}{nil, 1000}).SetInputLength(1000),
-		layer.LSTM(128),
+		layer.CuDNNLSTM(128),
 		layer.Dense(1024).SetActivation("swish"),
 		layer.Dense(1).SetActivation("sigmoid"),
 	)

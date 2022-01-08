@@ -7,7 +7,6 @@ import tensorflow as tf
 import numpy as np
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # ERROR
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 logging.disable(logging.WARNING)
 

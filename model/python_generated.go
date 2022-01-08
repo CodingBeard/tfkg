@@ -15,7 +15,6 @@ import tensorflow as tf
 import numpy as np
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # ERROR
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 logging.disable(logging.WARNING)
 
@@ -80,7 +79,7 @@ if config["loss"] == "binary_crossentropy" or config["loss"] == "sparse_categori
 
 learn_input_signature = [
     tf.TensorSpec(shape=y_shape, dtype=y_dtype),
-    tf.TensorSpec(shape=None, dtype=tf.float32),
+    tf.TensorSpec(shape=config["batch_size"], dtype=tf.float32),
 ]
 for sig in learn_signature:
     learn_input_signature.append(sig)
@@ -136,16 +135,10 @@ class GolangModel(tf.Module):
     ):
         self._global_step.assign_add(1)
         with tf.GradientTape() as tape:
-            logits = self._model(list(inputs), training=True)
+            logits = self._model(inputs, training=True)
             loss = self._loss(y, logits, class_weights)
 
-        gradient = tape.gradient(
-            loss,
-            self._model.trainable_variables
-        )
-        self._optimizer.apply_gradients(
-            zip(gradient, self._model.trainable_variables)
-        )
+        self._optimizer.minimize(loss, self._model.trainable_variables, tape=tape)
         return [
             loss,
             logits
@@ -199,7 +192,7 @@ for dim in y_shape[1:]:
     output_shape.append(dim)
 
 y_zeros = tf.zeros(shape=output_shape, dtype=y_dtype)
-class_weights_ones = tf.ones(shape=1, dtype=tf.float32)
+class_weights_ones = tf.ones(shape=config["batch_size"], dtype=tf.float32)
 
 print("Tracing learn")
 
