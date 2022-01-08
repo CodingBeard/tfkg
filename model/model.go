@@ -43,6 +43,7 @@ type TfkgModel struct {
 	layers                 []layer.Layer
 	isSequential           bool
 	pbCache                []byte
+	cpuPbCache             []byte
 	modelDefinitionSaveDir string
 
 	errorHandler *cberrors.ErrorsContainer
@@ -110,8 +111,14 @@ func LoadModel(
 	errorHandler *cberrors.ErrorsContainer,
 	logger *cblog.Logger,
 	dir string,
+	sessionOptions ...*for_core_protos_go_proto.ConfigProto,
 ) (*TfkgModel, error) {
-	tfConfig := &for_core_protos_go_proto.ConfigProto{}
+	var tfConfig *for_core_protos_go_proto.ConfigProto
+	if len(sessionOptions) == 1 {
+		tfConfig = sessionOptions[0]
+	} else {
+		tfConfig = &for_core_protos_go_proto.ConfigProto{}
+	}
 	tfConfigBytes, e := proto.Marshal(tfConfig)
 	if e != nil {
 		errorHandler.Error(e)
@@ -173,6 +180,7 @@ func LoadVanillaModel(
 	dir string,
 	loss Loss,
 	optimizer optimizer.Optimizer,
+	sessionOptions ...*for_core_protos_go_proto.ConfigProto,
 ) (*TfkgModel, error) {
 	logger.InfoF("model", "Loading vanilla model. If anything goes wrong python error messages will be printed out.")
 
@@ -225,7 +233,12 @@ func LoadVanillaModel(
 		return nil, e
 	}
 
-	tfConfig := &for_core_protos_go_proto.ConfigProto{}
+	var tfConfig *for_core_protos_go_proto.ConfigProto
+	if len(sessionOptions) == 1 {
+		tfConfig = sessionOptions[0]
+	} else {
+		tfConfig = &for_core_protos_go_proto.ConfigProto{}
+	}
 	tfConfigBytes, e := proto.Marshal(tfConfig)
 	if e != nil {
 		errorHandler.Error(e)
@@ -959,10 +972,18 @@ func (m *TfkgModel) Save(dir string) error {
 		return e
 	}
 
-	e = ioutil.WriteFile(filepath.Join(dir, "saved_model.pb"), m.pbCache, os.ModePerm)
-	if e != nil {
-		m.errorHandler.Error(e)
-		return e
+	if len(m.cpuPbCache) > 0 {
+		e = ioutil.WriteFile(filepath.Join(dir, "saved_model.pb"), m.cpuPbCache, os.ModePerm)
+		if e != nil {
+			m.errorHandler.Error(e)
+			return e
+		}
+	} else {
+		e = ioutil.WriteFile(filepath.Join(dir, "saved_model.pb"), m.pbCache, os.ModePerm)
+		if e != nil {
+			m.errorHandler.Error(e)
+			return e
+		}
 	}
 
 	filenameInput, e := tf.NewTensor(filepath.Join(dir, "variables/variables"))
@@ -1001,6 +1022,7 @@ type pythonConfig struct {
 	Loss                   string      `json:"loss"`
 	Optimizer              interface{} `json:"optimizer"`
 	BatchSize              int         `json:"batch_size"`
+	CpuInference           bool        `json:"cpu_inference"`
 }
 
 type CompileConfig struct {
@@ -1008,9 +1030,10 @@ type CompileConfig struct {
 	Optimizer        optimizer.Optimizer
 	ModelInfoSaveDir string
 	BatchSize        int
+	CpuInference     bool
 }
 
-func (m *TfkgModel) CompileAndLoad(config CompileConfig) error {
+func (m *TfkgModel) CompileAndLoad(config CompileConfig, sessionOptions ...*for_core_protos_go_proto.ConfigProto) error {
 	if config.Loss == "" {
 		config.Loss = LossMSE
 	}
@@ -1056,6 +1079,7 @@ func (m *TfkgModel) CompileAndLoad(config CompileConfig) error {
 		Loss:                   string(config.Loss),
 		Optimizer:              config.Optimizer.GetKerasLayerConfig(),
 		BatchSize:              config.BatchSize,
+		CpuInference:           config.CpuInference,
 	}
 
 	configBytes, e := json.Marshal(pConfig)
@@ -1108,7 +1132,12 @@ func (m *TfkgModel) CompileAndLoad(config CompileConfig) error {
 		return e
 	}
 
-	tfConfig := &for_core_protos_go_proto.ConfigProto{}
+	var tfConfig *for_core_protos_go_proto.ConfigProto
+	if len(sessionOptions) == 1 {
+		tfConfig = sessionOptions[0]
+	} else {
+		tfConfig = &for_core_protos_go_proto.ConfigProto{}
+	}
 	tfConfigBytes, e := proto.Marshal(tfConfig)
 	if e != nil {
 		m.errorHandler.Error(e)
@@ -1126,6 +1155,14 @@ func (m *TfkgModel) CompileAndLoad(config CompileConfig) error {
 	if e != nil {
 		m.errorHandler.Error(e)
 		return e
+	}
+
+	if config.CpuInference {
+		m.cpuPbCache, e = ioutil.ReadFile(filepath.Join(tempDir, tempModelDir, "cpu", "saved_model.pb"))
+		if e != nil {
+			m.errorHandler.Error(e)
+			return e
+		}
 	}
 
 	e = os.RemoveAll(filepath.Join(tempDir, tempModelDir))

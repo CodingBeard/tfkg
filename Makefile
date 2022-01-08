@@ -129,6 +129,15 @@ examples-bench-raw:
 	go generate ./...
 	cd examples/bench && go run main.go && python bench_python.py
 
+examples-cpu:
+	go generate ./...
+	docker-compose up -d tf-jupyter-golang-gpu
+	docker-compose exec tf-jupyter-golang-gpu sh -c "cd /go/src/tfkg/examples/gpu_train_cpu_infer && go run main.go"
+
+examples-cpu-raw:
+	go generate ./...
+	cd examples/gpu_train_cpu_infer && go run main.go
+
 test-python:
 	docker-compose up -d tf-jupyter-golang
 	docker-compose exec tf-jupyter-golang sh -c "cd /go/src/tfkg && python test.py"

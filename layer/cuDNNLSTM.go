@@ -38,7 +38,7 @@ type LcuDNNLSTM struct {
 	layerWeights         []*tf.Tensor
 }
 
-// CuDNNLSTM if trained on a GPU, a GPU is required for inference
+// CuDNNLSTM if trained on a GPU, a GPU is required for inference unless you compile the model with CpuInference: true option
 func CuDNNLSTM(units float64) *LcuDNNLSTM {
 	return &LcuDNNLSTM{
 		activation:           "tanh",
