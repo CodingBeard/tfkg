@@ -1,9 +1,12 @@
 package layer
 
-import "github.com/codingbeard/tfkg/layer/constraint"
-import "github.com/codingbeard/tfkg/layer/initializer"
-import "github.com/codingbeard/tfkg/layer/regularizer"
-import tf "github.com/galeone/tensorflow/tensorflow/go"
+import (
+	"github.com/codingbeard/tfkg/layer/constraint"
+	"github.com/codingbeard/tfkg/layer/initializer"
+	"github.com/codingbeard/tfkg/layer/regularizer"
+
+	tf "github.com/galeone/tensorflow/tensorflow/go"
+)
 
 type LcuDNNLSTM struct {
 	activation           string
@@ -294,7 +297,6 @@ func (l *LcuDNNLSTM) GetKerasLayerConfig() interface{} {
 func (l *LcuDNNLSTM) GetCustomLayerDefinition() string {
 	return `from tensorflow.python.eager import context
 from tensorflow.python.eager import function
-from tensorflow.python.eager.context import get_device_name
 from tensorflow.python.framework import constant_op
 from tensorflow.python.framework import device
 from tensorflow.python.framework import dtypes
@@ -352,7 +354,7 @@ def _read_variable_value(v):
 
 def _get_context_device_type():
   """Parse the current context and return the device type, eg CPU/GPU."""
-  current_device = get_device_name()
+  current_device = context.context().device_name
   if current_device is None:
     return None
   return device.DeviceSpec.from_string(current_device).device_type
