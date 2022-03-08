@@ -123,6 +123,7 @@ func (m *Module) getMetrics(modelName string) ([]Record, error) {
 				return e
 			}
 			reader := csv.NewReader(file)
+			reader.FieldsPerRecord = -1
 			headers, e := reader.Read()
 			if e != nil && !errors.Is(e, io.EOF) {
 				m.ErrorHandler.Error(e)
